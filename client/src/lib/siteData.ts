@@ -79,10 +79,11 @@ export const PHASES: Phase[] = [
 ];
 
 export const PHASE18_EVENTS: { event: string; producer: string; purpose: string; exists: boolean }[] = [
-  { event: "Event.Interaction.Available / Cleared / Progress", producer: "07_SandboxInteraction", purpose: "Prompt contextual, limpeza de foco e barra de hold-to-interact.", exists: true },
+  { event: "Event.Interaction.Available / Cleared", producer: "07_SandboxInteraction", purpose: "Prompt contextual e limpeza de foco.", exists: true },
+  { event: "Event.Interaction.Progress", producer: "07_SandboxInteraction", purpose: "Barra de hold-to-interact; progresso já publicado, throttle 60 Hz adicionado no Tick.", exists: true },
   { event: "Event.Inventory.ItemEquipped / ItemUnequipped", producer: "08_SandboxInventory", purpose: "Highlight de slot no HUD de inventário.", exists: true },
   { event: "Event.Inventory.ItemAdded / ItemRemoved", producer: "08_SandboxInventory", purpose: "Par simétrico de modificação bruta de slots (novo produtor).", exists: false },
-  { event: "Event.Attribute.Modified", producer: "05_SandboxCharacter", purpose: "Barras de vida/mana/estamina; injetado dentro de ModifyAttributeBaseValue.", exists: false },
+  { event: "Event.Attribute.Changed", producer: "05_SandboxCharacter", purpose: "Barras de vida/mana/estamina; publicado no BroadcastAttributeChanged.", exists: false },
   { event: "Event.Ability.CooldownStarted / CooldownEnded", producer: "05_SandboxCharacter", purpose: "Overlay de cooldown sem polling — polling violaria o manifesto.", exists: false },
   { event: "Event.Combat.WeaponEquipped / AmmoDepleted / FireExecuted", producer: "06_SandboxCombat", purpose: "HUD de arma, munição e feedback de tiro seco.", exists: false },
   { event: "Event.Combat.DamageReceived", producer: "05/06 (ponto autoritativo de dano)", purpose: "Indicador direcional de dano (seta por 1,5s).", exists: false },
@@ -92,7 +93,7 @@ export const PHASE18_WIDGETS: { widget: string; events: string[]; visual: string
   { widget: "USBUIPromptWidget", events: ["Event.Interaction.Available", "Event.Interaction.Cleared", "Event.Interaction.Progress"], visual: "Prompt contextual + barra de hold para Duration > 0." },
   { widget: "USBUIInventoryWidget", events: ["Event.Inventory.ItemAdded / Removed", "ItemEquipped / ItemUnequipped"], visual: "Grid de slots síncrono ao replicado; highlight no slot recém-equipado." },
   { widget: "USBUIAbilityWidget", events: ["Event.Ability.CooldownStarted", "Event.Ability.CooldownEnded"], visual: "Ícones de habilidade + overlay de cooldown em segundos decrescentes." },
-  { widget: "USBUIAttributeWidget", events: ["Event.Attribute.Modified", "Leitura local via ISBCharacterInterface"], visual: "Barras de vida/mana/estamina; flash vermelho em dano." },
+  { widget: "USBUIAttributeWidget", events: ["Event.Attribute.Changed", "Leitura local via ISBCharacterInterface"], visual: "Barras de vida/mana/estamina; flash vermelho em dano." },
   { widget: "USBUIWeaponWidget", events: ["Event.Combat.WeaponEquipped", "Event.Combat.AmmoDepleted"], visual: "Ícone da arma ativa + contador de munição; feedback de tiro seco." },
   { widget: "USBUIDamageIndicator", events: ["Event.Combat.DamageReceived"], visual: "Compass/seta direcional por 1,5s; re-spawn simétrico sob hit repetido." },
 ];
@@ -107,6 +108,22 @@ export const PHASE18_ACCEPTANCE: string[] = [
   "Barras de atributo e cooldowns atualizam sem flicker sob net PktLag=100.",
   "Manual de uso (v1.8.0) e walkthrough documentam a nova hierarquia de widgets.",
   "Versão v1.8.0 registrada em todos os .uplugin e no Dashboard.",
+];
+
+// Critérios de aceite da spec executada (plano revisado e homologado)
+export const PHASE18_ACCEPTANCE_V2: string[] = [
+  "USBUIManager (ULocalPlayerSubsystem) instancia um manager por jogador local: isolamento nativo em split-screen e Listen Server.",
+  "USBUserWidget faz auto-unsubscribe cirúrgico em NativeDestruct (FSBWidgetEventSubscription por delegate, nunca unsubscribe por tag).",
+  "SubscribeToEvent do subsystem é idempotente: reinscrição do mesmo delegate é rejeitada.",
+  "Todo widget de gameplay valida TargetPawn == owning pawn antes de renderizar (requisito anti-spill).",
+  "Contrato de inventário preservado: ItemAdded/Removed/Equipped/Unequipped individuais; grid assina os quatro.",
+  "Event.Interaction.Progress throttled a 60 Hz no acumulador do TickComponent.",
+  "SBEventPayloads.h (04_SandboxCore): USBPawnEventPayload, USBAttributeChangedPayload, USBInteractionProgressPayload, USBInventoryEventPayload (UObject* ItemInstance).",
+  "Teste de isolamento com 05+06+07+08 desabilitados simultaneamente: 09_SandboxUI compila (Exit Code 0).",
+  "Teste inverso: desabilitar 09_SandboxUI não quebra compilação nem a suíte de gameplay.",
+  "SBUITests 100% verde: Cenário 1 (auto-unsubscribe + idempotência) e Cenário 2 (escopo local / TargetPawn mismatch).",
+  "Playtest: barras de vida/mana, prompt e hold síncrono, grid de inventário instantâneo e cooldown em segundos decrescentes.",
+  "Manual de uso (v1.8.0), walkthrough e Dashboard atualizados; versão v1.8.0 em todos os .uplugin.",
 ];
 
 export const TEST_SUITES = [
