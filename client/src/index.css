@@ -3,6 +3,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+  DESIGN: "Blueprint Técnico" — editorial de engenharia (ver ideas.md)
+  - Papel técnico quente (off-white), tinta grafite, acento verde-engineering
+  - Serifada Libre Caslon para display, Source Sans 3 para corpo, JetBrains Mono p/ código
+*/
+@theme inline {
+  --font-serif: "Libre Caslon Text", Georgia, serif;
+  --font-sans: "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-engineering: var(--engineering);
+  --color-amber-warn: var(--amber-warn);
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -43,39 +58,44 @@
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
+  --paper: oklch(0.968 0.008 90);
+  --ink: oklch(0.26 0.012 255);
+  --engineering: oklch(0.48 0.09 165);
+  --amber-warn: oklch(0.62 0.13 65);
+
+  --primary: var(--engineering);
+  --primary-foreground: oklch(0.97 0.01 165);
+  --sidebar-primary: var(--engineering);
+  --sidebar-primary-foreground: oklch(0.97 0.01 165);
+  --chart-1: oklch(0.75 0.06 165);
+  --chart-2: oklch(0.6 0.08 165);
+  --chart-3: oklch(0.48 0.09 165);
+  --chart-4: oklch(0.38 0.07 165);
+  --chart-5: oklch(0.3 0.05 165);
+  --radius: 0.25rem;
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: oklch(0.985 0.005 90);
+  --card-foreground: var(--ink);
+  --popover: oklch(0.985 0.005 90);
+  --popover-foreground: var(--ink);
+  --secondary: oklch(0.94 0.008 90);
+  --secondary-foreground: oklch(0.35 0.012 255);
+  --muted: oklch(0.94 0.008 90);
+  --muted-foreground: oklch(0.48 0.015 255);
+  --accent: oklch(0.92 0.03 165);
+  --accent-foreground: oklch(0.3 0.06 165);
+  --destructive: oklch(0.52 0.19 25);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --border: oklch(0.87 0.01 255);
+  --input: oklch(0.87 0.01 255);
+  --ring: var(--engineering);
+  --sidebar: oklch(0.95 0.008 90);
+  --sidebar-foreground: var(--ink);
+  --sidebar-accent: oklch(0.92 0.03 165);
+  --sidebar-accent-foreground: oklch(0.3 0.06 165);
+  --sidebar-border: oklch(0.87 0.01 255);
+  --sidebar-ring: var(--engineering);
 }
 
 .dark {
@@ -119,6 +139,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  code, kbd, pre {
+    font-family: var(--font-mono);
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -134,6 +158,57 @@
 }
 
 @layer components {
+  .font-display {
+    font-family: var(--font-serif);
+  }
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+  /* Régua técnica fina com marcações — signature element */
+  .tech-rule {
+    position: relative;
+    height: 1px;
+    background: linear-gradient(to right, var(--border), transparent);
+  }
+  .tech-rule::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -3px;
+    width: 24px;
+    height: 7px;
+    background-image: repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 6px);
+    opacity: 0.35;
+  }
+  /* Papel com grain sutil */
+  .paper-grain {
+    background-image: radial-gradient(oklch(0.4 0.012 255 / 0.035) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  /* Carimbo de fase — signature element */
+  .phase-stamp {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--engineering);
+    color: var(--engineering);
+    padding: 0.15rem 0.5rem;
+    display: inline-block;
+  }
+  .phase-stamp.warn {
+    border-color: var(--amber-warn);
+    color: var(--amber-warn);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .fade-up {
+      animation: fadeUp 0.35s cubic-bezier(0.23, 1, 0.32, 1) both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
   /**
    * Custom container utility that centers content and adds responsive padding.
    *
@@ -158,6 +233,15 @@
   .flex {
     min-height: 0;
     min-width: 0;
+  }
+  a {
+    transition: color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  button {
+    transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  button:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
   @media (min-width: 640px) {
