@@ -6,6 +6,7 @@ import { DocsLayout } from "@/components/DocsLayout";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { AuditNote, CodeBlock, PhaseStamp, TechRule } from "@/components/Primitives";
 import { CheckCircle2, Circle, X } from "lucide-react";
+import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { PHASE18_ACCEPTANCE_V2, PHASE18_EVENTS, PHASE18_WIDGETS } from "@/lib/siteData";
 
 const TOC = [
@@ -17,6 +18,22 @@ const TOC = [
   { id: "padrao", label: "Padrão de consumo" },
   { id: "verificacao", label: "Verificação" },
   { id: "aceite", label: "Critérios de aceite" },
+  { id: "checklist", label: "Checklist interativo" },
+];
+
+const PHASE18_CHECKLIST_KEY = "sbf-phase18-checklist";
+
+const PHASE18_CHECKLIST_ITEMS = [
+  { key: "payloads", label: "SBEventPayloads.h criado em 04_SandboxCore (UObject, GC) — sem #include de 06/07/08" },
+  { key: "subsystem", label: "USBUIManager como ULocalPlayerSubsystem — isolamento por local player (split-screen / listen server)" },
+  { key: "unsubscribe", label: "Auto-unsubscribe cirúrgico em NativeDestruct (FSBWidgetEventSubscription tag + delegate)" },
+  { key: "antispill", label: "Filtro anti-spill em todos os widgets (TargetPawn == GetOwningPlayerPawn())" },
+  { key: "throttle", label: "Throttle de 60 Hz no acumulador do hold (USBInteractionComponent::TickComponent)" },
+  { key: "inventorio", label: "Grade de inventário assinando os 4 eventos canônicos (ItemAdded/Removed/Equipped/Unequipped)" },
+  { key: "sutest", label: "SBUITests verde (32/32 specs) — Cenário 1: unsubscribe/idempotência; Cenário 2: TargetPawn mismatch" },
+  { key: "isolamento", label: "Isolamento simétrico: hide 05+06+07+08 → 09 compila; hide 09 → gameplay e suíte preservados" },
+  { key: "playtest", label: "Playtest multiplayer: vida/mana, prompt de interação, progresso de hold síncrono, grid e cooldowns" },
+  { key: "vault", label: "Vault e site carimbados v1.8.0 (Dashboard, task.md, siteData, manual de uso)" },
 ];
 
 export default function Phase18() {
@@ -259,6 +276,20 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
               </li>
             ))}
           </ul>
+
+          <TechRule label="03.0 · Checklist interativo" />
+          <h2 id="checklist" className="font-display text-2xl font-bold scroll-mt-24">
+            Checklist interativo da Fase 18
+          </h2>
+          <p className="mt-3 leading-relaxed max-w-3xl">
+            Marca o progresso da execução item a item; o estado é salvo automaticamente no navegador e pode
+            ser exportado como texto para o relatório do Vault pelo botão <code className="font-mono text-xs">Copiar status</code>.
+          </p>
+          <PhaseChecklist
+            storageKey={PHASE18_CHECKLIST_KEY}
+            items={PHASE18_CHECKLIST_ITEMS}
+            completeMessage="Checklist completo — Fase 18 pronta para homologação final (9/9 itens, v1.8.0)."
+          />
         </article>
 
         {/* Sumário sticky */}
