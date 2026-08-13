@@ -13,7 +13,8 @@ const NAV = [
   { href: "/fase-18", label: "Fase 18 — Interface Dinâmica", section: "02" },
   { href: "/plugins", label: "Topologia de Plugins", section: "03" },
   { href: "/fases", label: "Histórico de Fases", section: "04" },
-  { href: "/manifesto", label: "Manifesto & Padrões", section: "05" },
+  { href: "/manual", label: "Manual de Uso", section: "05" },
+  { href: "/manifesto", label: "Manifesto & Padrões", section: "06" },
 ];
 
 export function DocsLayout({ children }: { children: ReactNode }) {

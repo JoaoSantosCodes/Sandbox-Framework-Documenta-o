@@ -9,6 +9,7 @@ import Phase18 from "./pages/Phase18";
 import Plugins from "./pages/Plugins";
 import Phases from "./pages/Phases";
 import Manifesto from "./pages/Manifesto";
+import Manual from "./pages/Manual";
 
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path={"/plugins"} component={Plugins} />
       <Route path={"/fases"} component={Phases} />
       <Route path={"/manifesto"} component={Manifesto} />
+      <Route path={"/manual"} component={Manual} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
