@@ -106,7 +106,7 @@ const CHECKLIST_ITEMS = [
   { key: "cenario8", label: "SBUITests Cenário 8: TargetPawn mismatch não renderiza" },
   { key: "isolamento", label: "Teste de isolamento simétrico (hide 06 + hide 09, Exit Code 0)" },
   { key: "playtest", label: "Playtest Dedicated Server: indicador só no pawn afetado" },
-  { key: "dd11", label: "DD-11 registrado: deduplicação client-side homologada" },
+  { key: "dd11", label: "DD-11 registrado e homologado: deduplicação client-side via AttackId (Ver DD-11)" },
   { key: "vault", label: "Vault + site carimbados v1.9.0 (Dashboard, task.md, siteData)" },
 ];
 

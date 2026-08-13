@@ -4,18 +4,56 @@
   Acento verde-engineering; tinta grafite sobre papel quente.
 */
 import { Link, useLocation } from "wouter";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { Menu, X } from "lucide-react";
 import { ASSET_URLS } from "@/lib/siteData";
 
 // Data registrada da última sincronização integral Vault ↔ site (Dashboard, task.md,
 // sfdg_guide.md, manifesto_and_coding_standards.md e páginas do site).
 const LAST_VAULT_SYNC = "13/08/2026 23:50 GMT-3";
+
+// Chaves de localStorage dos checklists interativos das fases — usadas pelo indicador de
+// sincronização pendente no rodapé: se existe progresso marcado no navegador que ainda não
+// foi homologado/marcado no Vault, o rodapé alerta o auditor.
+const PHASE_CHECKLIST_KEYS = ["sbf-phase17-checklist", "sbf-phase18-checklist", "sbf-phase19-checklist"];
+
+function useUnsyncedChecklists(): boolean {
+  const [unsynced, setUnsynced] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      try {
+        const anyProgress = PHASE_CHECKLIST_KEYS.some((key) => {
+          const raw = localStorage.getItem(key);
+          if (!raw) return false;
+          const parsed = JSON.parse(raw);
+          return typeof parsed === "object" && parsed !== null && Object.values(parsed).some(Boolean);
+        });
+        setUnsynced(anyProgress);
+      } catch {
+        setUnsynced(false);
+      }
+    };
+    check();
+    // Recheck quando outra aba atualiza o localStorage (checklists de outras páginas).
+    window.addEventListener("storage", check);
+    // Poll leve na mesma aba enquanto um checklist estiver na tela (itens mudam).
+    const interval = window.setInterval(check, 2000);
+    return () => {
+      window.removeEventListener("storage", check);
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  return unsynced;
+}
 import { SearchPalette, SearchShortcut } from "@/components/SearchPalette";
 import { Search } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Início", section: "01" },
+  { href: "/fase-17", label: "Fase 17 — Gameplay Debugger", section: "02·R" },
   { href: "/fase-18", label: "Fase 18 — Interface Dinâmica", section: "02" },
   { href: "/especificacao", label: "Especificação SFPS", section: "03" },
   { href: "/plugins", label: "Topologia de Plugins", section: "04" },
@@ -31,6 +69,7 @@ const NAV = [
 export function DocsLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
+  const unsynced = useUnsyncedChecklists();
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -122,6 +161,21 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             <span className="font-mono text-[10px] text-muted-foreground">
               {LAST_VAULT_SYNC} — Dashboard v1.8.0 · task.md 9/9 · sfdg_guide · manifesto (DD-01…DD-08)
             </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
+              Checklists no site
+            </span>
+            <span className="font-mono text-[10px] text-muted-foreground">·</span>
+            {unsynced ? (
+              <span className="inline-flex items-center gap-1.5 border border-amber-warn/70 bg-amber-warn/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-amber-warn animate-pulse">
+                <AlertTriangle className="h-3 w-3" /> Progresso marcado, ainda não sincronizado ao Vault
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 border border-engineering/60 bg-engineering/5 px-2 py-0.5 font-mono text-[10px] tracking-wider text-engineering">
+                Sem progresso pendente · sincronizado
+              </span>
+            )}
           </div>
         </div>
       </footer>

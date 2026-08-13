@@ -7,7 +7,7 @@
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 
-type DecisionStatus = "Homologada" | "Homologada com nota";
+type DecisionStatus = "Homologada" | "Homologada com nota" | "Pendente";
 
 interface Decision {
   id: string;
@@ -182,11 +182,28 @@ const DECISIONS: Decision[] = [
       "Mesma disciplina das interfaces em 02_SandboxInterfaces: nunca reflexão por string, sempre contrato leve e explícito.",
     status: "Homologada",
   },
+  {
+    id: "DD-11",
+    version: "v1.9.0 (planejada)",
+    title: "Deduplicação client-side do indicador de dano via AttackId",
+    problem:
+      "O cliente prediz o USBUIDamageIndicator localmente enquanto o servidor confirma via Event.Combat.DamageReceived — se o servidor publicar o evento antes da predição expirar, o HUD não pode exibir dois indicadores sobrepostos.",
+    decision:
+      "Deduplicação client-side por AttackId: cada indicador exibido consome uma entrada em um mapa local de AttackIds recentes; hits duplicados dentro do TTL são ignorados. No caminho feliz, o servidor pode suprimir a publicação redundante via bSkipClientNotify.",
+    rejected:
+      "Duplicar a validação no widget (comparar timestamp ou posição do hit) — espalharia regra de negócio no consumo e quebraria a simetria predição/autoridade já estabelecida em TryConsumeAttribute.",
+    consequence:
+      "O HUD exibe exatamente um indicador por hit confirmado, sem re-spawn duplicado; a regra fica no ponto de consumo local (USBUIDamageIndicator), preservando o produtor autoritativo puro.",
+    precedent:
+      "Mesma mecânica transacional do PredictionId (validar-antes-de-mutar): o cliente consome localmente, o servidor confirma; FSBStackMutationGuard provou o valor de guards locais contra reentrância.",
+    status: "Pendente",
+  },
 ];
 
 const STATUS_STYLES: Record<DecisionStatus, string> = {
   Homologada: "border-engineering/60 text-engineering",
   "Homologada com nota": "border-amber-warn/60 text-amber-warn",
+  Pendente: "border-muted-foreground/60 text-muted-foreground",
 };
 
 function DecisionRecord({ d, index }: { d: Decision; index: number }) {
