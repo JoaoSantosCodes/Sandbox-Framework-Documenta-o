@@ -6,6 +6,19 @@ import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, TechRule } from "@/components/Primitives";
 import { MANIFESTO_PRINCIPLES } from "@/lib/siteData";
 
+const PRECEDENTS = [
+  { principle: "Reaproveitar, não reinventar", decisions: "DD-06 (contrato canônico de inventário preservado), DD-02 (disciplina de simetria do FSBStackMutationGuard)" },
+  { principle: "Injeção dinâmica de componentes", decisions: "DD-01 (ULocalPlayerSubsystem: a engine mantém o estado que já é dela)" },
+  { principle: "Desacoplamento por interfaces", decisions: "DD-03 (payloads em 04_SandboxCore, Message Router como única superfície entre camadas)" },
+  { principle: "HasAuthority() explícito", decisions: "DD-05 (ownership na renderização — extensão do princípio de authority para o consumidor)" },
+];
+
+const NORMS = [
+  "Custo aceitável, prioridade documentada — DD-04 (payloads UObject) é aceito porque UI é consumidora de prioridade Low (20) e gameplay nunca espera pela UI.",
+  "Scope contido e verificável — DD-08 (indicador de dano adiado para a Fase 19) aplica a disciplina da transição Fase 17 → 18: entregar escopo pequeno e auditável é melhor que escopo grande com lacunas.",
+  "Reversão auditável — qualquer decisão registrada só pode ser revertida mediante auditoria explícita e novo registro no Registro de Decisões; modificação silenciosa é proibida.",
+];
+
 const STANDARDS = [
   {
     title: "Componentes modulares",
@@ -100,6 +113,46 @@ export default function Manifesto() {
             </ul>
           </section>
         ))}
+
+        <TechRule label="Precedentes homologados — DD-01 ··· DD-08 (v1.8.0)" />
+        <section className="mb-8">
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl mb-4">
+            As decisões homologadas em auditoria concretizam os princípios: vincular cada decisão ao
+            princípio que a originou torna o Manifesto auditável em cada nova fase. O registro completo
+            (problema, alternativa rejeitada, consequência) vive no{" "}
+            <a href="/decisoes" className="text-engineering underline underline-offset-2">
+              Registro de Decisões
+            </a>.
+          </p>
+          <div className="overflow-x-auto border border-border bg-card mb-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-secondary/60 text-left">
+                  <th className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground px-4 py-2">Princípio</th>
+                  <th className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground px-4 py-2">Decisões que o concretizam</th>
+                </tr>
+              </thead>
+              <tbody>
+                {PRECEDENTS.map((row) => (
+                  <tr key={row.principle} className="border-b border-border/60 last:border-0">
+                    <td className="px-4 py-2">{row.principle}</td>
+                    <td className="px-4 py-2 text-muted-foreground">{row.decisions}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <TechRule label="Normas resultantes" />
+        <ul className="mt-3 space-y-2 max-w-3xl mb-8">
+          {NORMS.map((it) => (
+            <li key={it} className="flex gap-3 text-sm leading-relaxed">
+              <span className="text-engineering font-bold">—</span>
+              {it}
+            </li>
+          ))}
+        </ul>
 
         <AuditNote tone="info">
           Reaproveitamento como regra de revisão: decisões já estabelecidas — chave estável em vez de

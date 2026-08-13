@@ -13,7 +13,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { PLUGINS } from "@/lib/siteData";
-import { FileText, Layers, Milestone } from "lucide-react";
+import { Clock, FileText, Layers, Milestone } from "lucide-react";
 
 interface IndexEntry {
   id: string;
@@ -102,6 +102,36 @@ const ALL_INDEX: IndexEntry[] = [
   ...CONCEPTS,
 ];
 
+// Tags populares — navegação rápida por conceito sem digitar.
+const POPULAR_TAGS: IndexEntry[] = [
+  { id: "tag-router", title: "Message Router", subtitle: "Tabela canônica de eventos Event.*", page: "/message-router", keywords: "router evento broadcast", group: "conceitos" },
+  { id: "tag-ui", title: "Widgets de UI", subtitle: "Prompt, inventário, arma e cooldowns", page: "/fase-18", keywords: "ui widget inventário cooldown", group: "conceitos" },
+  { id: "tag-isolation", title: "Isolamento de plugins", subtitle: "Teste de compilação via hide de módulos", page: "/plugins", keywords: "isolamento plugin compilação", group: "conceitos" },
+  { id: "tag-tags", title: "Gameplay Tags de estado", subtitle: "SBStateComponent · consulta exclusiva", page: "/manifesto", keywords: "gameplay tags estado personagem", group: "conceitos" },
+  { id: "tag-prediction", title: "Predição client/server", subtitle: "PredictionId · TryConsumeAttribute", page: "/especificacao", keywords: "predição rpc authority", group: "conceitos" },
+  { id: "tag-save", title: "Save Game System", page: "/guia-cpp", subtitle: "ISBSaveInterface · chave estável", keywords: "save persistência payload", group: "conceitos" },
+];
+
+const HISTORY_KEY = "sbf-search-history";
+const HISTORY_MAX = 5;
+
+function loadHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(history: string[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_MAX)));
+  } catch {
+    // storage indisponível — degrade silencioso
+  }
+}
+
 const GROUP_META: Record<IndexEntry["group"], { label: string; icon: React.ElementType }> = {
   paginas: { label: "Páginas", icon: FileText },
   plugins: { label: "Plugins", icon: Layers },
@@ -118,6 +148,7 @@ function matches(entry: IndexEntry, q: string): boolean {
 
 export function SearchPalette() {
   const [open, setOpen] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -131,6 +162,23 @@ export function SearchPalette() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    if (open) setHistory(loadHistory());
+  }, [open]);
+
+  const pushHistory = (term: string) => {
+    setHistory((prev) => {
+      const next = [term, ...prev.filter((h) => h !== term)].slice(0, HISTORY_MAX);
+      saveHistory(next);
+      return next;
+    });
+  };
+
+  const goTo = (e: IndexEntry) => {
+    setOpen(false);
+    navigate(e.hash ? `${e.page}#${e.hash}` : e.page);
+  };
+
   return (
     <CommandDialog open={open} onOpenChange={setOpen} title="Buscar no framework" description="Classes, eventos, plugins e páginas do Sandbox Framework">
       <CommandInput placeholder="Buscar classe, evento Event.*, plugin ou conceito…" />
@@ -138,6 +186,52 @@ export function SearchPalette() {
         <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
           Nenhum resultado. Tente outro termo — ex.: "Behavior Stack", "Cooldown", "07".
         </CommandEmpty>
+
+        {/* Sugestões: histórico recente e tags populares aparecem antes de digitar */}
+        {!history.length && (
+          <CommandGroup heading="Tags populares">
+            {POPULAR_TAGS.map((t) => (
+              <CommandItem
+                key={t.id}
+                value={`${t.title} ${t.subtitle} ${t.keywords}`}
+                onSelect={() => {
+                  pushHistory(t.title);
+                  goTo(t);
+                }}
+                className="gap-3"
+              >
+                <Clock className="h-3.5 w-3.5 opacity-50" />
+                <span className="flex flex-col min-w-0">
+                  <span className="font-mono text-[11px] text-foreground truncate">{t.title}</span>
+                  <span className="text-[11px] text-muted-foreground truncate">{t.subtitle}</span>
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+        {history.length > 0 && (
+          <CommandGroup heading="Buscas recentes">
+            {history.map((h) => (
+              <CommandItem
+                key={h}
+                value={`recente ${h}`}
+                onSelect={() => {
+                  const entry = ALL_INDEX.find((e) => e.title.toLowerCase().includes(h.toLowerCase()));
+                  if (entry) goTo(entry);
+                  else navigate("/message-router");
+                }}
+                className="gap-3"
+              >
+                <Clock className="h-3.5 w-3.5 opacity-50" />
+                <span className="flex flex-col min-w-0">
+                  <span className="font-mono text-[11px] text-foreground truncate">{h}</span>
+                  <span className="text-[11px] text-muted-foreground truncate">Abrir a melhor correspondência</span>
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
         {(Object.keys(GROUP_META) as IndexEntry["group"][]).map((group) => {
           const entries = ALL_INDEX.filter((e) => e.group === group);
           if (!entries.length) return null;
@@ -151,8 +245,8 @@ export function SearchPalette() {
                     key={e.id}
                     value={`${e.title} ${e.subtitle} ${e.keywords}`}
                     onSelect={() => {
-                      setOpen(false);
-                      navigate(e.hash && e.page === e.page ? `${e.page}#${e.hash}` : e.page);
+                      pushHistory(e.title);
+                      goTo(e);
                     }}
                     className="gap-3"
                   >

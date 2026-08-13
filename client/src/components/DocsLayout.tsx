@@ -7,6 +7,10 @@ import { Link, useLocation } from "wouter";
 import { ReactNode, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { ASSET_URLS } from "@/lib/siteData";
+
+// Data registrada da última sincronização integral Vault ↔ site (Dashboard, task.md,
+// sfdg_guide.md, manifesto_and_coding_standards.md e páginas do site).
+const LAST_VAULT_SYNC = "13/08/2026 23:50 GMT-3";
 import { SearchPalette, SearchShortcut } from "@/components/SearchPalette";
 import { Search } from "lucide-react";
 
@@ -108,6 +112,17 @@ export function DocsLayout({ children }: { children: ReactNode }) {
           <span className="font-mono text-xs text-muted-foreground tracking-wider">
             SPEC · v1.8.0 · 11 PLUGINS · ZERO DEPENDÊNCIAS CIRCULARES · FASE 18 HOMOLOGADA · 32/32
           </span>
+        </div>
+        <div className="border-t border-border/60">
+          <div className="container py-2 flex items-center gap-2">
+            <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
+              Última sincronização Vault ↔ site
+            </span>
+            <span className="font-mono text-[10px] text-muted-foreground">·</span>
+            <span className="font-mono text-[10px] text-muted-foreground">
+              {LAST_VAULT_SYNC} — Dashboard v1.8.0 · task.md 9/9 · sfdg_guide · manifesto (DD-01…DD-08)
+            </span>
+          </div>
         </div>
       </footer>
     </div>

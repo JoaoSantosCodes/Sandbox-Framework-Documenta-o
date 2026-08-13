@@ -8,6 +8,17 @@ import { ArrowRight } from "lucide-react";
 import { PhaseStamp, CodeBlock, AuditNote, TechRule } from "@/components/Primitives";
 import { DocsLayout } from "@/components/DocsLayout";
 
+const DD = [
+  { id: "DD-01", title: "USBUIManager herda de ULocalPlayerSubsystem", rule: "Não escreva isolamento manual de UI por jogador — a engine instancia uma cópia por ULocalPlayer (split-screen e Listen Server inclusos)." },
+  { id: "DD-02", title: "Auto-unsubscribe cirúrgico em NativeDestruct", rule: "USBUserWidget rastreia cada assinatura em FSBWidgetEventSubscription (tag + delegate) e remove por delegate individual na destruição; SubscribeToEvent é idempotente." },
+  { id: "DD-03", title: "Payloads em SBEventPayloads.h (04_SandboxCore)", rule: "Todo payload de evento vive em 04_SandboxCore. O 09_SandboxUI nunca inclui cabeçalhos de 05/06/07/08." },
+  { id: "DD-04", title: "Payloads como classes UObject (GC + Blueprint)", rule: "Use classes UObject para consumo em UMG Blueprint; structs FSB* continuam válidas para comunicação interna C++. Custo aceitável: UI é consumidora de prioridade Low (20)." },
+  { id: "DD-05", title: "Anti-spill obrigatório em todo widget", rule: "Todo widget de gameplay valida TargetPawn == owning pawn antes de renderizar (Cenário 2 da SBUITests)." },
+  { id: "DD-06", title: "Quatro eventos canônicos de inventário", rule: "Event.Inventory.ItemAdded/ItemRemoved/ItemEquipped/ItemUnequipped são contrato estável — nunca substituir por evento genérico discriminado." },
+  { id: "DD-07", title: "Throttle de 60 Hz em Event.Interaction.Progress", rule: "O produtor autoritativo (TickComponent do USBInteractionComponent) publica no máximo a 60 Hz; o widget consome com dirty-flag." },
+  { id: "DD-08", title: "Indicador de dano adiado para Fase 19", rule: "USBUIDamageIndicator nasce na Fase 19, com novo ponto autoritativo de publicação no hitscan de 06_SandboxCombat." },
+];
+
 const BEHAVIOR = `bool USBMovementBehaviorSprint::CanActivate_Implementation(
     const FSBBehaviorContext& Context)
 {
@@ -485,6 +496,47 @@ export default function Guide() {
               ({""}<span className="font-mono">ROLE_Authority</span>), conforme o roteiro de playtest
               multiplayer do Manual de Uso — os clientes recebem o estado replicado instantaneamente
               após o carregamento autoritativo.
+            </AuditNote>
+          </section>
+
+          {/* 08 Precedentes homologados */}
+          <section id="sfdg-08" className="mb-14">
+            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+              <span className="font-mono text-sm text-engineering">08</span>
+              Precedentes Homologados — DD-01 ··· DD-08 (v1.8.0)
+            </h2>
+            <p className="text-muted-foreground leading-relaxed max-w-3xl mb-5">
+              As decisões de arquitetura homologadas em auditoria são precedentes citáveis: ao implementar
+              nova funcionalidade, reaproveite o precedente em vez de reinventar o contrato (Regra 3 do Manifesto).
+              O registro completo vive em{" "}
+              <Link href="/decisoes" className="text-engineering underline underline-offset-2">
+                Registro de Decisões
+              </Link>.
+            </p>
+            <div className="overflow-x-auto border border-border bg-card">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-secondary/60 text-left">
+                    <th className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground px-4 py-2">ID</th>
+                    <th className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground px-4 py-2">Decisão</th>
+                    <th className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground px-4 py-2 min-w-[300px]">Regra prática</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {DD.map((d) => (
+                    <tr key={d.id} className="border-b border-border/60 last:border-0">
+                      <td className="px-4 py-2 font-mono text-xs whitespace-nowrap">{d.id}</td>
+                      <td className="px-4 py-2">{d.title}</td>
+                      <td className="px-4 py-2 text-muted-foreground">{d.rule}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <AuditNote tone="warn">
+              DD-04 e DD-08 são "Homologada com nota" — carregam custo (UObject por evento) ou premissa
+              (superfície de publicação nova na Fase 19). Reverter qualquer decisão exige auditoria explícita
+              e novo registro no Registro de Decisões; modificação silenciosa é proibida.
             </AuditNote>
           </section>
         </article>
