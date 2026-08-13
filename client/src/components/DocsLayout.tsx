@@ -20,6 +20,7 @@ const NAV = [
   { href: "/guia-cpp", label: "Guia de Desenvolvimento", section: "07" },
   { href: "/message-router", label: "Message Router", section: "08" },
   { href: "/decisoes", label: "Registro de Decisões", section: "09" },
+  { href: "/fase-19", label: "Fase 19 — Planejamento", section: "09·P" },
   { href: "/manifesto", label: "Manifesto & Padrões", section: "10" },
 ];
 
