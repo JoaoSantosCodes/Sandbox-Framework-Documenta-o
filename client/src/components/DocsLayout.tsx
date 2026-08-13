@@ -19,7 +19,8 @@ const NAV = [
   { href: "/manual", label: "Manual de Uso", section: "06" },
   { href: "/guia-cpp", label: "Guia de Desenvolvimento", section: "07" },
   { href: "/message-router", label: "Message Router", section: "08" },
-  { href: "/manifesto", label: "Manifesto & Padrões", section: "09" },
+  { href: "/decisoes", label: "Registro de Decisões", section: "09" },
+  { href: "/manifesto", label: "Manifesto & Padrões", section: "10" },
 ];
 
 export function DocsLayout({ children }: { children: ReactNode }) {
@@ -60,7 +61,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
           >
             <Search className="h-4.5 w-4.5" />
           </button>
-          <span className="phase-stamp hidden md:inline ml-2">v1.8.0 · Fase 18 em execução · alvo 32/32</span>
+          <span className="phase-stamp hidden md:inline ml-2">v1.8.0 · Fase 18 homologada · 32/32</span>
           <button
             className="xl:hidden p-2 -mr-2"
             onClick={() => setOpen(!open)}
@@ -104,7 +105,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             </p>
           </div>
           <span className="font-mono text-xs text-muted-foreground tracking-wider">
-            SPEC · v1.8.0 · 11 PLUGINS · ZERO DEPENDÊNCIAS CIRCULARES · FASE 18 EM EXECUÇÃO · ALVO 32/32
+            SPEC · v1.8.0 · 11 PLUGINS · ZERO DEPENDÊNCIAS CIRCULARES · FASE 18 HOMOLOGADA · 32/32
           </span>
         </div>
       </footer>

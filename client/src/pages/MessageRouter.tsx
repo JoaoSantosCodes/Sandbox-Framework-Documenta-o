@@ -11,6 +11,7 @@ import {
   PhaseStamp,
   TechRule,
 } from "@/components/Primitives";
+import { useMemo, useState } from "react";
 import { PHASE18_ACCEPTANCE_V2 } from "@/lib/siteData";
 
 const SEMANTICS = [
@@ -29,6 +30,9 @@ const SEMANTICS = [
     code: "GetSubsystem<USBEventSubsystem>()->PublishState<FOnWeaponEquipped>(Owner, Payload);",
   },
 ];
+
+const PRODUCER_OPTIONS = ["Todos", "05_SandboxCharacter", "06_SandboxCombat", "07_SandboxInteraction", "08_SandboxInventory"] as const;
+const PAYLOAD_OPTIONS = ["Todos", "USBPawnEventPayload*", "USBInteractionProgressPayload*", "USBInventoryEventPayload*", "USBAttributeChangedPayload*"] as const;
 
 const EVENTS = [
   { event: "Event.Interaction.Available", alt: "Event.Interaction.Cleared", producer: "07_SandboxInteraction", payload: "USBPawnEventPayload*", mechanics: "Fire-and-forget; anti-spill exige TargetPawn == owning pawn antes de renderizar." },
@@ -56,7 +60,37 @@ const RULES = [
   { title: "Payloads vivem em 04_SandboxCore", body: "SBEventPayloads.h centraliza USBPawnEventPayload, USBAttributeChangedPayload, USBInteractionProgressPayload e USBInventoryEventPayload. Construir payloads em 04 — nunca em 09 — mantém o teste de isolamento provável." },
 ];
 
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`font-mono text-[11px] uppercase tracking-wider px-2.5 py-1.5 border transition-colors duration-150 ${
+        active
+          ? "border-engineering bg-engineering/10 text-engineering"
+          : "border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function MessageRouter() {
+  const [producerFilter, setProducerFilter] = useState<string>("Todos");
+  const [payloadFilter, setPayloadFilter] = useState<string>("Todos");
+  const filtered = useMemo(
+    () =>
+      EVENTS.filter(
+        (e) =>
+          (producerFilter === "Todos" || e.producer.startsWith(producerFilter.replace("_", " ").split(" ")[0])) &&
+          (payloadFilter === "Todos" || e.payload === payloadFilter),
+      ),
+    [producerFilter, payloadFilter],
+  );
+  const hasFilter = producerFilter !== "Todos" || payloadFilter !== "Todos";
+
   return (
     <DocsLayout>
       <div className="container py-10 max-w-5xl">
@@ -102,7 +136,34 @@ export default function MessageRouter() {
           <h2 className="font-serif text-2xl font-bold mb-1">Tabela canônica — eventos Event.*</h2>
           <p className="text-sm text-muted-foreground mb-5">
             Evento, produtor autoritativo, payload em <code className="font-mono text-[13px]">SBEventPayloads.h</code> e regra de mecânica.
+            Filtre por plugin produtor ou por tipo de payload — os chips são seletivos.
           </p>
+          <div className="mb-5 space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground mr-1">Produtor</span>
+              {PRODUCER_OPTIONS.map((p) => (
+                <FilterChip key={p} label={p} active={producerFilter === p} onClick={() => setProducerFilter(p)} />
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground mr-1">Payload</span>
+              {PAYLOAD_OPTIONS.map((p) => (
+                <FilterChip key={p} label={p} active={payloadFilter === p} onClick={() => setPayloadFilter(p)} />
+              ))}
+              {hasFilter && (
+                <button
+                  type="button"
+                  onClick={() => { setProducerFilter("Todos"); setPayloadFilter("Todos"); }}
+                  className="font-mono text-[11px] uppercase tracking-wider px-2.5 py-1.5 border border-destructive/50 text-destructive hover:bg-destructive/5 transition-colors duration-150"
+                >
+                  Limpar filtros
+                </button>
+              )}
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              {filtered.length} de {EVENTS.length} eventos exibidos
+            </span>
+          </div>
           <div className="overflow-x-auto border border-border">
             <table className="w-full text-sm min-w-[640px]">
               <thead>
@@ -114,19 +175,27 @@ export default function MessageRouter() {
                 </tr>
               </thead>
               <tbody>
-                {EVENTS.map((e) => (
-                  <tr key={e.event} className="border-b border-border last:border-0 align-top hover:bg-secondary/40 transition-colors">
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-[12px] text-foreground">{e.event}</span>
-                      {e.alt !== "—" && (
-                        <span className="block font-mono text-[11px] text-muted-foreground mt-0.5">{e.alt}</span>
-                      )}
+                {filtered.length > 0 ? (
+                  filtered.map((e) => (
+                    <tr key={e.event} className="border-b border-border last:border-0 align-top hover:bg-secondary/40 transition-colors">
+                      <td className="px-4 py-3">
+                        <span className="font-mono text-[12px] text-foreground">{e.event}</span>
+                        {e.alt !== "—" && (
+                          <span className="block font-mono text-[11px] text-muted-foreground mt-0.5">{e.alt}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-foreground">{e.producer}</td>
+                      <td className="px-4 py-3 font-mono text-[11px]">{e.payload}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{e.mechanics}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center font-mono text-[12px] uppercase tracking-wider text-muted-foreground">
+                      Nenhum evento atende aos filtros — limpe a seleção para restaurar a tabela canônica.
                     </td>
-                    <td className="px-4 py-3 text-foreground">{e.producer}</td>
-                    <td className="px-4 py-3 font-mono text-[11px]">{e.payload}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{e.mechanics}</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
