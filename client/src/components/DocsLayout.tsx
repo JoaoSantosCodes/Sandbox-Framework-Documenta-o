@@ -7,6 +7,8 @@ import { Link, useLocation } from "wouter";
 import { ReactNode, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { ASSET_URLS } from "@/lib/siteData";
+import { SearchPalette, SearchShortcut } from "@/components/SearchPalette";
+import { Search } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Início", section: "01" },
@@ -16,7 +18,8 @@ const NAV = [
   { href: "/fases", label: "Histórico de Fases", section: "05" },
   { href: "/manual", label: "Manual de Uso", section: "06" },
   { href: "/guia-cpp", label: "Guia de Desenvolvimento", section: "07" },
-  { href: "/manifesto", label: "Manifesto & Padrões", section: "08" },
+  { href: "/message-router", label: "Message Router", section: "08" },
+  { href: "/manifesto", label: "Manifesto & Padrões", section: "09" },
 ];
 
 export function DocsLayout({ children }: { children: ReactNode }) {
@@ -49,7 +52,15 @@ export function DocsLayout({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </div>
-          <span className="phase-stamp hidden md:inline ml-2">v1.7.0 · 31/31 · Fase 18 em execução</span>
+          <SearchShortcut />
+          <button
+            className="md:hidden p-2 -mr-2 mr-1"
+            onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+            aria-label="Buscar"
+          >
+            <Search className="h-4.5 w-4.5" />
+          </button>
+          <span className="phase-stamp hidden md:inline ml-2">v1.8.0 · Fase 18 em execução · alvo 32/32</span>
           <button
             className="xl:hidden p-2 -mr-2"
             onClick={() => setOpen(!open)}
@@ -73,10 +84,17 @@ export function DocsLayout({ children }: { children: ReactNode }) {
                 {item.label}
               </Link>
             ))}
+            <button
+              className="flex items-center gap-2 py-2 mt-1 text-sm text-muted-foreground font-mono text-[11px]"
+              onClick={() => setOpen(false)}
+            >
+              <Search className="h-3.5 w-3.5" /> ⌘K buscar
+            </button>
           </nav>
         )}
       </header>
       <main className="flex-1">{children}</main>
+      <SearchPalette />
       <footer className="border-t border-border bg-secondary/60">
         <div className="container py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -86,7 +104,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             </p>
           </div>
           <span className="font-mono text-xs text-muted-foreground tracking-wider">
-            SPEC · v1.7.0 · 11 PLUGINS · ZERO DEPENDÊNCIAS CIRCULARES · PRÓXIMA MILESTONE v1.8.0
+            SPEC · v1.8.0 · 11 PLUGINS · ZERO DEPENDÊNCIAS CIRCULARES · FASE 18 EM EXECUÇÃO · ALVO 32/32
           </span>
         </div>
       </footer>

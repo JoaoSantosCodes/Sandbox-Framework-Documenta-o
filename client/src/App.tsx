@@ -12,6 +12,7 @@ import Phases from "./pages/Phases";
 import Manifesto from "./pages/Manifesto";
 import Manual from "./pages/Manual";
 import Guide from "./pages/Guide";
+import MessageRouter from "./pages/MessageRouter";
 
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path={"/manifesto"} component={Manifesto} />
       <Route path={"/manual"} component={Manual} />
       <Route path={"/guia-cpp"} component={Guide} />
+      <Route path={"/message-router"} component={MessageRouter} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
