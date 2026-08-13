@@ -6,7 +6,8 @@
   Papel quente, tinta grafite, acento verde-engineering. Carimbo "em planejamento".
 */
 import { Link } from "wouter";
-import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 
@@ -93,6 +94,102 @@ const SCOPE: ProposedItem[] = [
     dependencia: "DD-09 · método DD-09: renome de pasta + .uplugin_disabled",
   },
 ];
+
+const CHECKLIST_KEY = "sbf-phase19-checklist";
+
+const CHECKLIST_ITEMS = [
+  { key: "payload", label: "SBEventPayloads.h — USBDamageEventPayload (AttackId, Direction, bIsFatal)" },
+  { key: "produtor", label: "Ponto autoritativo de publicação no Hitscan (HasAuthority já ativo)" },
+  { key: "widget", label: "USBUIDamageIndicator assinando com prioridade Low + anti-spill" },
+  { key: "dedupe", label: "Deduplicação client-side via AttackId (TTL ou bSkipClientNotify)" },
+  { key: "cenario7", label: "SBUITests Cenário 7: indicador no ângulo esperado" },
+  { key: "cenario8", label: "SBUITests Cenário 8: TargetPawn mismatch não renderiza" },
+  { key: "isolamento", label: "Teste de isolamento simétrico (hide 06 + hide 09, Exit Code 0)" },
+  { key: "playtest", label: "Playtest Dedicated Server: indicador só no pawn afetado" },
+  { key: "dd11", label: "DD-11 registrado: deduplicação client-side homologada" },
+  { key: "vault", label: "Vault + site carimbados v1.9.0 (Dashboard, task.md, siteData)" },
+];
+
+function ChecklistSection() {
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CHECKLIST_KEY);
+      if (raw) setChecked(JSON.parse(raw));
+    } catch {
+      /* ignore */
+    }
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checked));
+    } catch {
+      /* ignore */
+    }
+  }, [checked, loaded]);
+
+  const toggle = (key: string) => setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+  const doneCount = CHECKLIST_ITEMS.filter((i) => checked[i.key]).length;
+  const pct = Math.round((doneCount / CHECKLIST_ITEMS.length) * 100);
+
+  return (
+    <div className="mt-6 border border-border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 border-b border-border bg-secondary/60">
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          Progresso salvo automaticamente no localStorage (por navegador)
+        </span>
+        <span className="font-mono text-[11px] text-engineering">
+          {doneCount}/{CHECKLIST_ITEMS.length} ({pct}%)
+        </span>
+      </div>
+      <div className="h-1 w-full bg-secondary">
+        <div
+          className="h-1 bg-engineering transition-[width] duration-200"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <ul className="divide-y divide-border">
+        {CHECKLIST_ITEMS.map((item, idx) => (
+          <li key={item.key}>
+            <button
+              type="button"
+              onClick={() => toggle(item.key)}
+              className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-secondary/40 transition-colors"
+              aria-pressed={!!checked[item.key]}
+            >
+              <span
+                className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center border font-mono text-[10px] transition-colors duration-150 ${
+                  checked[item.key]
+                    ? "border-engineering bg-engineering/15 text-engineering"
+                    : "border-border bg-background text-transparent"
+                }`}
+              >
+                {checked[item.key] ? <Check className="h-3 w-3" /> : String(idx + 1).padStart(2, "0")}
+              </span>
+              <span
+                className={`text-sm leading-relaxed ${
+                  checked[item.key] ? "text-muted-foreground line-through decoration-engineering/60" : "text-foreground"
+                }`}
+              >
+                {item.label}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {doneCount === CHECKLIST_ITEMS.length && (
+        <div className="px-4 py-3 border-t border-engineering/50 bg-engineering/5 font-mono text-[11px] uppercase tracking-wider text-engineering">
+          Checklist completo — pronto para submeter o plano executado da Fase 19 à revisão.
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Phase19() {
   return (
@@ -200,6 +297,10 @@ export default function Phase19() {
             </tbody>
           </table>
         </div>
+
+        <TechRule label="Checklist interativo da Fase 19" />
+
+        <ChecklistSection />
 
         <AuditNote tone="warn">
           Ponto sensível: a deduplicação client-side via AttackId. O cliente prediz o indicador localmente

@@ -35,15 +35,31 @@ const PRODUCER_OPTIONS = ["Todos", "05_SandboxCharacter", "06_SandboxCombat", "0
 const PAYLOAD_OPTIONS = ["Todos", "USBPawnEventPayload*", "USBInteractionProgressPayload*", "USBInventoryEventPayload*", "USBAttributeChangedPayload*"] as const;
 
 const EVENTS = [
-  { event: "Event.Interaction.Available", alt: "Event.Interaction.Cleared", producer: "07_SandboxInteraction", payload: "USBPawnEventPayload*", mechanics: "Fire-and-forget; anti-spill exige TargetPawn == owning pawn antes de renderizar." },
-  { event: "Event.Interaction.Progress", alt: "—", producer: "07_SandboxInteraction", payload: "USBInteractionProgressPayload*", mechanics: "Throttle de 60 Hz no acumulador do TickComponent; protege o Slate de re-render por frame." },
-  { event: "Event.Inventory.ItemAdded", alt: "Event.Inventory.ItemRemoved", producer: "08_SandboxInventory", payload: "USBInventoryEventPayload*", mechanics: "Contrato canônico de 4 eventos (compatibilidade reversa com 06_SandboxCombat). Grid assina os quatro." },
-  { event: "Event.Inventory.ItemEquipped", alt: "Event.Inventory.ItemUnequipped", producer: "08_SandboxInventory", payload: "USBInventoryEventPayload*", mechanics: "Highlight de slot no HUD; ItemInstance como UObject* (GC + casting em Blueprint)." },
-  { event: "Event.Attribute.Changed", alt: "—", producer: "05_SandboxCharacter", payload: "USBAttributeChangedPayload*", mechanics: "Ponto de injeção: dentro de ModifyAttributeBaseValue, sem duplicar escritas." },
-  { event: "Event.Ability.CooldownStarted", alt: "Event.Ability.CooldownEnded", producer: "05_SandboxCharacter", payload: "USBPawnEventPayload*", mechanics: "Overlay de cooldown sem polling — polling violaria o princípio de desacoplamento." },
-  { event: "Event.Combat.WeaponEquipped", alt: "Event.Combat.AmmoDepleted", producer: "06_SandboxCombat", payload: "USBPawnEventPayload*", mechanics: "Ícone de arma ativa e feedback de munição esgotada." },
-  { event: "Event.Combat.DamageReceived", alt: "—", producer: "06_SandboxCombat (ponto autoritativo)", payload: "USBPawnEventPayload*", mechanics: "Indicador direcional por 1,5 s; exige publicação no ponto autoritativo de dano." },
+  { event: "Event.Interaction.Available", alt: "Event.Interaction.Cleared", producer: "07_SandboxInteraction", payload: "USBPawnEventPayload*", priority: "Low" as const, mechanics: "Fire-and-forget; anti-spill exige TargetPawn == owning pawn antes de renderizar." },
+  { event: "Event.Interaction.Progress", alt: "—", producer: "07_SandboxInteraction", payload: "USBInteractionProgressPayload*", priority: "Low" as const, mechanics: "Throttle de 60 Hz no acumulador do TickComponent; protege o Slate de re-render por frame." },
+  { event: "Event.Inventory.ItemAdded", alt: "Event.Inventory.ItemRemoved", producer: "08_SandboxInventory", payload: "USBInventoryEventPayload*", priority: "Low" as const, mechanics: "Contrato canônico de 4 eventos (compatibilidade reversa com 06_SandboxCombat). Grid assina os quatro." },
+  { event: "Event.Inventory.ItemEquipped", alt: "Event.Inventory.ItemUnequipped", producer: "08_SandboxInventory", payload: "USBInventoryEventPayload*", priority: "Low" as const, mechanics: "Highlight de slot no HUD; ItemInstance como UObject* (GC + casting em Blueprint)." },
+  { event: "Event.Attribute.Changed", alt: "—", producer: "05_SandboxCharacter", payload: "USBAttributeChangedPayload*", priority: "Low" as const, mechanics: "Ponto de injeção: dentro de ModifyAttributeBaseValue, sem duplicar escritas." },
+  { event: "Event.Ability.CooldownStarted", alt: "Event.Ability.CooldownEnded", producer: "05_SandboxCharacter", payload: "USBPawnEventPayload*", priority: "Low" as const, mechanics: "Overlay de cooldown sem polling — polling violaria o princípio de desacoplamento." },
+  { event: "Event.Combat.WeaponEquipped", alt: "Event.Combat.AmmoDepleted", producer: "06_SandboxCombat", payload: "USBPawnEventPayload*", priority: "Medium" as const, mechanics: "Ícone de arma ativa e feedback de munição esgotada." },
+  { event: "Event.Combat.DamageReceived", alt: "—", producer: "06_SandboxCombat (ponto autoritativo)", payload: "USBPawnEventPayload*", priority: "High" as const, mechanics: "Indicador direcional por 1,5 s; exige publicação no ponto autoritativo de dano." },
 ];
+
+const PRIORITY_OPTIONS = ["Todos", "High", "Medium", "Low", "Lowest"] as const;
+
+function PriorityTag({ priority }: { priority: string }) {
+  const map: Record<string, string> = {
+    High: "border-[oklch(0.55_0.15_25)] text-[oklch(0.45_0.12_25)] bg-[oklch(0.55_0.15_25)]/10",
+    Medium: "border-[oklch(0.55_0.10_80)] text-[oklch(0.45_0.08_80)] bg-[oklch(0.55_0.10_80)]/10",
+    Low: "border-engineering text-engineering bg-engineering/10",
+    Lowest: "border-border text-muted-foreground bg-muted/50",
+  };
+  return (
+    <span className={`font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 border ${map[priority] ?? map.Low}`}>
+      {priority}
+    </span>
+  );
+}
 
 const PRIORITIES = [
   { label: "High", value: "0", semantics: "Gameplay crítico: lógica de rede e gameplay que NÃO espera pela UI.", example: "RPCs de validação, lock de interação" },
@@ -80,16 +96,18 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
 export default function MessageRouter() {
   const [producerFilter, setProducerFilter] = useState<string>("Todos");
   const [payloadFilter, setPayloadFilter] = useState<string>("Todos");
+  const [priorityFilter, setPriorityFilter] = useState<string>("Todos");
   const filtered = useMemo(
     () =>
       EVENTS.filter(
         (e) =>
           (producerFilter === "Todos" || e.producer.startsWith(producerFilter.replace("_", " ").split(" ")[0])) &&
-          (payloadFilter === "Todos" || e.payload === payloadFilter),
+          (payloadFilter === "Todos" || e.payload === payloadFilter) &&
+          (priorityFilter === "Todos" || e.priority === priorityFilter),
       ),
-    [producerFilter, payloadFilter],
+    [producerFilter, payloadFilter, priorityFilter],
   );
-  const hasFilter = producerFilter !== "Todos" || payloadFilter !== "Todos";
+  const hasFilter = producerFilter !== "Todos" || payloadFilter !== "Todos" || priorityFilter !== "Todos";
 
   return (
     <DocsLayout>
@@ -146,6 +164,12 @@ export default function MessageRouter() {
               ))}
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground mr-1">Prioridade</span>
+              {PRIORITY_OPTIONS.map((p) => (
+                <FilterChip key={p} label={p} active={priorityFilter === p} onClick={() => setPriorityFilter(p)} />
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground mr-1">Payload</span>
               {PAYLOAD_OPTIONS.map((p) => (
                 <FilterChip key={p} label={p} active={payloadFilter === p} onClick={() => setPayloadFilter(p)} />
@@ -153,7 +177,7 @@ export default function MessageRouter() {
               {hasFilter && (
                 <button
                   type="button"
-                  onClick={() => { setProducerFilter("Todos"); setPayloadFilter("Todos"); }}
+                  onClick={() => { setProducerFilter("Todos"); setPayloadFilter("Todos"); setPriorityFilter("Todos"); }}
                   className="font-mono text-[11px] uppercase tracking-wider px-2.5 py-1.5 border border-destructive/50 text-destructive hover:bg-destructive/5 transition-colors duration-150"
                 >
                   Limpar filtros
@@ -171,6 +195,7 @@ export default function MessageRouter() {
                   <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider">Evento</th>
                   <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider">Produtor</th>
                   <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider">Payload</th>
+                  <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider">Prioridade</th>
                   <th className="px-4 py-3 font-mono text-[11px] uppercase tracking-wider">Mecânica</th>
                 </tr>
               </thead>
@@ -186,12 +211,13 @@ export default function MessageRouter() {
                       </td>
                       <td className="px-4 py-3 text-foreground">{e.producer}</td>
                       <td className="px-4 py-3 font-mono text-[11px]">{e.payload}</td>
+                      <td className="px-4 py-3"><PriorityTag priority={e.priority} /></td>
                       <td className="px-4 py-3 text-muted-foreground">{e.mechanics}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center font-mono text-[12px] uppercase tracking-wider text-muted-foreground">
+                    <td colSpan={5} className="px-4 py-8 text-center font-mono text-[12px] uppercase tracking-wider text-muted-foreground">
                       Nenhum evento atende aos filtros — limpe a seleção para restaurar a tabela canônica.
                     </td>
                   </tr>

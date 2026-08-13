@@ -198,7 +198,7 @@ export function SearchPalette() {
                   pushHistory(t.title);
                   goTo(t);
                 }}
-                className="gap-3"
+                className="gap-3 focus:bg-accent focus:text-accent-foreground outline-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
               >
                 <Clock className="h-3.5 w-3.5 opacity-50" />
                 <span className="flex flex-col min-w-0">
@@ -211,16 +211,17 @@ export function SearchPalette() {
         )}
         {history.length > 0 && (
           <CommandGroup heading="Buscas recentes">
-            {history.map((h) => (
+            {history.map((h) => {
+              const match = ALL_INDEX.find((e) => e.title.toLowerCase().includes(h.toLowerCase()));
+              return (
               <CommandItem
                 key={h}
                 value={`recente ${h}`}
                 onSelect={() => {
-                  const entry = ALL_INDEX.find((e) => e.title.toLowerCase().includes(h.toLowerCase()));
-                  if (entry) goTo(entry);
+                  if (match) goTo(match);
                   else navigate("/message-router");
                 }}
-                className="gap-3"
+                className="gap-3 focus:bg-accent focus:text-accent-foreground outline-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
               >
                 <Clock className="h-3.5 w-3.5 opacity-50" />
                 <span className="flex flex-col min-w-0">
@@ -228,7 +229,8 @@ export function SearchPalette() {
                   <span className="text-[11px] text-muted-foreground truncate">Abrir a melhor correspondência</span>
                 </span>
               </CommandItem>
-            ))}
+              );
+            })}
           </CommandGroup>
         )}
 
@@ -248,7 +250,7 @@ export function SearchPalette() {
                       pushHistory(e.title);
                       goTo(e);
                     }}
-                    className="gap-3"
+                    className="gap-3 focus:bg-accent focus:text-accent-foreground outline-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                   >
                     <Icon className="h-3.5 w-3.5 opacity-50" />
                     <span className="flex flex-col min-w-0">
