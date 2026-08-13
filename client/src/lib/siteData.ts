@@ -60,7 +60,7 @@ export interface Phase {
   phase: number;
   version: string;
   title: string;
-  status: "Concluída" | "Em planejamento";
+  status: "Concluída" | "Em execução" | "Em planejamento";
   summary: string;
   highlights: string[];
   tests?: string;
@@ -75,7 +75,7 @@ export const PHASES: Phase[] = [
   { phase: 15, version: "v1.5.x", title: "Persistência e Save Game (USBSaveSubsystem)", status: "Concluída", summary: "Subsistema abstrato em 02_SandboxInterfaces + concreto em 04_SandboxCore, serialização autoritativa de atributos e inventário com prioridades de carregamento.", highlights: ["FObjectAndNameAsStringProxyArchive", "SaveGame por componente (ISBSaveInterface)", "Restauração via ModifyAttributeBaseValue", "28/28 testes verdes"] },
   { phase: 16, version: "v1.6.0", title: "Habilidades no Behavior Stack", status: "Concluída", summary: "USBAbility herdando de USBGameplayBehavior com consumo preditivo de recursos, FSBCooldownList replicado e Enhanced Input Mapping data-driven.", highlights: ["Consumo preditivo com PredictionId", "CurrentServerPredictionId no servidor", "Cooldowns jitter-free", "31/31 testes verdes"] },
   { phase: 17, version: "v1.7.0", title: "Gameplay Debugger e Telemetria (10_SandboxDebug)", status: "Concluída", summary: "Plugin de debug com dependência exclusiva de 02_SandboxInterfaces e 04_SandboxCore, integrando ISBDebugInterface aos componentes de gameplay e ao ator de teste de interação.", highlights: ["FSBDebugLine (Label/Value/bIsHeader) sem vazamento de ponteiros", "#if WITH_GAMEPLAY_DEBUGGER (zero custo em Shipping)", "Teste de isolamento real (UBT com inventário oculto)", "31/31 testes verdes"] },
-  { phase: 18, version: "v1.8.0", title: "Interface Dinâmica (09_SandboxUI)", status: "Em planejamento", summary: "Widgets reativos via USBEventSubsystem sem dependência de compilação das extensões: prompt, inventário, arma, atributos, cooldowns e indicador de dano.", highlights: ["USBUIElement base com assinatura priorizada (Low)", "USBUIManager com camadas Game/Modal/Debug", "Filtro de escopo local (Instigator == owning pawn)", "Plano publicado neste site — ver Fase 18"] },
+  { phase: 18, version: "v1.8.0", title: "Interface Dinâmica (09_SandboxUI)", status: "Em execução", summary: "Widgets reativos via USBEventSubsystem sem dependência de compilação das extensões. Checklist do task.md: 0/9 itens, alvo 32/32 specs. Plano homologado e publicado neste site.", highlights: ["Plano executado homologado (ULocalPlayerSubsystem, NativeDestruct, anti-spill, throttle 60 Hz)", "4 eventos canônicos de inventário preservados (ItemAdded/Removed/Equipped/Unequipped)", "SBUITests: Cenário 1 (auto-unsubscribe + idempotência) e Cenário 2 (escopo local)", "Teste de isolamento com 05+06+07+08 desabilitados simultaneamente"] },
 ];
 
 export const PHASE18_EVENTS: { event: string; producer: string; purpose: string; exists: boolean }[] = [

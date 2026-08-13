@@ -6,10 +6,12 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Phase18 from "./pages/Phase18";
+import Spec from "./pages/Spec";
 import Plugins from "./pages/Plugins";
 import Phases from "./pages/Phases";
 import Manifesto from "./pages/Manifesto";
 import Manual from "./pages/Manual";
+import Guide from "./pages/Guide";
 
 
 function Router() {
@@ -17,10 +19,12 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/fase-18"} component={Phase18} />
+      <Route path={"/especificacao"} component={Spec} />
       <Route path={"/plugins"} component={Plugins} />
       <Route path={"/fases"} component={Phases} />
       <Route path={"/manifesto"} component={Manifesto} />
       <Route path={"/manual"} component={Manual} />
+      <Route path={"/guia-cpp"} component={Guide} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

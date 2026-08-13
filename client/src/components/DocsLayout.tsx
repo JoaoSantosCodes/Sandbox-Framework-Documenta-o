@@ -11,10 +11,12 @@ import { ASSET_URLS } from "@/lib/siteData";
 const NAV = [
   { href: "/", label: "Início", section: "01" },
   { href: "/fase-18", label: "Fase 18 — Interface Dinâmica", section: "02" },
-  { href: "/plugins", label: "Topologia de Plugins", section: "03" },
-  { href: "/fases", label: "Histórico de Fases", section: "04" },
-  { href: "/manual", label: "Manual de Uso", section: "05" },
-  { href: "/manifesto", label: "Manifesto & Padrões", section: "06" },
+  { href: "/especificacao", label: "Especificação SFPS", section: "03" },
+  { href: "/plugins", label: "Topologia de Plugins", section: "04" },
+  { href: "/fases", label: "Histórico de Fases", section: "05" },
+  { href: "/manual", label: "Manual de Uso", section: "06" },
+  { href: "/guia-cpp", label: "Guia de Desenvolvimento", section: "07" },
+  { href: "/manifesto", label: "Manifesto & Padrões", section: "08" },
 ];
 
 export function DocsLayout({ children }: { children: ReactNode }) {
@@ -47,7 +49,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </div>
-          <span className="phase-stamp hidden md:inline ml-2">v1.7.0 · 31/31 testes</span>
+          <span className="phase-stamp hidden md:inline ml-2">v1.7.0 · 31/31 · Fase 18 em execução</span>
           <button
             className="xl:hidden p-2 -mr-2"
             onClick={() => setOpen(!open)}
@@ -84,7 +86,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             </p>
           </div>
           <span className="font-mono text-xs text-muted-foreground tracking-wider">
-            SPEC · v1.7.0 · 11 PLUGINS · ZERO DEPENDÊNCIAS CIRCULARES
+            SPEC · v1.7.0 · 11 PLUGINS · ZERO DEPENDÊNCIAS CIRCULARES · PRÓXIMA MILESTONE v1.8.0
           </span>
         </div>
       </footer>

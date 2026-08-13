@@ -30,17 +30,21 @@ export default function Phases() {
             <li key={p.phase} className="ml-7 relative">
               <span
                 className={`absolute -left-[37px] top-1 h-4 w-4 rounded-full border-2 ${
-                  p.status === "Em planejamento"
-                    ? "border-amber-warn bg-background"
-                    : "border-engineering bg-engineering"
+                  p.status === "Concluída"
+                    ? "border-engineering bg-engineering"
+                    : "border-amber-warn bg-background"
                 }`}
               />
               <div className="flex items-center gap-3 flex-wrap">
-                <PhaseStamp phase={String(p.phase)} version={p.version} warn={p.status === "Em planejamento"} />
+                <PhaseStamp phase={String(p.phase)} version={p.version} warn={p.status !== "Concluída"} />
                 <span className={`font-mono text-[10px] uppercase tracking-wider px-2 py-1 border ${
-                  p.status === "Em planejamento" ? "border-amber-warn/60 text-amber-warn" : "border-engineering/60 text-engineering"
+                  p.status === "Concluída"
+                    ? "border-engineering/60 text-engineering"
+                    : p.status === "Em execução"
+                      ? "border-amber-warn/60 text-amber-warn"
+                      : "border-muted-foreground/40 text-muted-foreground"
                 }`}>
-                  {p.status === "Em planejamento" ? "Em execução" : "Homologada"}
+                  {p.status === "Concluída" ? "Homologada" : p.status}
                 </span>
               </div>
               <h2 className="font-display text-2xl font-bold mt-3">{p.title}</h2>
@@ -68,8 +72,9 @@ export default function Phases() {
               Em aberto · Fase 18 · Interface Dinâmica (09_SandboxUI)
             </div>
             <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
-              Plano de implantação publicado: arquitetura de eventos via USBEventSubsystem e hierarquia
-              de widgets reativos.
+              Plano de implantação homologado e publicado: arquitetura de eventos via
+              USBEventSubsystem e hierarquia de widgets reativos. Checklist em aberto no task.md:
+              0/9 itens, alvo de 32/32 specs após a suíte SBUITests.
             </p>
           </div>
           <Link

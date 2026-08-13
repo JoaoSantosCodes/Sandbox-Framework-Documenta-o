@@ -25,7 +25,7 @@ export default function Home() {
       <section className="paper-grain border-b border-border">
         <div className="container py-14 lg:py-20 grid lg:grid-cols-5 gap-10 items-center">
           <div className="lg:col-span-2 fade-up">
-            <PhaseStamp phase={String(latestPhase.phase)} version={latestPhase.version} />
+            <PhaseStamp phase={String(latestPhase.phase)} version={latestPhase.version} warn />
             <h1 className="font-display text-4xl lg:text-5xl font-bold leading-tight mt-5">
               A especificação viva de um framework de gameplay multiplayer em Unreal Engine 5.8
             </h1>
