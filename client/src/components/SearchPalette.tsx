@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
+
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -147,6 +148,24 @@ function saveHistory(history: string[]) {
   }
 }
 
+/* Destaque dos termos pesquisados — marca as ocorrências no título/subtítulo do resultado.
+   Escape de regex para termos literais; mantém o layout (uma única ocorrência destacada
+   por trecho, a primeira encontrada) para evitar saturação visual. */
+function highlightText(text: string, query: string): React.ReactNode {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return text;
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx < 0) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-amber-warn/25 text-inherit rounded-sm px-0.5">{text.slice(idx, idx + q.length)}</mark>
+      {text.slice(idx + q.length)}
+    </>
+  );
+}
+
 const GROUP_META: Record<IndexEntry["group"], { label: string; icon: React.ElementType }> = {
   paginas: { label: "Páginas", icon: FileText },
   secoes: { label: "Seções internas", icon: Hash },
@@ -164,6 +183,7 @@ function matches(entry: IndexEntry, q: string): boolean {
 
 export function SearchPalette() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [, navigate] = useLocation();
 
@@ -196,8 +216,20 @@ export function SearchPalette() {
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen} title="Buscar no framework" description="Classes, eventos, plugins e páginas do Sandbox Framework">
-      <CommandInput placeholder="Buscar classe, evento Event.*, plugin ou conceito…" />
+    <CommandDialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setQuery("");
+      }}
+      title="Buscar no framework"
+      description="Classes, eventos, plugins e páginas do Sandbox Framework"
+    >
+      <CommandInput
+        placeholder="Buscar classe, evento Event.*, plugin ou conceito…"
+        value={query}
+        onValueChange={setQuery}
+      />
       <CommandList>
         <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
           Nenhum resultado. Tente outro termo — ex.: "Behavior Stack", "Cooldown", "07".
@@ -218,8 +250,8 @@ export function SearchPalette() {
               >
                 <Clock className="h-3.5 w-3.5 opacity-50" />
                 <span className="flex flex-col min-w-0">
-                  <span className="font-mono text-[11px] text-foreground truncate">{t.title}</span>
-                  <span className="text-[11px] text-muted-foreground truncate">{t.subtitle}</span>
+                  <span className="font-mono text-[11px] text-foreground truncate">{highlightText(t.title, query)}</span>
+                  <span className="text-[11px] text-muted-foreground truncate">{highlightText(t.subtitle, query)}</span>
                 </span>
               </CommandItem>
             ))}
@@ -279,8 +311,8 @@ export function SearchPalette() {
                   >
                     <Icon className={`h-3.5 w-3.5 shrink-0 ${group === "secoes" ? "text-muted-foreground/70" : "text-engineering/70"}`} />
                     <span className="flex flex-col min-w-0">
-                      <span className="font-mono text-[11px] text-foreground truncate">{e.title}</span>
-                      <span className="text-[11px] text-muted-foreground truncate">{e.subtitle}</span>
+                      <span className="font-mono text-[11px] text-foreground truncate">{highlightText(e.title, query)}</span>
+                      <span className="text-[11px] text-muted-foreground truncate">{highlightText(e.subtitle, query)}</span>
                     </span>
                   </CommandItem>
                 ))}

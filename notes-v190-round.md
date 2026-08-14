@@ -66,3 +66,22 @@ DD-01 USBUIManager ULocalPlayerSubsystem; DD-02 idempotência/subscribe cirúrgi
 - History.tsx: camada (layer) em FOUNDATION_PHASES e PHASES: foundation/gameplay-base/gameplay-ext/presentation/tools/planning. Chips tipo FilterChip (já existe pattern em MessageRouter: font-mono uppercase border). Filtro padrão "Todas"; aplicar a ambos os blocos (timeline principal + fundação). Contagem "(N)" no chip.
 ### Fase 3 — Ícones ⌘K
 - SearchPalette: no render dos resultados, ícone por group: paginas=FileText/Compass?, fases=Layers, decisons=ScrollText/Stamp, secoes=Hash/Anchor. Mapear groups reais lidos do arquivo.
+
+
+## Rodada 3 — localStorage + Copiar Tudo + highlight de busca
+Checkpoint anterior: c21aa211 (copy buttons, filtros, ícones). Entregue ao usuário.
+Novos pedidos:
+1. Persistir filtro de camada em /historico (History.tsx: estado `layer` (Layer) e `ddFilter` (string|null)) em localStorage. Chave sugerida: `sbf-history-layer` e `sbf-history-dd-filter`.
+2. Botão "Copiar Tudo" na seção "Corpo do código (homologação)" da Phase19.tsx — concatena os 4 códigos dos slots A–D. Os slots estão definidos como array inline (const com slot/title/exige/code) renderizado em .map; extrair para const SLOTS e adicionar botão no topo da seção. CopyButton já existe em Primitives.tsx (aceita className?) — verificar assinatura antes de reusar.
+3. Highlight do termo pesquisado nos CommandItem do SearchPalette.tsx — CommandInput value acessível via estado `value` do Command (cmdk usa Input com value no CommandRoot; passar `value={query}` ao <Command> e usar span com mark/bg-amber-warn/20 no título/subtítulo, com função simpleHighlight(text, q)). O Input do command é filho do CommandRoot — usar <Command value={query}>. Ver linhas ~175-210 do SearchPalette para o <Command>.
+
+State atual relevante:
+- History.tsx: const layer + setLayer ("todas" default), ddFilter + setDdFilter (null default). Type Layer definido. FOUNDATION_PHASES, PHASES (siteData tem F19 agora), DD_BY_VERSION, AnimatePresence importado.
+- Phase19.tsx: slots inline após linha ~261; CodeBlock path=s.slot.replace(" · "," — ") language="cpp"; importações: AuditNote, CodeBlock, CopyButton, PhaseStamp, TechRule; toast "Copiado" via CopyButton interno.
+- SearchPalette.tsx: GROUP_META icons; CommandGroup/CommandItem; queries feitas em matches() sobre `${title} ${subtitle} ${keywords}`. Input no topo do CommandDialog.
+
+### Progresso rodada 3 (atualizado)
+- Fase 1 (persistência) CONCLUÍDA: History.tsx — readStored<T> com validação contra LAYER_IDS/ddVersions; chaves sbf-history-layer e sbf-history-dd-filter; persistLayer/persistDd helpers com try/catch. Inicialização lazy nos useState. Todos os setLayer/setDdFilter trocados. Filtro ddFilter default no readStored = "Todas as versões" (não null; persistDd(null) remove).
+- Fase 3 (highlight) CONCLUÍDA: SearchPalette.tsx — import Command (do ui/command, usado? não — remover import se não usado no render; tsc já passou então pode estar como side import, remover para cleanliness), highlightText() com escape regex e mark bg-amber-warn/25, CommandInput value={query} onValueChange={setQuery}, query resetado no onOpenChange(false), aplicado em CommandItem de grupos e POPULAR_TAGS.
+- FALTA: Fase 2 — botão "Copiar Tudo" na seção "Corpo do código" da Phase19.tsx. Slots definidos inline (~linha 261-350) com campo code. Extrair const CODE_SLOTS acima do componente, adicionar botão CopyButton value={CODE_SLOTS.map(s=>s.code).join("\n\n")} acima do .map, label "Copiar tudo". CopyButton assinatura: { value, label? }.
+- Depois: tsc, screenshots, checkpoint, entrega.

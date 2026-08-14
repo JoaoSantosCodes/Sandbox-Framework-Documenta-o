@@ -20,6 +20,106 @@ const TOC = [
   { id: "aceite", label: "Critérios de aceite" },
 ];
 
+/* Slots auditáveis da homologação — definidos como dado para que o "Copiar Tudo"
+   concatene os quatro contratos em um único texto exportável (escopo da sprint no Vault). */
+interface CodeSlot {
+  slot: string;
+  title: string;
+  exige: string;
+  code: string;
+}
+
+const CODE_SLOTS: CodeSlot[] = [
+  {
+    slot: "Slot A · SBEventPayloads.h",
+    title: "USBDamageEventPayload em 04_SandboxCore",
+    exige:
+      "Classe UObject com AttackId (FString estável — chave de deduplicação), Direction (FVector), DamageAmount (float), bIsFatal (bool). Nunca dentro de 06 ou 09.",
+    code: `// --- Slot A · Plugins/04_SandboxCore/Source/Public/SBEventPayloads.h ---
+// Aguardando o corpo do build da Fase 19.
+// Contrato: classe UObject (DD-04) + ataque id estável para deduplicação (DD-11). Nunca dentro de 06 ou 09.
+UCLASS()
+class SANDBOXCORE_API USBDamageEventPayload : public USBEventPayload
+{
+    GENERATED_BODY()
+public:
+    FString AttackId;      // chave estável — deduplicação client-side (TTL) ou bSkipClientNotify
+    FVector Direction;     // vetor mundo no ponto autoritativo, para o ângulo no HUD
+    float   DamageAmount;  // informativo — nunca mutar atributos a partir dele
+    bool    bIsFatal;      // flag para feedback de dano letal
+};`,
+  },
+  {
+    slot: "Slot B · 06_SandboxCombat",
+    title: "Ponto autoritativo de publicação no Hitscan",
+    exige:
+      "BroadcastMessage<Event.Combat.DamageReceived> dentro do caminho existente protegido por HasAuthority() — sem duplicar escritas de atributos nem tocar replicação; ordem de validação antes de mutação preservada.",
+    code: `// --- Slot B · Plugins/06_SandboxCombat/Source/Private/Components/SBHitscanComponent.cpp ---
+// Aguardando o corpo do build da Fase 19.
+// Contrato: broadcast DEPOIS da validação autoritativa (HasAuthority), ANTES de qualquer escrita de atributo.
+void USBHitscanComponent::ApplyDamage(...)
+{
+    if (!HasAuthority()) { return; }
+    if (!Validate(authoritative)) { return; }
+    auto* EventBus = GetSubsystem<USBEventSubsystem>();
+    auto* Payload = NewObject<USBDamageEventPayload>();
+    Payload->AttackId = BuildStableAttackId();
+    Payload->Direction = GetWorldDirection();
+    Payload->DamageAmount = BaseDamage;
+    Payload->bIsFatal = bIsKillingBlow;
+    EventBus->BroadcastMessage<UE::SBEvent::Combat::DamageReceived>(Payload);
+    // SÓ AGORA: consumo transacional de atributos (TryConsumeAttribute) e replicação.
+}`,
+  },
+  {
+    slot: "Slot C · USBUIDamageIndicator (09_SandboxUI)",
+    title: "Widget com anti-spill, prioridade Low e deduplicação AttackId",
+    exige:
+      "SubscribeToEvent com prioridade 20, filtro TargetPawn == owning pawn, mapa local de AttackIds recentes com TTL (ou verificação bSkipClientNotify no caminho feliz). Simetria add/remove completa em NativeDestruct.",
+    code: `// --- Slot C · Plugins/09_SandboxUI/Source/Private/Widgets/SBUIDamageIndicator.cpp ---
+// Aguardando o corpo do build da Fase 19.
+// Contrato: anti-spill (DD-05), prioridade Low = 20, dedupe via AttackId (DD-11),
+// simetria add/remove em NativeDestruct (DD-02).
+void USBUIDamageIndicator::NativeConstruct()
+{
+    SubscribeToEvent<UE::SBEvent::Combat::DamageReceived>(
+        this, &ThisClass::OnDamageReceived, ESBEventPriority::Low);
+}
+void USBUIDamageIndicator::OnDamageReceived(USBDamageEventPayload* P)
+{
+    if (!P || P->TargetPawn != GetOwningPlayerPawn()) { return; } // anti-spill (DD-05)
+    if (RecentAttacks.Contains(P->AttackId)) { return; }          // dedupe (DD-11)
+    RecentAttacks.Add(P->AttackId, GetWorld()->GetTimeSeconds());
+    ShowDirectionalIndicator(ProjectToHUD(P->Direction));
+}
+void USBUIDamageIndicator::NativeDestruct()
+{
+    UnsubscribeAll(this); // simetria cirúrgica — DD-02
+    Super::NativeDestruct();
+}`,
+  },
+  {
+    slot: "Slot D · SBUITests",
+    title: "Cenários 7 e 8",
+    exige:
+      "Cenário 7: dano recebido exibe o indicador no ângulo esperado; Cenário 8: TargetPawn mismatch não renderiza nada no local player. Suíte completa 34/34 (6 existentes + 2 novos).",
+    code: `// --- Slot D · Plugins/09_SandboxUI/Source/Private/Tests/SBUITests.cpp ---
+// Aguardando o corpo do build da Fase 19.
+// Contrato: Cenários 7 e 8 complementam os 6 existentes; suíte final 34/34 (32 F18 + 2).
+IMPLEMENT_SBUI_TEST(F7_DamageIndicator_RendersAtExpectedAngle,
+{
+    GIVEN("dano recebido localmente com Direction vetorial")
+    THEN("USBUIDamageIndicator exibe o indicador no ângulo HUD esperado")
+    AND("apenas 1 indicador, mesmo com broadcast duplicado com AttackId igual")
+})
+IMPLEMENT_SBUI_TEST(F8_DamageIndicator_NoRenderOnTargetPawnMismatch,
+{
+    GIVEN("dano recebido por outro jogador (TargetPawn != owning pawn)")
+    THEN("nenhum indicador é renderizado no local player")
+})`,
+  },
+];
+
 interface Prerequisite {
   id: string;
   title: string;
@@ -258,96 +358,16 @@ export default function Phase19() {
           de comportamento).
         </p>
         <div className="mt-6 space-y-4">
-          {[
-            {
-              slot: "Slot A · SBEventPayloads.h",
-              title: "USBDamageEventPayload em 04_SandboxCore",
-              exige:
-                "Classe UObject com AttackId (FString estável — chave de deduplicação), Direction (FVector), DamageAmount (float), bIsFatal (bool). Nunca dentro de 06 ou 09.",
-              code: `// --- Slot A · Plugins/04_SandboxCore/Source/Public/SBEventPayloads.h ---
-// Aguardando o corpo do build da Fase 19.
-// Contrato: classe UObject (DD-04) + ataque id estável para deduplicação (DD-11). Nunca dentro de 06 ou 09.
-UCLASS()
-class SANDBOXCORE_API USBDamageEventPayload : public USBEventPayload
-{
-    GENERATED_BODY()
-public:
-    FString AttackId;      // chave estável — deduplicação client-side (TTL) ou bSkipClientNotify
-    FVector Direction;     // vetor mundo no ponto autoritativo, para o ângulo no HUD
-    float   DamageAmount;  // informativo — nunca mutar atributos a partir dele
-    bool    bIsFatal;      // flag para feedback de dano letal
-};`,
-            },
-            {
-              slot: "Slot B · 06_SandboxCombat",
-              title: "Ponto autoritativo de publicação no Hitscan",
-              exige:
-                "BroadcastMessage<Event.Combat.DamageReceived> dentro do caminho existente protegido por HasAuthority() — sem duplicar escritas de atributos nem tocar replicação; ordem de validação antes de mutação preservada.",
-              code: `// --- Slot B · Plugins/06_SandboxCombat/Source/Private/Components/SBHitscanComponent.cpp ---
-// Aguardando o corpo do build da Fase 19.
-// Contrato: broadcast DEPOIS da validação autoritativa (HasAuthority), ANTES de qualquer escrita de atributo.
-void USBHitscanComponent::ApplyDamage(...)
-{
-    if (!HasAuthority()) { return; }
-    if (!Validate(authoritative)) { return; }
-    auto* EventBus = GetSubsystem<USBEventSubsystem>();
-    auto* Payload = NewObject<USBDamageEventPayload>();
-    Payload->AttackId = BuildStableAttackId();
-    Payload->Direction = GetWorldDirection();
-    Payload->DamageAmount = BaseDamage;
-    Payload->bIsFatal = bIsKillingBlow;
-    EventBus->BroadcastMessage<UE::SBEvent::Combat::DamageReceived>(Payload);
-    // SÓ AGORA: consumo transacional de atributos (TryConsumeAttribute) e replicação.
-}`,
-            },
-            {
-              slot: "Slot C · USBUIDamageIndicator (09_SandboxUI)",
-              title: "Widget com anti-spill, prioridade Low e deduplicação AttackId",
-              exige:
-                "SubscribeToEvent com prioridade 20, filtro TargetPawn == owning pawn, mapa local de AttackIds recentes com TTL (ou verificação bSkipClientNotify no caminho feliz). Simetria add/remove completa em NativeDestruct.",
-              code: `// --- Slot C · Plugins/09_SandboxUI/Source/Private/Widgets/SBUIDamageIndicator.cpp ---
-// Aguardando o corpo do build da Fase 19.
-// Contrato: anti-spill (DD-05), prioridade Low = 20, dedupe via AttackId (DD-11),
-// simetria add/remove em NativeDestruct (DD-02).
-void USBUIDamageIndicator::NativeConstruct()
-{
-    SubscribeToEvent<UE::SBEvent::Combat::DamageReceived>(
-        this, &ThisClass::OnDamageReceived, ESBEventPriority::Low);
-}
-void USBUIDamageIndicator::OnDamageReceived(USBDamageEventPayload* P)
-{
-    if (!P || P->TargetPawn != GetOwningPlayerPawn()) { return; } // anti-spill (DD-05)
-    if (RecentAttacks.Contains(P->AttackId)) { return; }          // dedupe (DD-11)
-    RecentAttacks.Add(P->AttackId, GetWorld()->GetTimeSeconds());
-    ShowDirectionalIndicator(ProjectToHUD(P->Direction));
-}
-void USBUIDamageIndicator::NativeDestruct()
-{
-    UnsubscribeAll(this); // simetria cirúrgica — DD-02
-    Super::NativeDestruct();
-}`,
-            },
-            {
-              slot: "Slot D · SBUITests",
-              title: "Cenários 7 e 8",
-              exige:
-                "Cenário 7: dano recebido exibe o indicador no ângulo esperado; Cenário 8: TargetPawn mismatch não renderiza nada no local player. Suíte completa 34/34 (6 existentes + 2 novos).",
-              code: `// --- Slot D · Plugins/09_SandboxUI/Source/Private/Tests/SBUITests.cpp ---
-// Aguardando o corpo do build da Fase 19.
-// Contrato: Cenários 7 e 8 complementam os 6 existentes; suíte final 34/34 (32 F18 + 2).
-IMPLEMENT_SBUI_TEST(F7_DamageIndicator_RendersAtExpectedAngle,
-{
-    GIVEN("dano recebido localmente com Direction vetorial")
-    THEN("USBUIDamageIndicator exibe o indicador no ângulo HUD esperado")
-    AND("apenas 1 indicador, mesmo com broadcast duplicado com AttackId igual")
-})
-IMPLEMENT_SBUI_TEST(F8_DamageIndicator_NoRenderOnTargetPawnMismatch,
-{
-    GIVEN("dano recebido por outro jogador (TargetPawn != owning pawn)")
-    THEN("nenhum indicador é renderizado no local player")
-})`,
-            },
-          ].map((s) => (
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              4 slots auditáveis — concatene o contrato completo para a sprint
+            </span>
+            <CopyButton
+              label="Copiar tudo"
+              value={CODE_SLOTS.map((s) => `=== ${s.slot} ===\n${s.title}\n\n${s.code}`).join("\n\n")}
+            />
+          </div>
+          {CODE_SLOTS.map((s) => (
             <div key={s.slot} className="border border-dashed border-amber-warn/50 bg-amber-warn/[0.04]">
               <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
                 <span className="font-mono text-[11px] text-amber-warn">{s.slot}</span>

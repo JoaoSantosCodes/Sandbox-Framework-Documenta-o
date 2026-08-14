@@ -88,12 +88,48 @@ const METRICS = [
   { value: "14", label: "decisões DD-* registradas" },
 ];
 
+/* Persistência dos filtros — a visualização escolhida sobrevive ao recarregamento.
+   Chaves namespaced (sbf-history-*) para não colidir com outros módulos do site. */
+const LS_LAYER_KEY = "sbf-history-layer";
+const LS_DDFILTER_KEY = "sbf-history-dd-filter";
+const LAYER_IDS: Layer[] = ["todas", "foundation", "gameplay-base", "gameplay-ext", "presentation", "tools"];
+
+function readStored<T extends string>(key: string, valid: T[], fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw && valid.includes(raw as T)) return raw as T;
+  } catch {
+    // storage indisponível — degrade silencioso
+  }
+  return fallback;
+}
+
 export default function History() {
   const active = useActiveSection(TOC.map((t) => t.id));
-  const [layer, setLayer] = useState<Layer>("todas");
+  const [layer, setLayer] = useState<Layer>(() => readStored<Layer>(LS_LAYER_KEY, LAYER_IDS, "todas"));
   const foundationVisible = layer === "todas" || layer === "foundation";
   const ddVersions = Object.keys(DD_BY_VERSION);
-  const [ddFilter, setDdFilter] = useState<string | null>(null);
+  const [ddFilter, setDdFilter] = useState<string | null>(() =>
+    readStored<string>(LS_DDFILTER_KEY, ["Todas as versões", ...ddVersions], "Todas as versões")
+  );
+
+  const persistLayer = (next: Layer) => {
+    try {
+      localStorage.setItem(LS_LAYER_KEY, next);
+    } catch {
+      /* storage indisponível — comportamento segue normal */
+    }
+    setLayer(next);
+  };
+  const persistDd = (next: string | null) => {
+    try {
+      if (next) localStorage.setItem(LS_DDFILTER_KEY, next);
+      else localStorage.removeItem(LS_DDFILTER_KEY);
+    } catch {
+      /* storage indisponível — comportamento segue normal */
+    }
+    setDdFilter(next);
+  };
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante (padrão fuch.ai) */}
@@ -168,7 +204,7 @@ export default function History() {
         )}
         {layer !== "todas" && layer !== "foundation" && (
           <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            Fundação oculta pelo filtro ativo — <button type="button" onClick={() => setLayer("foundation")} className="underline hover:text-engineering">ver fundação</button>
+            Fundação oculta pelo filtro ativo — <button type="button" onClick={() => persistLayer("foundation")} className="underline hover:text-engineering">ver fundação</button>
           </p>
         )}
 
@@ -180,7 +216,7 @@ export default function History() {
               <button
                 key={l.id}
                 type="button"
-                onClick={() => setLayer(l.id)}
+                onClick={() => persistLayer(l.id)}
                 className={`font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 border transition-colors active:scale-[0.97] ${
                   layer === l.id
                     ? "border-engineering/60 bg-engineering/8 text-engineering"
@@ -270,7 +306,7 @@ export default function History() {
         <div className="mt-6 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setDdFilter(null)}
+            onClick={() => persistDd(null)}
             className={`font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 border transition-colors active:scale-[0.97] ${
               ddFilter === null
                 ? "border-engineering/60 bg-engineering/8 text-engineering"
@@ -283,7 +319,7 @@ export default function History() {
             <button
               key={v}
               type="button"
-              onClick={() => setDdFilter(v)}
+              onClick={() => persistDd(v)}
               className={`font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 border transition-colors active:scale-[0.97] ${
                 ddFilter === v
                   ? "border-engineering/60 bg-engineering/8 text-engineering"
@@ -331,7 +367,7 @@ export default function History() {
           </AnimatePresence>
           {ddFilter !== null && (
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              Filtrando {ddFilter} — <button type="button" onClick={() => setDdFilter(null)} className="underline hover:text-engineering">mostrar todas</button>
+              Filtrando {ddFilter} — <button type="button" onClick={() => persistDd(null)} className="underline hover:text-engineering">mostrar todas</button>
             </p>
           )}
         </div>
