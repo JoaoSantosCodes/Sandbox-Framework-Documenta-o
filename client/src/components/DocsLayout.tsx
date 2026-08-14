@@ -6,7 +6,7 @@
 */
 import { Link, useLocation } from "wouter";
 import { ReactNode, useEffect, useState } from "react";
-import { AlertTriangle, Check, ExternalLink, Moon, PlayCircle, Search, Sun, X, Menu } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink, HelpCircle, Moon, PlayCircle, Search, Sun, X, Menu } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { ASSET_URLS } from "@/lib/siteData";
@@ -186,6 +186,20 @@ function usePendingDetails(): PendingDetail[] {
   Nav como chips (referência fuch.ai): rótulo curto mono + número de ordem.
   Home fica como chip utilitário de busca (⌘K cobre o acesso completo).
 */
+
+/* Símbolo da marca: três camadas empilhadas (Foundation → Gameplay → Presentation)
+   em verde-auditoria, sem texto — conforme o Wordmark & Logo do ideas.md.
+   Reutilizado em header, sheet mobile e em páginas internas como cue recorrente. */
+function BrandMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <rect x="2" y="2" width="20" height="4" rx="1" fill="oklch(0.55 0.11 165)" />
+      <rect x="5" y="10" width="14" height="4" rx="1" fill="oklch(0.45 0.09 165)" />
+      <rect x="8" y="18" width="8" height="4" rx="1" fill="oklch(0.35 0.07 165)" />
+    </svg>
+  );
+}
+
 const NAV_CHIPS = [
   { href: "/fase-17", label: "F17 — Debugger", short: "01 · F17" },
   { href: "/fase-18", label: "F18 — Interface Dinâmica", short: "02 · F18" },
@@ -325,9 +339,12 @@ export function DocsLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border bg-[oklch(0.968_0.008_90)]/90 backdrop-blur-md">
         <div className="container flex items-center justify-between gap-3 py-3">
-          {/* Marca compacta no canto superior esquerdo (fuch.ai: identidade em bloco) */}
-          <Link href="/" className="flex items-baseline gap-2 shrink-0 group">
-            <span className="font-display text-lg font-bold tracking-tight whitespace-nowrap">
+          {/* Marca compacta no canto superior esquerdo (fuch.ai: identidade em bloco).
+              Lockup padrão da marca: símbolo de 3 camadas + SANDBOX·FRAMEWORK mono caps
+              + machine-label de versão/spec (Style Decisions — style review). */}
+          <Link href="/" className="flex items-baseline gap-2.5 shrink-0 group">
+            <BrandMark className="h-5 w-5 shrink-0" />
+            <span className="font-mono text-[13px] font-bold uppercase tracking-[0.14em] whitespace-nowrap">
               Sandbox<span className="text-engineering">·</span>Framework
             </span>
             <span className="hidden sm:inline font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground group-hover:text-engineering transition-colors">
@@ -378,7 +395,8 @@ export function DocsLayout({ children }: { children: ReactNode }) {
               </SheetTrigger>
               <SheetContent side="right" className="w-72">
                 <SheetHeader>
-                  <SheetTitle className="font-mono text-xs uppercase tracking-[0.18em]">
+                  <SheetTitle className="flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.14em]">
+                    <BrandMark className="h-4.5 w-4.5 shrink-0" />
                     Sandbox<span className="text-engineering">·</span>Framework
                   </SheetTitle>
                 </SheetHeader>
@@ -497,24 +515,40 @@ function AuditStatusRow() {
       <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
         CI GitHub Actions · push na main + seg/qui 09:00 UTC
         {/* Disparo manual do workflow sync-audit via workflow_dispatch. */}
-        <a
-          href="https://github.com/JoaoSantosCodes/Sandbox-Framework-Documenta-o/actions/workflows/sync-audit.yml"
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() =>
-            toast("Abrindo o workflow sync-audit", {
-              description:
-                "No GitHub, clique em \"Run workflow\" → \"Run workflow\" — o resultado aparece nos detalhes do job.",
-              duration: 8000,
-            })
-          }
-          className="inline-flex items-center gap-1 border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:border-engineering/60 hover:text-engineering transition-colors"
-          title="Disparar manualmente a auditoria Vault ↔ site (workflow sync-audit)"
-        >
-          <PlayCircle className="h-3 w-3" />
-          Disparar audit
-          <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-        </a>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a
+                href="https://github.com/JoaoSantosCodes/Sandbox-Framework-Documenta-o/actions/workflows/sync-audit.yml"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  toast("Abrindo o workflow sync-audit", {
+                    description:
+                      "No GitHub, clique em \"Run workflow\" → \"Run workflow\" — o resultado aparece nos detalhes do job.",
+                    duration: 8000,
+                  })
+                }
+                className="inline-flex items-center gap-1 border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:border-engineering/60 hover:text-engineering transition-colors"
+                title="Disparar manualmente a auditoria Vault ↔ site (workflow sync-audit)"
+              >
+                <PlayCircle className="h-3 w-3" />
+                Disparar audit
+                <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[340px] text-[12px] leading-relaxed">
+              <p>
+                O audit completo exige o secret <code className="font-mono text-[10px]">VAULT_MIRROR_REPO</code>
+                = <code className="font-mono text-[10px]">JoaoSantosCodes/Sandbox-Framework-Vault</code> criado em
+                Settings → Secrets → Actions do repositório. Sem ele, o CI usa o espelho embutido
+                (scripts/vault-mirror/), que não acompanha o Vault em tempo real — o resultado
+                reflete o snapshot, não o estado atual da máquina.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <HelpCircle className="h-3 w-3 text-muted-foreground/60" />
       </span>
     </div>
   );

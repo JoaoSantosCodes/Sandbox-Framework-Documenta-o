@@ -81,3 +81,18 @@ ORGANIZAÇÃO espacial, adotando os padrões do fuch.ai:
   de fundo; bordas finas (1px) como única moldura.
 - **Microcódigos**: códigos mono de máquina como elemento decorativo (números de fase, carimbos
   de auditoria).
+
+## Style Decisions — Style review (agosto/2026)
+
+Review visual independente aplicado na rodada v2.0.0-prep. Regras aceitas:
+
+- **Brand lockup em toda página**: o header de todas as rotas usa o símbolo de três camadas
+  verde + wordmark mono caps "SANDBOX·FRAMEWORK" + linha de versão/spec como machine-label;
+  o formato title-case "Sandbox Framework" fica reservado apenas a referências em prosa,
+  nunca à identidade primária.
+- **Internal-page opening rule**: toda rota interna abre com um header espec assimétrico de
+  duas colunas — trilho mono de metadados de documento/índice à esquerda, tese editorial
+  bold à direita, e ao menos um artefato de auditoria/status ocupando um canto.
+- **Recurring motif rule**: toda página maior inclui um cue visível de topologia/camadas/
+  dependência (fragmento da pilha, setas de dependência ou carimbo de camada), mesmo quando
+  o diagrama completo de plugins não está presente — a arquitetura é a assinatura visual da marca.

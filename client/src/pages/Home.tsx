@@ -11,6 +11,82 @@ import { DocsLayout } from "@/components/DocsLayout";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { PhaseStamp, TechRule, useF19SubmittedCount } from "@/components/Primitives";
 import { ASSET_URLS, MANIFESTO_PRINCIPLES, PHASES, TEST_SUITES } from "@/lib/siteData";
+import {
+  ChangelogFilterKey,
+  V20_CHANGELOG,
+  changelogFilterMeta as CHANGELOG_FILTER_META,
+  useChangelogFilter,
+} from "@/lib/v20Changelog";
+
+/* Changelog consolidado da v2.0.0-prep na Home (visão de entrada rápida):
+   chips de categoria compartilhados com a /fase-20 (mesma chave
+   sbf-changelog-filter — o filtro reflete entre as páginas) e link para o
+   changelog completo na página da fase. Some com o carimbo v2.0.0. */
+function HomeChangelog() {
+  const { filter, setFilter } = useChangelogFilter();
+  const filtered = V20_CHANGELOG.filter((e) =>
+    filter === "all" ? true : e.category === filter,
+  );
+  return (
+    <section id="changelog-v2" className="border-y border-border">
+      <div className="container py-14">
+        <div className="flex items-end justify-between flex-wrap gap-3">
+          <div>
+            <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              Seção 06 · v2.0.0-prep
+            </span>
+            <h2 className="font-display text-3xl font-bold mt-2">
+              O que mudou na pré-versão — changelog v2.0.0-prep
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground max-w-2xl leading-relaxed">
+              Registro documental das mudanças em curso da Fase 20. Nenhum item homologa a fase —
+              a v2.0.0 fecha somente com build UBT + suíte + isolamento Exit 0 (ver porta de homologação).
+            </p>
+          </div>
+          <Link href="/fase-20" className="inline-flex items-center gap-1.5 text-sm font-semibold text-engineering hover:underline">
+            Ver changelog completo <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <TechRule />
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          {(Object.keys(CHANGELOG_FILTER_META()) as ChangelogFilterKey[]).map((key) => {
+            const n = V20_CHANGELOG.filter((e) => (key === "all" ? true : e.category === key)).length;
+            const active = filter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilter(key)}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-2 border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] transition-colors active:scale-[0.97] ${
+                  active
+                    ? "border-engineering text-engineering bg-engineering/[0.06]"
+                    : "border-border text-muted-foreground hover:border-engineering/50 hover:text-foreground"
+                }`}
+              >
+                {CHANGELOG_FILTER_META()[key].label}
+                <span className={active ? "text-engineering" : "text-border"}>{n}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-5 border border-border divide-y divide-border/60 bg-card">
+          {filtered.map((entry) => (
+            <div key={entry.tag} className="grid grid-cols-[7.5rem_1fr] sm:grid-cols-[9rem_1fr] gap-4 px-4 py-3">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering pt-0.5 shrink-0">
+                {entry.tag}
+              </span>
+              <div>
+                <div className="text-sm font-semibold">{entry.title}</div>
+                <div className="mt-1 text-[13px] text-muted-foreground leading-relaxed">{entry.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* Banner automático: só aparece quando os 4 slots da F19 recebem código (simulação local).
    O texto deixa explícito que é submissão local — homologação real exige build + suíte 34/34. */
@@ -326,6 +402,8 @@ export default function Home() {
           </p>
         </div>
       </section>
+      {/* CHANGELOG V2.0.0-PREP — visão consolidada na Home (desaparece com o carimbo v2.0.0) */}
+      <HomeChangelog />
     </DocsLayout>
   );
 }

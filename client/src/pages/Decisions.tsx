@@ -721,23 +721,41 @@ export default function Decisions() {
 
   return (
     <DocsLayout>
-      <div className="container py-10 lg:py-14 max-w-5xl">
-        <header className="border-b-2 border-foreground pb-6 mb-10">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <PhaseStamp phase="RD" version="v1.8.0" />
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              Documento de referência · Registro consolidado de decisões homologadas em auditoria
+      <div className="container py-10 lg:py-14">
+        {/* Header espec assimétrico (Internal-page opening rule — Style Decisions):
+            trilho mono à esquerda + tese editorial bold à direita + carimbo em canto. */}
+        <header className="border-b-2 border-foreground pb-6 mb-10 grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6">
+          <div className="flex md:flex-col gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="text-engineering">03 / DOC · RD</span>
+            <span>Decisões DD-01…DD-19</span>
+            <span>Homologadas: 16</span>
+            <span>Versão: v2.0.0-prep</span>
+            <span className="hidden md:inline mt-2 flex items-center gap-1.5 text-muted-foreground/70">
+              <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden>
+                <rect x="2" y="2" width="20" height="4" rx="1" fill="oklch(0.55 0.11 165)" />
+                <rect x="5" y="10" width="14" height="4" rx="1" fill="oklch(0.45 0.09 165)" />
+                <rect x="8" y="18" width="8" height="4" rx="1" fill="oklch(0.35 0.07 165)" />
+              </svg>
+              3 camadas · 1 arquivo de precedentes
             </span>
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold leading-tight">
-            Registro de Decisões
-            <span className="text-engineering"> — Precedentes homologados</span>
-          </h1>
-          <p className="mt-4 text-muted-foreground max-w-3xl">
-            Cada decisão de arquitetura com peso de longo prazo foi registrada aqui no momento da homologação:
-            o problema, a alternativa rejeitada, a consequência e o precedente citável. Novas fases devem
-            reaproveitar estes precedentes em vez de reinventar o contrato — a Regra 3 do Manifesto, tornada auditável.
-          </p>
+          <div>
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <PhaseStamp phase="RD" version="v1.8.0" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Documento de referência · Registro consolidado de decisões homologadas em auditoria
+              </span>
+            </div>
+            <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight">
+              Registro de Decisões
+              <span className="text-engineering"> — Precedentes homologados</span>
+            </h1>
+            <p className="mt-4 text-muted-foreground max-w-3xl">
+              Cada decisão de arquitetura com peso de longo prazo foi registrada aqui no momento da homologação:
+              o problema, a alternativa rejeitada, a consequência e o precedente citável. Novas fases devem
+              reaproveitar estes precedentes em vez de reinventar o contrato — a Regra 3 do Manifesto, tornada auditável.
+            </p>
+          </div>
         </header>
 
         {directLinkBanner && (

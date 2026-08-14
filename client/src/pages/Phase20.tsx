@@ -27,75 +27,26 @@ import {
   HomologationRulesModal,
 } from "@/components/Primitives";
 import { toast } from "sonner";
-
-interface ChangelogEntry {
-  tag: string;
-  title: string;
-  body: string;
-}
-
-interface ChangelogEntryCategory extends ChangelogEntry {
-  category: "Novidade" | "Correção" | "Auditoria";
-}
+import {
+  ChangelogFilterKey,
+  V20_CHANGELOG,
+  changelogFilterMeta as CHANGELOG_FILTER_META,
+  useChangelogFilter,
+} from "@/lib/v20Changelog";
 
 /* Filtros do changelog (padrão da linha do tempo/Roadmap): categoria com
    contagem, persistência em localStorage (sbf-changelog-filter) e sync entre
-   abas via storage event + focus. */
-type ChangelogFilterKey = "all" | "Novidade" | "Correção" | "Auditoria";
-
-const CHANGELOG_FILTER_META: Record<ChangelogFilterKey, { label: string }> = {
-  all: { label: "Todas" },
-  Novidade: { label: "Novidades" },
-  Correção: { label: "Correções" },
-  Auditoria: { label: "Auditoria" },
-};
-
+   abas via storage event + focus. Dados e hook compartilhados com a Home
+   (client/src/lib/v20Changelog.ts — fonte única de verdade). */
 function ChangelogFilter() {
-  const [filter, setFilter] = useState<ChangelogFilterKey>(() => {
-    try {
-      const saved = localStorage.getItem("sbf-changelog-filter") as ChangelogFilterKey | null;
-      if (saved && CHANGELOG_FILTER_META[saved]) return saved;
-    } catch {
-      /* ignorado */
-    }
-    return "all";
-  });
-  useEffect(() => {
-    try {
-      localStorage.setItem("sbf-changelog-filter", filter);
-    } catch {
-      /* ignorado */
-    }
-  }, [filter]);
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "sbf-changelog-filter") {
-        const saved = e.newValue as ChangelogFilterKey | null;
-        if (saved && CHANGELOG_FILTER_META[saved]) setFilter(saved);
-      }
-    };
-    const onFocus = () => {
-      try {
-        const saved = localStorage.getItem("sbf-changelog-filter") as ChangelogFilterKey | null;
-        if (saved && CHANGELOG_FILTER_META[saved]) setFilter(saved);
-      } catch {
-        /* ignorado */
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("focus", onFocus);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, []);
+  const { filter, setFilter } = useChangelogFilter();
   const filtered = V20_CHANGELOG.filter((e) =>
     filter === "all" ? true : e.category === filter,
   );
   return (
     <div>
       <div className="mt-5 flex flex-wrap items-center gap-2">
-        {(Object.keys(CHANGELOG_FILTER_META) as ChangelogFilterKey[]).map((key) => {
+        {(Object.keys(CHANGELOG_FILTER_META()) as ChangelogFilterKey[]).map((key) => {
           const n = V20_CHANGELOG.filter((e) => (key === "all" ? true : e.category === key)).length;
           const active = filter === key;
           return (
@@ -110,7 +61,7 @@ function ChangelogFilter() {
                   : "border-border text-muted-foreground hover:border-engineering/50 hover:text-foreground"
               }`}
             >
-              {CHANGELOG_FILTER_META[key].label}
+              {CHANGELOG_FILTER_META()[key].label}
               <span className={active ? "text-engineering" : "text-border"}>{n}</span>
             </button>
           );
@@ -119,7 +70,7 @@ function ChangelogFilter() {
       <div className="mt-5 border border-border divide-y divide-border/60">
         {filtered.length === 0 ? (
           <p className="text-sm text-muted-foreground px-4 py-4">
-            Nenhuma entrada na categoria “{CHANGELOG_FILTER_META[filter].label.toLowerCase()}” — ajuste
+            Nenhuma entrada na categoria “{CHANGELOG_FILTER_META()[filter as ChangelogFilterKey].label.toLowerCase()}” — ajuste
             o filtro acima.
           </p>
         ) : (
@@ -140,57 +91,6 @@ function ChangelogFilter() {
   );
 }
 
-/* Alterações da pré-versão v2.0.0-prep — registro documental; nenhum item homologa a fase. */
-const V20_CHANGELOG: ChangelogEntryCategory[] = [
-  {
-    tag: "Carimbo",
-    category: "Correção",
-    title: "Título do site v2.0.0-prep",
-    body: "O <title> de client/index.html passou de v1.9.0-prep para v2.0.0-prep, abrindo oficialmente a janela da Fase 20. O audit compara o título com os carimbos das páginas — divergência aqui quebra a verificação de sincronização.",
-  },
-  {
-    tag: "Rodapé",
-    category: "Novidade",
-    title: "Indicador de status da última auditoria de sincronização",
-    body: "O rodapé de todas as páginas agora expõe o status da última verificação de sincronização: verde (\"Auditada · N divergência(s) · última verificação HH:MM (sessão)\") ou âmbar pulsante (\"Não auditada nesta sessão\"), com a linha \"CI GitHub Actions · push na main + seg/qui 09:00 UTC\". O registro local (sbf-audit-status) declara \"última verificação\" — o CI real continua sendo a fonte oficial.",
-  },
-  {
-    tag: "DD-19",
-    category: "Novidade",
-    title: "Registro de Decisões: DD-19 (Persistência Transacional de Atributos)",
-    body: "Card 19 no /decisoes com o plano homologado da Fase 20: 6 decisões D1–D6, 3 alternativas rejeitadas e status Pendente até a homologação real. Botões de exportação Markdown/PDF por card.",
-  },
-  {
-    tag: "F20 · Playtest",
-    category: "Novidade",
-    title: "Painel interativo de status do playtest F20-9",
-    body: "7 etapas sequenciais (conexão → mutação predita → TransactionLog → confirmação server → checkpoint authoritativo → saída limpa → restore validado), com persistência em localStorage sincronizada entre abas, falha travando o roteiro e faixa de conclusão animada. Roteiro de auditoria — não substitui o playtest real.",
-  },
-  {
-    tag: "F20 · Vault",
-    category: "Novidade",
-    title: "Trechos do Vault da Fase 20 (copiáveis, com avisos de homologação)",
-    body: "Blocos exatos para o 00_Sandbox_Framework_Dashboard.md e o task.md (itens 11.1–11.9), no mesmo padrão das F17/F18/F19: bloco âmbar 'Regra de homologação' e modal das 5 regras nos botões de copiar.",
-  },
-  {
-    tag: "F20 · Slots",
-    category: "Novidade",
-    title: "Porta de homologação da F20: slots F20-A…F20-D (padrão DD-16)",
-        body: "Seção 'Corpo do código' criada na /fase-20 com os 4 slots de contrato (Definition/Instance em 04, TransactionLog/rollback em 04, SaveGame/restore autoritativo em 04/05 e SBAttributePersistenceTests com isolamento). Mesmos componentes da F19: formulário com mínimo 40 caracteres, barra 0/4, exportar/importar .txt, 'Limpar todas' com Desfazer (5s), histórico de alterações por slot e avisos de simulação em todos os pontos de contato. A nota de bloqueio antiga foi substituída pela porta aberta.",
-  },
-  {
-    tag: "CI",
-    category: "Auditoria",
-    title: "Mitigador C2 fechado: workflow sync-audit ativado",
-    body: ".github/workflows/sync-audit.yml criado e pushado (f743006) após a aprovação da permissão Workflows do GitHub App: roda no push da main, workflow_dispatch e cron seg/qui 09:00 UTC, auditando o espelho privado JoaoSantosCodes/Sandbox-Framework-Vault (secret VAULT_MIRROR_REPO) com fallback no espelho embutido scripts/vault-mirror/. Audit validado com 0 divergências nos dois caminhos.",
-  },
-  {
-    tag: "Processo",
-    category: "Auditoria",
-    title: "Push automático para o GitHub ao final de cada rodada",
-    body: "Regra de processo registrada (scripts/README-push-github.md): após checkpoint + tsc limpo + screenshot, o estado do site é espelhado no GitHub (remote github) e o commit reportado. Repo em f743006, 100% sincronizado com o site publicado.",
-  },
-];
 
 /* ------------------------------------------------------------------
    PORTA DE HOMOLOGAÇÃO DA F20 — slots F20-A…F20-D (padrão DD-16).
@@ -469,6 +369,15 @@ function SlotsSection({
           >
             <Download className="h-3.5 w-3.5" />
             Exportar (.txt)
+          </button>
+          <button
+            type="button"
+            onClick={() => exportF20SubmissionsJson(submissions)}
+            disabled={submittedCount === 0}
+            className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Exportar (.json)
           </button>
           <button
             type="button"
@@ -756,12 +665,50 @@ function importF20Submissions(
 ): void {
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = ".txt,text/plain";
+  input.accept = ".txt,.json,text/plain,application/json";
   input.onchange = async () => {
     const file = input.files?.[0];
     if (!file) return;
-    const text = await file.text();
+    const isJson = /\.json$/i.test(file.name) || file.type.startsWith("application/json");
     const restored: Record<string, string> = { ...submissions };
+    const problems: { slot: string; issue: string }[] = [];
+    const seen = new Set<string>();
+    if (isJson) {
+      /* Importação JSON estruturada — aceita o formato de exportF20SubmissionsJson
+         (topo "submissions" com slot → {slot,title,exige,code} ou slot → string). */
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(await file.text());
+      } catch {
+        toast.error("Arquivo JSON ilegível", { description: "O JSON está corrompido ou malformado — nenhum slot foi restaurado." });
+        return;
+      }
+      const root = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+      const map = (root.submissions && typeof root.submissions === "object" ? root.submissions : root) as Record<string, unknown>;
+      for (const [rawSlot, rawValue] of Object.entries(map)) {
+        const slot = CODE_SLOTS_F20.find((s) => rawSlot.startsWith(s.slot));
+        if (!slot) {
+          problems.push({ slot: rawSlot, issue: "chave não corresponde a nenhum slot F20 conhecido (F20-A…F20-D)" });
+          continue;
+        }
+        if (seen.has(slot.slot)) {
+          problems.push({ slot: slot.slot, issue: "duplicado no arquivo — mantém-se a primeira ocorrência" });
+          continue;
+        }
+        const code = (typeof rawValue === "string" ? rawValue : (rawValue as Record<string, unknown>)?.code as string | undefined) ?? "";
+        if (typeof code !== "string" || code.length < 40) {
+          problems.push({
+            slot: slot.slot,
+            issue: !code ? "campo code vazio ou ausente" : `corrompido/insuficiente — ${code.length} caracteres (mínimo exigido: 40)`,
+          });
+          continue;
+        }
+        seen.add(slot.slot);
+        restored[slot.slot] = code;
+      }
+    } else {
+      /* Importação .txt — blocos com cabeçalho '=== Slot F20-X · Título ==='. */
+    const text = await file.text();
     const blocks = text.split(/=== /).filter((b) => b.trim());
     const problems: { slot: string; issue: string }[] = [];
     const seen = new Set<string>();
@@ -791,6 +738,7 @@ function importF20Submissions(
         continue;
       }
       restored[slot.slot] = code;
+    }
     }
     if (problems.length > 0) {
       toast.warning(`${problems.length} ${problems.length === 1 ? "problema detectado no arquivo" : "problemas detectados no arquivo"}`, {
@@ -823,8 +771,9 @@ function importF20Submissions(
   input.click();
 }
 
-/* Exporta os códigos submetidos dos slots F20 como .txt — apenas os slots
-   com código, para backup entre navegadores (localStorage é local ao browser). */
+/* Exporta os códigos submetidos dos slots F20 em dois formatos complementares:
+   .txt — leitura humana com cabeçalhos de slot; .json — integração estruturada
+   (contrato, exige e código por slot, com metadados de versão e data). */
 function exportF20Submissions(submissions: Record<string, string>) {
   const entries = CODE_SLOTS_F20.filter((s) => submissions[s.slot]);
   if (entries.length === 0) return;
@@ -845,6 +794,36 @@ function exportF20Submissions(submissions: Record<string, string>) {
   URL.revokeObjectURL(url);
   toast.success(`${entries.length} ${entries.length === 1 ? "slot exportado" : "slots exportados"}`, {
     description: "Backup .txt salvo — apenas os slots com código submetido neste navegador.",
+    duration: 4000,
+  });
+}
+
+/* Exportação JSON estruturada dos slots F20 (mesma disciplina do .txt: apenas
+   slots com código, aviso de simulação nos metadados e import compatível com
+   importF20Submissions — espera "submissions" no topo do JSON). */
+function exportF20SubmissionsJson(submissions: Record<string, string>) {
+  const entries = CODE_SLOTS_F20.filter((s) => submissions[s.slot]);
+  if (entries.length === 0) return;
+  const payload = {
+    meta: {
+      generatedAt: new Date().toISOString(),
+      siteVersion: "v2.0.0-prep",
+      phase: "Fase 20 · Persistência Transacional",
+      warning: "SIMULAÇÃO DE FLUXO — os códigos abaixo NÃO substituem o build compilado; a homologação real exige SBAttributePersistenceTests 100% + isolamento simétrico Exit Code 0.",
+    },
+    submissions: Object.fromEntries(
+      entries.map((s) => [s.slot, { slot: s.slot, title: s.title, exige: s.exige, code: submissions[s.slot] }]),
+    ),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sandbox-framework-f20-slots-submetidos-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success(`${entries.length} ${entries.length === 1 ? "slot exportado" : "slots exportados"} (JSON)`, {
+    description: "Backup JSON salvo — estrutura pronta para integração estruturada; o parser de importação aceita os dois formatos.",
     duration: 4000,
   });
 }
@@ -1367,7 +1346,24 @@ export default function Phase20() {
             FASE 20
           </span>
         </div>
-        <div className="container relative py-12 lg:py-16">
+        <div className="container relative py-12 lg:py-16 grid lg:grid-cols-[11rem_1fr] gap-6">
+          {/* Rail mono (Internal-page opening rule — Style Decisions): metadados de
+              documento à esquerda; oculto em telas menores para não apertar o hero. */}
+          <div className="hidden lg:flex flex-col gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground pt-1">
+            <span className="text-engineering">04 / DOC · F20</span>
+            <span>DD-19 · D1–D6</span>
+            <span>Escopo F20-1…F20-9</span>
+            <span>Slots F20-A…F20-D</span>
+            <span>Versão v2.0.0-prep</span>
+            <span className="mt-2 flex items-center gap-1.5 text-muted-foreground/70">
+              <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden>
+                <rect x="2" y="2" width="20" height="4" rx="1" fill="oklch(0.55 0.11 165)" />
+                <rect x="5" y="10" width="14" height="4" rx="1" fill="oklch(0.45 0.09 165)" />
+                <rect x="8" y="18" width="8" height="4" rx="1" fill="oklch(0.35 0.07 165)" />
+              </svg>
+              camada 12 em projeto
+            </span>
+          </div>
           <div className="fade-up">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
               doc. 20 · v2.0.0 · planning gate
