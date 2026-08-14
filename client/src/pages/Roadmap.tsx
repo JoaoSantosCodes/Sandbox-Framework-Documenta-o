@@ -6,6 +6,7 @@
 */
 import { useState, useEffect } from "react";
 import {
+  ArrowRight,
   Check,
   CircleAlert,
   Compass,
@@ -17,6 +18,7 @@ import {
   TerminalSquare,
   Wrench,
 } from "lucide-react";
+import { Link } from "wouter";
 import { DocsLayout } from "@/components/DocsLayout";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { F19_SLOT_KEYS, useF19SubmittedCount, useSlotSubmissionStatus } from "@/components/Primitives";
@@ -53,6 +55,7 @@ interface Milestone {
   status: MilestoneStatus;
   metric?: string;
   blocking?: boolean;
+  href?: string;
 }
 
 const MILESTONES: Milestone[] = [
@@ -151,10 +154,11 @@ const MILESTONES: Milestone[] = [
     id: "m-f20",
     tag: "v2.0.0",
     date: "Roadmap",
-    title: "Fase 20 — a definir pela próxima prioridade",
+    title: "Fase 20 — Persistência Transacional de Atributos",
     description:
-      "Pré-requisito: F19 homologada. Candidatas naturais: F20 de gameplay (ex.: persistência de atributos transacionais) ou consolidação de playtest multiplayer como critério de aceite oficial.",
+      "Planejamento registrado em /fase-20: TransactionLog ancorado no PredictionId (DD-10), chave estável (DD-02), checkpoint autorizado via USaveGame, SBAttributePersistenceTests e playtest Dedicated Server. Entra em execução com a homologação real da F19 (build real nos slots + suíte verde + isolamento simétrico).",
     status: "planned",
+    href: "/fase-20",
   },
 ];
 
@@ -493,7 +497,16 @@ export default function Roadmap() {
                         </span>
                         <StatusBadge status={m.status} />
                       </div>
-                      <h3 className="mt-2 font-display text-xl font-bold">{m.title}</h3>
+                      {m.href ? (
+                        <Link
+                          href={m.href}
+                          className="mt-2 block font-display text-xl font-bold hover:text-engineering transition-colors"
+                        >
+                          {m.title} <ArrowRight className="inline h-4 w-4 align-baseline" />
+                        </Link>
+                      ) : (
+                        <h3 className="mt-2 font-display text-xl font-bold">{m.title}</h3>
+                      )}
                       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
                         {m.description}
                       </p>

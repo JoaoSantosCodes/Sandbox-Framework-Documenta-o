@@ -19,6 +19,7 @@ import Phase19 from "@/pages/Phase19";
 import History from "./pages/History";
 import Roadmap from "./pages/Roadmap";
 import Phase19Umg from "@/pages/Phase19Umg";
+import Phase20 from "@/pages/Phase20";
 
 
 function Router() {
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/historico" component={History} />
       <Route path="/roadmap" component={Roadmap} />
       <Route path="/fase-19-umg" component={Phase19Umg} />
+      <Route path="/fase-20" component={Phase20} />
           <Route path="/fase-17" component={Phase17} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

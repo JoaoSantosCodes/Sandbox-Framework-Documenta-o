@@ -53,13 +53,14 @@ const PAGES: IndexEntry[] = [
   { id: "fase18", title: "Fase 18 — Interface Dinâmica", subtitle: "Plano de implantação do 09_SandboxUI homologado", page: "/fase-18", keywords: "plano ui widget gerente fase", group: "paginas" },
   { id: "fase19", title: "Fase 19 — Indicador Direcional de Dano", subtitle: "USBUIDamageIndicator · porta de homologação v1.9.0 · DD-08 vigente", page: "/fase-19", keywords: "fase 19 dano indicador planejamento damage", group: "paginas" },
   { id: "fase19-umg", title: "F19 — Execução Paralela UMG (Widgets)", subtitle: "WBP_StatusHUD · WBP_InteractionPrompt · WBP_AbilityBar · WBP_InventoryGrid · nota paralela DD-17", page: "/fase-19-umg", keywords: "umg widget wbp hud editor playtest ability inventory status interaction", group: "paginas" },
+  { id: "fase20", title: "Fase 20 — Planejamento: Persistência Transacional de Atributos", subtitle: "TransactionLog · PredictionId · checkpoint autorizado · planejada (v2.0.0)", page: "/fase-20", keywords: "fase 20 planejamento persistência transaction log save checkpoint rollback dd-19", group: "paginas" },
   { id: "especificacao", title: "Especificação Estrutural (SFPS)", subtitle: "Topologia, Message Router, FSBBehaviorContext, interfaces", page: "/especificacao", keywords: "spec sfps router publishstate", group: "paginas" },
   { id: "guia", title: "Guia de Desenvolvimento (SFDG)", subtitle: "Procedimentos C++ por componente e subsistema", page: "/guia-cpp", keywords: "sfdg cpp guia desenvolvimento", group: "paginas" },
   { id: "message-router", title: "Message Router — Referência de Eventos", subtitle: "Tabela canônica de eventos Event.* e payloads", page: "/message-router", keywords: "router evento broadcast publishstate", group: "paginas" },
   { id: "plugins", title: "Topologia de Plugins", subtitle: "Dependências unidirecionais dos 11 plugins", page: "/plugins", keywords: "plugins dependências layer foundation", group: "paginas" },
   { id: "fases", title: "Histórico de Fases", subtitle: "Registro de homologação por versão", page: "/fases", keywords: "fases histórico versões specs", group: "paginas" },
   { id: "manifesto", title: "Manifesto e Padrões de Código", subtitle: "Os 10 princípios e standards A/B/C", page: "/manifesto", keywords: "manifesto princípios standards", group: "paginas" },
-  { id: "roadmap", title: "Linha do Tempo & Roadmap", subtitle: "Marcos homologados · F19 em homologação · rota até a v2.0.0", page: "/roadmap", keywords: "roadmap linha do tempo marcos riscos v1.9.0 v2.0.0 timeline", group: "paginas" },
+  { id: "roadmap", title: "Linha do Tempo & Roadmap", subtitle: "Marcos homologados · F19 slots fechados (v1.9.0) · rota até a v2.0.0", page: "/roadmap", keywords: "roadmap linha do tempo marcos riscos v1.9.0 v2.0.0 timeline", group: "paginas" },
   { id: "manual", title: "Manual de Uso (v1.7.0)", subtitle: "Pré-requisitos, playtest, gameplay debugger, checklist", page: "/manual", keywords: "manual uso playtest debug", group: "paginas" },
 ];
 
