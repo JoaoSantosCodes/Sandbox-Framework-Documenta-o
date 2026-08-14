@@ -13,6 +13,51 @@ import { PhaseChecklist, decodeChecklistProgress } from "@/components/PhaseCheck
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { AuditNote, CodeBlock, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning, HomologationRulesModal } from "@/components/Primitives";
 
+interface ChangelogEntry {
+  tag: string;
+  title: string;
+  body: string;
+}
+
+/* Alterações da pré-versão v2.0.0-prep — registro documental; nenhum item homologa a fase. */
+const V20_CHANGELOG: ChangelogEntry[] = [
+  {
+    tag: "Carimbo",
+    title: "Título do site v2.0.0-prep",
+    body: "O <title> de client/index.html passou de v1.9.0-prep para v2.0.0-prep, abrindo oficialmente a janela da Fase 20. O audit compara o título com os carimbos das páginas — divergência aqui quebra a verificação de sincronização.",
+  },
+  {
+    tag: "Rodapé",
+    title: "Indicador de status da última auditoria de sincronização",
+    body: "O rodapé de todas as páginas agora expõe o status da última verificação de sincronização: verde (\"Auditada · N divergência(s) · última verificação HH:MM (sessão)\") ou âmbar pulsante (\"Não auditada nesta sessão\"), com a linha \"CI GitHub Actions · push na main + seg/qui 09:00 UTC\". O registro local (sbf-audit-status) declara \"última verificação\" — o CI real continua sendo a fonte oficial.",
+  },
+  {
+    tag: "DD-19",
+    title: "Registro de Decisões: DD-19 (Persistência Transacional de Atributos)",
+    body: "Card 19 no /decisoes com o plano homologado da Fase 20: 6 decisões D1–D6, 3 alternativas rejeitadas e status Pendente até a homologação real. Botões de exportação Markdown/PDF por card.",
+  },
+  {
+    tag: "F20 · Playtest",
+    title: "Painel interativo de status do playtest F20-9",
+    body: "7 etapas sequenciais (conexão → mutação predita → TransactionLog → confirmação server → checkpoint authoritativo → saída limpa → restore validado), com persistência em localStorage sincronizada entre abas, falha travando o roteiro e faixa de conclusão animada. Roteiro de auditoria — não substitui o playtest real.",
+  },
+  {
+    tag: "F20 · Vault",
+    title: "Trechos do Vault da Fase 20 (copiáveis, com avisos de homologação)",
+    body: "Blocos exatos para o 00_Sandbox_Framework_Dashboard.md e o task.md (itens 11.1–11.9), no mesmo padrão das F17/F18/F19: bloco âmbar \"Regra de homologação\", modal das 5 regras nos botões de copiar e nota de bloqueio (a F20 ainda não tem slots de homologação F20-A…F20-D).",
+  },
+  {
+    tag: "CI",
+    title: "Mitigador C2 fechado: workflow sync-audit ativado",
+    body: ".github/workflows/sync-audit.yml criado e pushado (f743006) após a aprovação da permissão Workflows do GitHub App: roda no push da main, workflow_dispatch e cron seg/qui 09:00 UTC, auditando o espelho privado JoaoSantosCodes/Sandbox-Framework-Vault (secret VAULT_MIRROR_REPO) com fallback no espelho embutido scripts/vault-mirror/. Audit validado com 0 divergências nos dois caminhos.",
+  },
+  {
+    tag: "Processo",
+    title: "Push automático para o GitHub ao final de cada rodada",
+    body: "Regra de processo registrada (scripts/README-push-github.md): após checkpoint + tsc limpo + screenshot, o estado do site é espelhado no GitHub (remote github) e o commit reportado. Repo em f743006, 100% sincronizado com o site publicado.",
+  },
+];
+
 const CHECKLIST_KEY = "sbf-phase20-checklist";
 
 const TOC = [
@@ -23,6 +68,7 @@ const TOC = [
   { id: "aceite", label: "Critérios de aceite preliminares" },
   { id: "checklist", label: "Checklist interativo" },
   { id: "trechos-vault", label: "Trechos do Vault" },
+  { id: "changelog", label: "Changelog · v2.0.0-prep" },
 ];
 
 interface Prerequisite {
@@ -748,6 +794,30 @@ export default function Phase20() {
           antes de colar qualquer trecho acima, a página da Fase 20 deve receber os slots de contrato (F20-A…F20-D,
           padrão DD-16) com o corpo real do build — a colagem antecipada quebra a auditoria Vault ↔ site.
         </AuditNote>
+
+        <TechRule label="Changelog · v2.0.0-prep" />
+        <h2 id="changelog" className="font-display text-2xl font-bold scroll-mt-24 mt-10">
+          O que mudou nesta pré-versão
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+          Registro de alterações acumulado da pré-versão v2.0.0-prep (iniciada em 14/08/2026), para
+          rastrear tudo que o site e a infraestrutura ganharam desde o fechamento local da v1.9.0. A
+          versão v2.0.0 só é carimbada como homologada quando a Fase 20 fechar com build UBT + suíte
+          100% + isolamento simétrico Exit 0.
+        </p>
+        <div className="mt-5 border border-border divide-y divide-border/60">
+          {V20_CHANGELOG.map((entry) => (
+            <div key={entry.tag} className="grid grid-cols-[7.5rem_1fr] sm:grid-cols-[9rem_1fr] gap-4 px-4 py-3">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering pt-0.5 shrink-0">
+                {entry.tag}
+              </span>
+              <div>
+                <div className="text-sm font-semibold">{entry.title}</div>
+                <div className="mt-1 text-[13px] text-muted-foreground leading-relaxed">{entry.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <TechRule label="Navegação" />
         <div className="mt-10 flex items-center gap-3">

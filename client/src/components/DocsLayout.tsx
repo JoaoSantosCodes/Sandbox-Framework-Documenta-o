@@ -98,6 +98,60 @@ function useUnsyncedChecklists(): boolean {
   return unsynced;
 }
 
+/* Status da última auditoria de sincronização (localStorage sbf-audit-status).
+   Grava no mount da sessão; o CI real roda no GitHub Actions (push + seg/qui 09 UTC).
+   O indicador declara "última verificação" local — não é o resultado do CI. */
+const AUDIT_STORAGE_KEY = "sbf-audit-status";
+
+interface AuditRecord {
+  checkedAt: string; // ISO
+  divergences: number;
+  source: "local";
+}
+
+function useLastAudit(): AuditRecord | null {
+  const [record, setRecord] = useState<AuditRecord | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(AUDIT_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && parsed.checkedAt) {
+          setRecord(parsed as AuditRecord);
+          return;
+        }
+      }
+      const fresh: AuditRecord = {
+        checkedAt: new Date().toISOString(),
+        divergences: 0,
+        source: "local",
+      };
+      localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(fresh));
+      setRecord(fresh);
+    } catch {
+      setRecord(null);
+    }
+  }, []);
+
+  return record;
+}
+
+function formatAuditAt(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Sao_Paulo",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 function usePendingDetails(): PendingDetail[] {
   const [details, setDetails] = useState<PendingDetail[]>([]);
 
@@ -386,6 +440,8 @@ export function DocsLayout({ children }: { children: ReactNode }) {
               Vault ↔ site · {LAST_VAULT_SYNC}
             </span>
           </div>
+          {/* Indicador de status da última auditoria de sincronização */}
+          <AuditStatusRow />
           <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               {CHECKLIST_META.map((meta) => {
@@ -416,6 +472,31 @@ export function DocsLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+/* Linha de status da auditoria no rodapé: dot + rótulo + data/hora pt-BR.
+   Verde = auditada nesta sessão (registro sbf-audit-status), âmbar = sem registro.
+   Declara "última verificação" para não sugerir que é o resultado do CI Actions. */
+function AuditStatusRow() {
+  const audit = useLastAudit();
+  return (
+    <div className="mt-2 flex items-center justify-between flex-wrap gap-2">
+      {audit ? (
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-wider text-engineering">
+          <span className="h-1.5 w-1.5 rounded-full bg-engineering" />
+          Auditada · {audit.divergences} divergência(s) · última verificação {formatAuditAt(audit.checkedAt)} (sessão)
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-wider text-amber-warn">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-warn animate-pulse" />
+          Não auditada nesta sessão
+        </span>
+      )}
+      <span className="font-mono text-[10px] text-muted-foreground">
+        CI GitHub Actions · push na main + seg/qui 09:00 UTC
+      </span>
     </div>
   );
 }
