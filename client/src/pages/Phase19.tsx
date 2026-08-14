@@ -29,11 +29,26 @@ import {
   HomologationRulesModal,
   PhaseStamp,
   TechRule,
+  useSlotHistory,
   useSlotSubmissions,
   VaultCopyButton,
   VaultCopyWarning,
 } from "@/components/Primitives";
 import { toast } from "sonner";
+
+/* Formata a data/hora exata de uma alteração de slot (locale pt-BR, segundos incluídos). */
+function formatSlotTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
 
 /* Trechos exatos para colar no Vault após a homologação — mantidos como dado
    único, consumidos pelos blocos copiáveis e pelo "Copiar tudo" manual. */
@@ -276,12 +291,14 @@ function SlotCard({
   submitted,
   submissions,
   onSubmit,
+  lastChanged,
 }: {
   slot: (typeof CODE_SLOTS)[number];
   resolved: { status: SlotStatus; code: string };
   submitted: boolean;
   submissions: Record<string, string>;
   onSubmit: (code: string) => void;
+  lastChanged?: { at: string; via: string };
 }) {
   const [draft, setDraft] = useState(submissions[slot.slot] ?? "");
   const [openForm, setOpenForm] = useState(false);
@@ -326,6 +343,11 @@ function SlotCard({
       <div className="px-4 py-3">
         <p className="font-medium text-sm">{slot.title}</p>
         <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{slot.exige}</p>
+        {lastChanged && (
+          <p className="mt-1.5 font-mono text-[10px] tracking-[0.05em] text-muted-foreground">
+            Última alteração: {formatSlotTimestamp(lastChanged.at)} · {lastChanged.via}
+          </p>
+        )}
       </div>
       {resolved.code && (
         <div className="px-4 pb-4">
@@ -449,11 +471,14 @@ const CHECKLIST_ITEMS = [
   { key: "vault", label: "Vault + site carimbados v1.9.0 (Dashboard, task.md, siteData)" },
 ];
 
-/* Importa o backup .txt exportado pela função exportSubmissions — restaura apenas
-   os slots reconhecidos pelo cabeçalho "=== Slot X … ===", ignorando blocos inválidos. */
+/* Importa o backup .txt exportado pela função exportSubmissions — restaura os slots
+   reconhecidos pelo cabeçalho "=== Slot X · … ===" e valida cada bloco individualmente:
+   blocos vazios (< 40 caracteres após o cabeçalho) ou com cabeçalho ilegível entram
+   no relatório de problemas (toast.warning detalhado, nunca restaurados). */
 function importSubmissions(
   submissions: Record<string, string>,
   submitAll: (next: Record<string, string>) => void,
+  recordChange: (slot: string, via: "submissão" | "importação") => void,
 ): void {
   const input = document.createElement("input");
   input.type = "file";
@@ -466,17 +491,50 @@ function importSubmissions(
     const slotPattern = /^=== (Slot [A-D][^=·]+)\s*·/;
     const blocks = text.split(/=== /).filter((b) => b.trim());
     let matched = 0;
+    const problems: { slot: string; issue: string }[] = [];
+    const seen = new Set<string>();
     for (const block of blocks) {
       const headerMatch = block.match(slotPattern);
-      if (!headerMatch) continue;
+      if (!headerMatch) {
+        problems.push({ slot: "(bloco não identificado)", issue: "cabeçalho ilegível — não segue o formato '=== Slot X · Título ==='" });
+        continue;
+      }
       const header = headerMatch[1].trim();
-      const code = block.slice(headerMatch[0].length).replace(/^Exige:.*?\n\n/, "").trim();
-      if (code.length < 40) continue;
-      // casa o cabeçalho com o slot correspondente (Slot A · … → "Slot A · SBEventPayloads")
       const slot = CODE_SLOTS.find((s) => header.startsWith(s.slot));
-      if (!slot || restored[slot.slot] === code) continue;
+      if (!slot) {
+        problems.push({ slot: header, issue: "cabeçalho não corresponde a nenhum slot auditável conhecido (A–D)" });
+        continue;
+      }
+      if (seen.has(slot.slot)) {
+        problems.push({ slot: slot.slot, issue: "duplicado no arquivo — mantém-se a primeira ocorrência" });
+        continue;
+      }
+      seen.add(slot.slot);
+      const code = block.slice(headerMatch[0].length).replace(/^Exige:.*?\n\n/, "").trim();
+      if (code.length < 40) {
+        problems.push({
+          slot: slot.slot,
+          issue: code.length === 0 ? "bloco vazio — sem código após o cabeçalho" : `corrompido/insuficiente — ${code.length} caracteres (mínimo exigido: 40)`,
+        });
+        continue;
+      }
       restored[slot.slot] = code;
       matched++;
+    }
+    if (problems.length > 0) {
+      toast.warning(`${problems.length} ${problems.length === 1 ? "problema detectado no arquivo" : "problemas detectados no arquivo"}`, {
+        description: (
+          <ul className="mt-1 space-y-0.5 text-xs">
+            {problems.map((p, i) => (
+              <li key={i} className="text-muted-foreground">
+                <strong className="text-foreground">{p.slot}:</strong> {p.issue}
+              </li>
+            ))}
+            <li className="text-muted-foreground">Os blocos problemáticos foram ignorados — nenhum slot foi restaurado a partir deles.</li>
+          </ul>
+        ),
+        duration: 12000,
+      });
     }
     if (matched === 0) {
       toast.error("Nenhum slot restaurado", {
@@ -485,6 +543,7 @@ function importSubmissions(
       return;
     }
     submitAll(restored);
+    for (const s of CODE_SLOTS) if (restored[s.slot]) recordChange(s.slot, "importação");
     toast.success(`${matched} ${matched === 1 ? "slot restaurado" : "slots restaurados"}`, {
       description: "Submissões importadas do backup .txt — verificação do build segue necessária.",
       duration: 5000,
@@ -525,7 +584,14 @@ export default function Phase19() {
   const active = useActiveSection(TOC.map((t) => t.id));
   const [rulesOpen, setRulesOpen] = useState(false);
   const { submissions, submitSlot, clearAll, submitAll } = useSlotSubmissions("sbf-slot-submissions-19");
+  const { history, recordChange } = useSlotHistory("sbf-slot-submissions-19");
   const submittedCount = CODE_SLOTS.filter((s) => submissions[s.slot]).length;
+  // Guarda o snapshot da última limpeza para o botão Desfazer (janela de 5s).
+  const undoSnapshotRef = useRef<Record<string, string> | null>(null);
+  const registerSubmit = (slot: string, code: string) => {
+    submitSlot(slot, code);
+    if (code) recordChange(slot, "submissão");
+  };
   const resolveSlot = (s: (typeof CODE_SLOTS)[number]): { status: SlotStatus; code: string } =>
     submissions[s.slot] ? { status: "Código recebido" as const, code: submissions[s.slot] } : s;
   return (
@@ -721,7 +787,7 @@ export default function Phase19() {
               </button>
               <button
                 type="button"
-                onClick={() => importSubmissions(submissions, submitAll)}
+                onClick={() => importSubmissions(submissions, submitAll, recordChange)}
                 className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering transition-colors"
               >
                 <Upload className="h-3.5 w-3.5" />
@@ -734,34 +800,35 @@ export default function Phase19() {
                     toast("Nada a limpar", { description: "Nenhum slot tem submissão neste navegador." });
                     return;
                   }
-                  const confirmId = toast(
-                    <div className="flex flex-col gap-2">
-                      <p className="font-medium">Limpar todas as submissões?</p>
-                      <p className="text-xs text-muted-foreground">Reseta a barra de progresso e os 4 slots para “Aguardando Código” — ação irreversível.</p>
-                      <div className="flex gap-2 mt-1">
-                        <button
-                          type="button"
-                          className="bg-destructive text-destructive-foreground px-3 py-1 text-xs font-mono uppercase hover:opacity-90 transition-opacity"
-                          onClick={() => {
-                            clearAll();
-                            toast.dismiss(confirmId);
-                            toast.success("Todas as submissões removidas", {
-                              description: "Barra de progresso em 0/4 e slots restaurados para “Aguardando Código”.",
-                            });
-                          }}
-                        >
-                          Sim, limpar tudo
-                        </button>
-                        <button
-                          type="button"
-                          className="border border-border px-3 py-1 text-xs font-mono uppercase hover:border-engineering/60 transition-colors"
-                          onClick={() => toast.dismiss(confirmId)}
-                        >
-                          Cancelar
-                        </button>
-                      </div>
+                  // Limpa imediatamente e oferece Desfazer por 5 segundos no próprio toast.
+                  const snapshot = clearAll();
+                  undoSnapshotRef.current = snapshot;
+                  const undone = toast(
+                    <div className="flex items-center justify-between gap-3">
+                      <p>
+                        <span className="font-medium">Todas as submissões removidas</span>
+                        <span className="text-xs text-muted-foreground block mt-0.5">
+                          Barra de progresso em 0/4 e slots em “Aguardando Código”.
+                        </span>
+                      </p>
+                      <button
+                        type="button"
+                        className="border border-border bg-background px-2.5 py-1 text-xs font-mono uppercase hover:border-engineering/60 hover:text-engineering transition-colors"
+                        onClick={() => {
+                          toast.dismiss(undone);
+                          undoSnapshotRef.current = null;
+                          submitAll(snapshot);
+                          for (const s of CODE_SLOTS) if (snapshot[s.slot]) recordChange(s.slot, "importação");
+                          toast.success("Desfeito", {
+                            description: "Submissões restauradas do snapshot anterior à limpeza.",
+                            duration: 5000,
+                          });
+                        }}
+                      >
+                        Desfazer
+                      </button>
                     </div> as unknown as ReactNode,
-                    { duration: 10000 },
+                    { duration: 5000, onAutoClose: () => (undoSnapshotRef.current = null) },
                   );
                 }}
                 className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-destructive/60 hover:text-destructive transition-colors"
@@ -811,7 +878,8 @@ export default function Phase19() {
                 resolved={resolved}
                 submitted={submitted}
                 submissions={submissions}
-                onSubmit={(code) => submitSlot(s.slot, code)}
+                onSubmit={(code) => registerSubmit(s.slot, code)}
+                lastChanged={history[s.slot]}
               />
             );
           })}

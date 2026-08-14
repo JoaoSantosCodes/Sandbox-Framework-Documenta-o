@@ -226,6 +226,32 @@ export function HomologationRulesModal({
 /* Submissão de código dos slots auditáveis — puramente cliente (localStorage,
    chave sbf-slot-submissions-{phase}). Marca o slot "Código recebido" e habilita
    o corpo do código na página, com aviso explícito de que é simulação de fluxo. */
+/* Histórico de alterações por slot — formato { at: ISO string, via: "submissão" | "importação" }.
+   A chave de histórico é {storageKey}-history; o mapa mantém apenas a última alteração por slot. */
+export function useSlotHistory(storageKey: string) {
+  const historyKey = `${storageKey}-history`;
+  const [history, setHistory] = useState<Record<string, { at: string; via: string }>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(historyKey) ?? "{}");
+    } catch {
+      return {};
+    }
+  });
+  const recordChange = (slot: string, via: "submissão" | "importação") => {
+    const next = { ...history, [slot]: { at: new Date().toISOString(), via } };
+    try {
+      localStorage.setItem(historyKey, JSON.stringify(next));
+    } catch {
+      // ignorado — sem quebra de UI
+    }
+    setHistory(next);
+  };
+  return { history, recordChange };
+}
+
+/* Submissão de código dos slots auditáveis — puramente cliente (localStorage,
+   chave sbf-slot-submissions-{phase}). Marca o slot "Código recebido" e habilita
+   o corpo do código na página, com aviso explícito de que é simulação de fluxo. */
 export function useSlotSubmissions(storageKey: string) {
   const [submissions, setSubmissions] = useState<Record<string, string>>(() => {
     try {
@@ -234,31 +260,31 @@ export function useSlotSubmissions(storageKey: string) {
       return {};
     }
   });
+  const persist = (next: Record<string, string>) => {
+    try {
+      if (Object.keys(next).length === 0) localStorage.removeItem(storageKey);
+      else localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // ignorado — sem quebra de UI
+    }
+    setSubmissions(next);
+  };
   const submitSlot = (slot: string, code: string) => {
-    const next = { ...submissions, [slot]: code };
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-    } catch {
-      // ignorado — sem quebra de UI
+    if (code) persist({ ...submissions, [slot]: code });
+    else {
+      const next = { ...submissions };
+      delete next[slot];
+      persist(next);
     }
-    setSubmissions(next);
   };
-  const clearAll = () => {
-    try {
-      localStorage.removeItem(storageKey);
-    } catch {
-      // ignorado — sem quebra de UI
-    }
-    setSubmissions({});
+  /* Limpa todas as submissões e retorna o snapshot para desfazer dentro da janela de undo.
+     O caller (toast Desfazer 5s) chama undo() com o snapshot retornado. */
+  const clearAll = (): Record<string, string> => {
+    const snapshot = submissions;
+    persist({});
+    return snapshot;
   };
-  const submitAll = (next: Record<string, string>) => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-    } catch {
-      // ignorado — sem quebra de UI
-    }
-    setSubmissions(next);
-  };
+  const submitAll = (next: Record<string, string>) => persist(next);
   return { submissions, submitSlot, clearAll, submitAll };
 }
 
