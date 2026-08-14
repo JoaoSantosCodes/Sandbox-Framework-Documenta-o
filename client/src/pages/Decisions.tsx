@@ -7,8 +7,55 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link2, Search, Star } from "lucide-react";
+import { toast } from "sonner";
+
+// Favoritos do Registro de Decisões — persistidos em localStorage por dd-id.
+const FAVORITES_KEY = "sbf-favorite-decisions";
+
+function useFavoriteDecisions() {
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    } catch {
+      // storage indisponível — comportamento de leitura apenas.
+    }
+  }, [favorites]);
+
+  return {
+    favorites,
+    toggleFavorite: (id: string) =>
+      setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id])),
+    isFavorite: (id: string) => favorites.includes(id),
+  };
+}
+
+async function copyDecisionLink(id: string) {
+  const url = `${window.location.origin}/decisoes#${id}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success(`Link de ${id} copiado para a área de transferência`);
+  } catch {
+    // Fallback: input oculto — necessário em contextos sem clipboard API.
+    const input = document.createElement("input");
+    input.value = url;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand("copy");
+    document.body.removeChild(input);
+    toast.success(`Link de ${id} copiado para a área de transferência`);
+  }
+}
 
 type DecisionStatus = "Homologada" | "Homologada com nota" | "Pendente";
 
@@ -221,7 +268,19 @@ const STATUS_STYLES: Record<DecisionStatus, string> = {
   Pendente: "border-muted-foreground/60 text-muted-foreground",
 };
 
-function DecisionRecord({ d, index, formatDate }: { d: Decision; index: number; formatDate: (iso?: string) => string | undefined }) {
+function DecisionRecord({
+  d,
+  index,
+  formatDate,
+  favorite,
+  onToggleFavorite,
+}: {
+  d: Decision;
+  index: number;
+  formatDate: (iso?: string) => string | undefined;
+  favorite: boolean;
+  onToggleFavorite: (id: string) => void;
+}) {
   return (
     <article className="border border-border bg-card relative overflow-hidden" id={d.id.toLowerCase()}>
       <div className="h-1 bg-[repeating-linear-gradient(-45deg,var(--engineering),var(--engineering) 3px,transparent 3px 9px)] opacity-30" />
@@ -242,6 +301,30 @@ function DecisionRecord({ d, index, formatDate }: { d: Decision; index: number; 
             </span>
           )}
           <span className="phase-stamp">{d.version}</span>
+          <div className="flex items-center gap-1 mt-1">
+            <button
+              onClick={() => onToggleFavorite(d.id)}
+              aria-label={favorite ? `Remover ${d.id} dos favoritos` : `Marcar ${d.id} como favorito`}
+              title={favorite ? "Favorito — clique para remover" : "Marcar como favorito"}
+              className={`inline-flex items-center gap-1 border px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors ${
+                favorite
+                  ? "border-amber-warn/70 bg-amber-warn/10 text-amber-warn"
+                  : "border-border/70 text-muted-foreground hover:text-foreground hover:border-engineering/60"
+              }`}
+            >
+              <Star className={`h-3 w-3 ${favorite ? "fill-current" : ""}`} />
+              <span className="hidden sm:inline">{favorite ? "Favorito" : "Favoritar"}</span>
+            </button>
+            <button
+              onClick={() => copyDecisionLink(d.id.toLowerCase())}
+              aria-label={`Copiar link direto para ${d.id}`}
+              title="Copiar link direto"
+              className="inline-flex items-center gap-1 border border-border/70 text-muted-foreground hover:text-foreground hover:border-engineering/60 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors"
+            >
+              <Link2 className="h-3 w-3" />
+              <span className="hidden sm:inline">Copiar link</span>
+            </button>
+          </div>
         </div>
       </header>
       <div className="px-5 pb-4 grid md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
@@ -275,8 +358,11 @@ const STATUS_FILTERS: (DecisionStatus | "Todas")[] = ["Todas", "Homologada", "Ho
 export default function Decisions() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<DecisionStatus | "Todas">("Todas");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const { favorites, toggleFavorite, isFavorite } = useFavoriteDecisions();
 
   const filtered = DECISIONS.filter((d) => {
+    if (favoritesOnly && !isFavorite(d.id)) return false;
     if (statusFilter !== "Todas" && d.status !== statusFilter) return false;
     if (!query.trim()) return true;
     const q = query.toLowerCase();
@@ -353,6 +439,18 @@ export default function Decisions() {
               />
             </div>
             <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setFavoritesOnly(!favoritesOnly)}
+                className={`border px-3 py-2 text-xs font-mono uppercase tracking-wider inline-flex items-center gap-1.5 transition-colors duration-150 ${
+                  favoritesOnly
+                    ? "border-amber-warn bg-amber-warn/10 text-amber-warn"
+                    : "border-border bg-card text-muted-foreground hover:border-amber-warn/60 hover:text-amber-warn"
+                }`}
+              >
+                <Star className={`h-3.5 w-3.5 ${favoritesOnly ? "fill-current" : ""}`} />
+                Favoritos ({favorites.length})
+              </button>
               {STATUS_FILTERS.map((s) => (
                 <button
                   key={s}
@@ -385,7 +483,13 @@ export default function Decisions() {
                   style={{ border: "1px solid var(--border)", background: "var(--card)", position: "relative", overflow: "hidden" }}
                   id={d.id.toLowerCase()}
                 >
-                  <DecisionRecord d={d} index={i} formatDate={formatDate} />
+                  <DecisionRecord
+                    d={d}
+                    index={i}
+                    formatDate={formatDate}
+                    favorite={isFavorite(d.id)}
+                    onToggleFavorite={toggleFavorite}
+                  />
                 </motion.article>
               ))
             ) : (
@@ -397,8 +501,10 @@ export default function Decisions() {
                 transition={{ duration: 0.15 }}
                 className="border border-dashed border-border px-6 py-10 text-center font-mono text-sm text-muted-foreground"
               >
-                Nenhum registro corresponde à busca "{query}" {statusFilter !== "Todas" && `com status "${statusFilter}"`}.
-                Tente outro identificador (DD-01…DD-11) ou amplie o filtro de status.
+                {favoritesOnly
+                  ? "Nenhuma decisão marcada como favorita. Use o botão Favoritar no card de cada decisão para destacá-la aqui."
+                  : `Nenhum registro corresponde à busca "${query}" ${statusFilter !== "Todas" && `com status "${statusFilter}"`}.`}
+                {!favoritesOnly && "Tente outro identificador (DD-01…DD-11) ou amplie o filtro de status."}
               </motion.div>
             )}
           </AnimatePresence>

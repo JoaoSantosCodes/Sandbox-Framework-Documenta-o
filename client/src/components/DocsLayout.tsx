@@ -5,7 +5,8 @@
 */
 import { Link, useLocation } from "wouter";
 import { ReactNode, useEffect, useState } from "react";
-import { AlertTriangle, Check } from "lucide-react";
+import { AlertTriangle, Check, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Menu, X } from "lucide-react";
 import { ASSET_URLS } from "@/lib/siteData";
 import { CHECKLIST_META, decodeChecklistProgress } from "@/components/PhaseChecklist";
@@ -97,6 +98,23 @@ function usePendingDetails(): PendingDetail[] {
 import { SearchPalette, SearchShortcut } from "@/components/SearchPalette";
 import { Search } from "lucide-react";
 
+function ThemeToggle({ compact = false }: { compact?: boolean }) {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"}
+      title={theme === "light" ? "Modo escuro" : "Modo claro"}
+      className={`inline-flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:border-engineering/60 transition-colors ${
+        compact ? "p-2" : "px-2 py-1.5 text-[10px] gap-1.5 font-mono uppercase tracking-wider"
+      }`}
+    >
+      {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      {!compact && (theme === "light" ? "Escuro" : "Claro")}
+    </button>
+  );
+}
+
 const NAV = [
   { href: "/", label: "Início", section: "01" },
   { href: "/fase-17", label: "Fase 17 — Gameplay Debugger", section: "02·R" },
@@ -129,6 +147,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             </span>
           </Link>
           <div className="hidden xl:flex items-center gap-1">
+            <ThemeToggle />
             {NAV.map((item) => (
               <Link
                 key={item.href}
@@ -145,6 +164,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             ))}
           </div>
           <SearchShortcut />
+          <ThemeToggle compact />
           <button
             className="md:hidden p-2 -mr-2 mr-1"
             onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
@@ -213,6 +233,24 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
               Checklists no site
             </span>
+            <span className="font-mono text-[10px] text-muted-foreground">·</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {CHECKLIST_META.map((meta) => {
+                const { done } = decodeChecklistProgress(meta);
+                return (
+                  <span
+                    key={meta.storageKey}
+                    className={`inline-flex items-center gap-1 border px-1.5 py-0.5 font-mono text-[10px] tracking-wider ${
+                      done.length === 0
+                        ? "border-border/70 text-muted-foreground"
+                        : "border-amber-warn/60 text-amber-warn"
+                    }`}
+                  >
+                    <Check className="h-2.5 w-2.5" /> {meta.phase.replace("Fase ", "F")}: {done.length}/{meta.items.length}
+                  </span>
+                );
+              })}
+            </div>
             <span className="font-mono text-[10px] text-muted-foreground">·</span>
             {unsynced ? (
               <TooltipProvider>
