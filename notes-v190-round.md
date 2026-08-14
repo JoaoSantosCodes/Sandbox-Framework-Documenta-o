@@ -174,3 +174,34 @@ Detalhes técnicos:
 - sectionsMarkdown.ts: SOURCE_MAP (routes: /manual, /especificacao, /guia-cpp, /message-router) com ids e labels; extractSectionMarkdown(source, id) retorna string Markdown do DOM até o próximo id.
 - DocsLayout.tsx: sourceForRoute(location) retorna source de SECTION_SOURCES por rota; toast já implementado no handler ⌘⇧C (linhas ~252-254: "Seção técnica copiada").
 - Checkpoint anterior: a53415cc. Auto-publish ativo.
+
+
+## Rodada 9 — /fase-19-umg + trechos Vault copiáveis (em andamento)
+
+### Contexto chave (não perder)
+- Usuário pediu: códigos reais dos slots A-D na F19 + página UMG + trechos Vault.
+- Códigos reais AINDA NÃO recebidos (não anexou .cpp/.h nesta sessão). F19 continua "porta de homologação".
+- Usuário confirmou "pode continuar" → executar itens que não dependem dos binários.
+
+### Decisões desta rodada
+- Página /fase-19-umg: documenta os WBPs (WBP_StatusHUD, WBP_InteractionPrompt, WBP_AbilityBar, WBP_InventoryGrid) do implementation_plan.md como EXECUÇÃO PARALELA NO EDITOR, fora do escopo da F19 (DD-17). Link na timeline /historico como nota paralela.
+- Trechos Vault copiáveis: blocos exatos para colar no 00_Sandbox_Framework_Dashboard.md e task.md (F19 em execução → homologada), com botão copiar. Carimbo definitivo v1.9.0 só quando códigos reais chegarem.
+
+### Dados do plano UMG (do implementation_plan.md enviado, resumo)
+- Widgets UMG: WBP_StatusHUD (vida/mana), WBP_InteractionPrompt (hold), WBP_AbilityBar (habilidades/cooldowns), WBP_InventoryGrid (slots inventário)
+- Infraestrutura C++ de suporte = Fase 18 (USBEventSubsystem, payloads UObject DD-04, anti-spill DD-05, 4 eventos canônicos DD-06, throttle 60Hz DD-07, unsubscribe cirúrgico DD-02)
+- Montagem por binários .uasset no editor pelo usuário
+
+### Progresso fase 1 (rodada 9)
+- Phase19Umg.tsx CRIADO (/fase-19-umg): hero FASE 19 · UMG, TOC 5 seções (dd-17, diretrizes, widgets, hud, verificacao), 4 guias WBP_GUIDES (WBP_StatusHUD, WBP_InteractionPrompt, WBP_AbilityBar, WBP_InventoryGrid) com CopyButton por guia + botão Copiar nota VAULT_NOTE; AuditNotes anti-spill; link para /fase-19 e /historico; BackToTop. tsc OK.
+- FALTA: rota em App.tsx, chip "12 · UMG" no NAV_CHIPS (DocsLayout), link na timeline do History.tsx (nota paralela), indexação na busca (SearchPalette), seção VAULT_SNIPPETS (trechos Dashboard + task.md copiáveis) — decidir onde (página própria /vault-sync ou seção na F19).
+
+### Estado da skill
+- SKILL.md atualizada até DD-17 (rodada 8). Precisa registrar: página /fase-19-umg (nota paralela), trechos Vault copiáveis, estado de F19 aguardando códigos.
+
+### Padrões de componentes existentes (reusar)
+- DocsLayout NAV_CHIPS: adicionar chip "12 · UMG" (sheet mobile + ⌘K; desktop top-6 não muda); rota em App.tsx
+- PhaseStamp: phase, version, warn; CopyButton: { value, label?, onCopy? }; AuditNote tone; TechRule label
+- TOC lateral: useActiveSection + scroll-mt-24 nas h2; seções com id
+- History.tsx: PHASES (siteData) timeline + SECTION_NOTES/linha de notas paralelas; METRICS "17 decisões"; DD_BY_VERSION
+- Decisões: 17 DDs (01..17), DD-17 = divergência UMG vs DD-08 Rota A

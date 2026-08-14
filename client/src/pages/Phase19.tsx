@@ -13,12 +13,36 @@ import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { AuditNote, CodeBlock, CopyButton, PhaseStamp, TechRule } from "@/components/Primitives";
 import { toast } from "sonner";
 
+/* Trechos exatos para colar no Vault após a homologação — mantidos como dado
+   único, consumidos pelos blocos copiáveis e pelo "Copiar tudo" manual. */
+const VAULT_DASHBOARD_SNIPPET = `### Execução paralela — Fase 19 (widgets UMG, DD-17)
+Montagem, fiação e verificação PIE dos WBPs: WBP_StatusHUD, WBP_InteractionPrompt,
+WBP_AbilityBar e WBP_InventoryGrid (herdando de USBUserWidget), com WBP_MainHUD,
+BP_SBHUD e HUDClass no GameMode de playtest. Infraestrutura C++ de suporte: Fase 18
+homologada (DD-04 · DD-05 · DD-06 · DD-07 · DD-02). Referência: /fase-19-umg.
+
+### Fase 19 Concluída · v1.9.0 (Indicador Direcional de Dano)
+Homologação fechada: USBDamageEventPayload em 04_SandboxCore (Slot A), broadcast
+autoritativo no Hitscan (Slot B), USBUIDamageIndicator com deduplicação AttackId (Slot C)
+e SBUITests 34/34 (Slot D, Cenários 7/8). Decisão DD-08 vigente; DD-11 homologada (deduplicação
+client-side). 11 de 11 plugins implementados · 0 em backlog.`;
+
+const VAULT_TASK_SNIPPET = `## Fase 19 — Indicador Direcional de Dano (v1.9.0)
+
+- [x] 10.1. Implementar USBDamageEventPayload em 04_SandboxCore (Slot A homologado)
+- [x] 10.2. Publicar Event.Combat.DamageReceived no ponto autoritativo do Hitscan (Slot B)
+- [x] 10.3. USBUIDamageIndicator em 09_SandboxUI com AttackId / bSkipClientNotify (Slot C)
+- [x] 10.4. SBUITests Cenários 7 e 8 (slot replicated + spill anti-pawn-alheio) — suíte 34/34
+- [x] 10.5. Carimbo v1.9.0: task.md, Dashboard, walkthrough, V1 Unreal Engine, /fase-19
+- [x] 10.6. DD-11 homologada (deduplicação client-side via AttackId com TTL)`;
+
 const TOC = [
   { id: "DD-08", label: "Por que adiar (DD-08)" },
   { id: "pre-requisitos", label: "Pré-requisitos homologados" },
   { id: "escopo", label: "Escopo proposto" },
   { id: "corpo-codigo", label: "Corpo do código (homologação)" },
   { id: "aceite", label: "Critérios de aceite" },
+  { id: "trechos-vault", label: "Trechos do Vault" },
 ];
 
 /* Slots auditáveis da homologação — definidos como dado para que o "Copiar Tudo"
@@ -464,6 +488,47 @@ export default function Phase19() {
           carimbo v1.9.0 em todos os documentos do Vault e neste site; (5) novo registro DD-11 documentando
           a deduplicação client-side homologada.
         </p>
+
+        <TechRule label="Trechos do Vault — colar quando a homologação fechar" />
+
+        <h2 id="trechos-vault" className="sr-only">
+          Trechos do Vault
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+          Os dois blocos abaixo são os trechos exatos para colar nos documentos do Vault assim que os quatro
+          slots receberem os corpos reais e a suíte fechar 34/34 — mantidos aqui para cópia rápida, com botão
+          dedicado por arquivo.
+        </p>
+        <div className="mt-4 space-y-4">
+          <div className="border border-border">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+              <span className="font-mono text-[11px] text-engineering">
+                00_Sandbox_Framework_Dashboard.md · F19 homologada · v1.9.0
+              </span>
+              <CopyButton
+                label="Copiar"
+                value={VAULT_DASHBOARD_SNIPPET}
+                onCopy={() => toast("Trecho do Dashboard copiado", { description: "Cole no 00_Sandbox_Framework_Dashboard.md após a homologação." })}
+              />
+            </div>
+            <CodeBlock path="00_Sandbox_Framework_Dashboard.md · Execução paralela + v1.9.0" language="text">
+              {VAULT_DASHBOARD_SNIPPET}
+            </CodeBlock>
+          </div>
+          <div className="border border-border">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+              <span className="font-mono text-[11px] text-engineering">task.md · itens da Fase 19</span>
+              <CopyButton
+                label="Copiar"
+                value={VAULT_TASK_SNIPPET}
+                onCopy={() => toast("Trecho do task.md copiado", { description: "Cole no task.md substituindo os itens de planejamento." })}
+              />
+            </div>
+            <CodeBlock path="task.md · Fase 19 (checklist pós-homologação)" language="text">
+              {VAULT_TASK_SNIPPET}
+            </CodeBlock>
+          </div>
+        </div>
 
         <TechRule label="Navegação" />
 

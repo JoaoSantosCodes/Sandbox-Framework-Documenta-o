@@ -366,6 +366,34 @@ export default function History() {
                 </Link>
               </motion.li>
             ))}
+              {/* Nota paralela — execução UMG no editor (DD-17, fora do escopo da homologação v1.9.0) */}
+              <motion.li
+                className="relative pl-8"
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <span className="absolute left-0 top-1.5 h-[15px] w-[15px] border border-dashed border-muted-foreground/60 bg-muted/30" />
+                <Link
+                  href="/fase-19-umg"
+                  className="group block border border-dashed border-border bg-secondary/40 hover:border-engineering/40 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60">
+                    <span className="font-mono text-[11px] text-muted-foreground">Nota paralela · Widgets UMG</span>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] border border-dashed border-muted-foreground/60 px-1.5 py-0.5 text-muted-foreground">
+                      execução no editor · DD-17
+                    </span>
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="text-[13px] text-muted-foreground leading-relaxed">
+                      Montagem e verificação PIE dos WBPs (WBP_StatusHUD, WBP_InteractionPrompt, WBP_AbilityBar,
+                      WBP_InventoryGrid) — conteúdo paralelo que consome a infraestrutura da Fase 18 homologada,
+                      sem alterar o escopo da homologação v1.9.0 (indicador de dano).
+                    </p>
+                  </div>
+                </Link>
+              </motion.li>
             </AnimatePresence>
           </ul>
         </div>

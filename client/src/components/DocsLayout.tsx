@@ -144,6 +144,7 @@ const NAV_CHIPS = [
   { href: "/decisoes", label: "Registro de Decisões", short: "09 · Decisões" },
   { href: "/manifesto", label: "Manifesto & Padrões", short: "10 · Manifesto" },
   { href: "/historico", label: "Histórico Consolidado", short: "11 · Hist" },
+  { href: "/fase-19-umg", label: "F19 — Widgets UMG", short: "12 · UMG" },
 ];
 
 function ThemeToggle({ compact = false }: { compact?: boolean }) {
@@ -309,7 +310,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
                 className="px-2 py-1 rounded-full border border-dashed border-border text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground hover:text-engineering hover:border-engineering/60 transition-colors"
                 title="Buscar nas demais páginas (⌘K)"
               >
-                +5 · ⌘K
+                +6 · ⌘K
               </button>
             </nav>
             <SyncBadge details={pendingDetails} unsynced={unsynced} />
