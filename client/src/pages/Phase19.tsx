@@ -113,24 +113,42 @@ const CHECKLIST_ITEMS = [
 export default function Phase19() {
   return (
     <DocsLayout>
-      <div className="container py-10 max-w-4xl">
-        <div className="mb-2">
-          <PhaseStamp phase="19" version="v1.9.0 · em planejamento" warn />
-          <span className="ml-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            Rascunho de planejamento · aguardando homologação da Fase 18 no Vault
+      {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
+      <section className="paper-grain border-b border-border relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
+          <span className="font-display font-black leading-[0.85] text-center text-engineering/[0.09] dark:text-engineering/[0.14] whitespace-nowrap" style={{ fontSize: "clamp(4rem, 13vw, 14rem)" }}>
+            FASE 19
           </span>
         </div>
-        <h1 className="mt-3 font-serif text-4xl sm:text-5xl font-bold leading-tight">
-          Fase 19 — Indicador Direcional de Dano
-        </h1>
-        <p className="mt-5 text-base text-muted-foreground leading-relaxed max-w-3xl">
-          A Fase 19 implementa o{" "}
-          <code className="font-mono text-[13px] text-foreground">USBUIDamageIndicator</code> adiado pela
-          decisão DD-08 da Fase 18: feedback visual direcional no HUD quando o pawn local sofre dano, com o
-          novo ponto de publicação autoritativa em{" "}
-          <code className="font-mono text-[13px] text-foreground">06_SandboxCombat</code>. Esta página é o
-          espaço reservado — o escopo, a injeção e os critérios de aceite ainda não foram homologados por
-          revisão; os pré-requisitos, sim, são todos precedentes já homologados.
+        <div className="container relative py-12 lg:py-16">
+          <div className="fade-up">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              doc. 19 · planning draft
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <PhaseStamp phase="19" version="v1.9.0 · em planejamento" warn />
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                rascunho · aguardando homologação
+              </span>
+            </div>
+          </div>
+          <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
+            Indicador Direcional de{" "}
+            <em className="not-italic text-engineering">Dano</em>
+          </h1>
+          <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Feedback visual direcional no HUD quando o pawn local sofre dano — o{" "}
+            <code className="font-mono text-sm">USBUIDamageIndicator</code> adiado pela decisão DD-08,
+            com novo ponto de publicação autoritativa em{" "}
+            <code className="font-mono text-sm">06_SandboxCombat</code>.
+          </p>
+        </div>
+      </section>
+
+      <div className="container py-10 max-w-4xl">
+        <p className="mt-6 text-base text-muted-foreground leading-relaxed max-w-3xl">
+          Esta página é o espaço reservado — o escopo, a injeção e os critérios de aceite ainda não foram
+          homologados por revisão; os pré-requisitos, sim, são todos precedentes já homologados.
         </p>
 
         <TechRule label="Contrato estrutural" />

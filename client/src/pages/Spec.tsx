@@ -95,27 +95,71 @@ const UPPLUGIN = `{
     }
 }`;
 
+const SPEC_INDEX = [
+  { n: "01", label: "Topologia de Plugins", id: "sfps-01" },
+  { n: "02", label: "Dependência Unidirecional", id: "sfps-02" },
+  { n: "03", label: "Metadados .uplugin", id: "sfps-03" },
+  { n: "04", label: "Contexto Unificado", id: "sfps-04" },
+  { n: "05", label: "Definition / Instance", id: "sfps-05" },
+  { n: "06", label: "Modificadores", id: "sfps-06" },
+  { n: "07", label: "Message Router", id: "sfps-07" },
+  { n: "08", label: "Matriz de Interfaces", id: "sfps-08" },
+];
+
+function scrollToSection(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
+  e.preventDefault();
+  const target = document.getElementById(id);
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+  history.replaceState(null, "", `#${id}`);
+}
+
 export default function Spec() {
   return (
     <DocsLayout>
-      <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr] gap-10">
+      {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
+      <section className="paper-grain border-b border-border relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
+          <span className="font-display font-black leading-[0.85] text-center text-engineering/[0.09] dark:text-engineering/[0.14] whitespace-nowrap" style={{ fontSize: "clamp(3.5rem, 12vw, 12rem)" }}>
+            SFPS
+          </span>
+        </div>
+        <div className="container relative py-12 lg:py-16">
+          <div className="fade-up">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              doc. sfps · fonte de verdade
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <PhaseStamp phase="SPEC" version="v1.0.0" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                sandbox framework plugin specification · 11 plugins
+              </span>
+            </div>
+          </div>
+          <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
+            Especificação{" "}
+            <em className="not-italic text-engineering">Estrutural</em>
+          </h1>
+          <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Documento consolidado que governa a arquitetura de software do framework — a
+            especificação é a fonte de verdade; o código é a prova.
+          </p>
+        </div>
+      </section>
+
+      <div className="container grid grid-cols-1 xl:grid-cols-[200px_1fr] gap-10 py-12">
         {/* Trilho lateral de seções */}
         <nav className="hidden xl:block sticky top-28 self-start border-l border-border pl-5">
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground mb-4">Índice SFPS</p>
           <ol className="space-y-3 text-sm">
-            {[
-              { n: "01", label: "Topologia de Plugins" },
-              { n: "02", label: "Dependência Unidirecional" },
-              { n: "03", label: "Metadados .uplugin" },
-              { n: "04", label: "Contexto Unificado" },
-              { n: "05", label: "Definition / Instance" },
-              { n: "06", label: "Modificadores" },
-              { n: "07", label: "Message Router" },
-              { n: "08", label: "Matriz de Interfaces" },
-            ].map((s) => (
+            {SPEC_INDEX.map((s) => (
               <li key={s.n}>
-                <a href={`#sfps-${s.n}`} className="group flex items-baseline gap-3 text-muted-foreground hover:text-foreground transition-colors">
-                  <span className="font-mono text-[10px] text-engineering/70 group-hover:text-engineering">{s.n}</span>
+                <a
+                  href={`#${s.id}`}
+                  onClick={(e) => scrollToSection(e, s.id)}
+                  className="group flex items-baseline gap-3 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span className="font-mono text-[10px] text-engineering group-hover:text-engineering">{s.n} ·</span>
                   <span>{s.label}</span>
                 </a>
               </li>
@@ -125,26 +169,6 @@ export default function Spec() {
         </nav>
 
         <article className="min-w-0">
-          <header className="mb-10">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-engineering mb-3">
-              SFPS v1.0.0 · Sandbox Framework Plugin Specification
-            </p>
-            <h1 className="font-serif text-4xl md:text-5xl font-semibold leading-tight mb-4">
-              Especificação Estrutural
-            </h1>
-            <p className="text-muted-foreground max-w-3xl leading-relaxed">
-              Especificação consolidada que governa a arquitetura de software do framework:
-              topologia de plugins, abstrações reutilizáveis, contrato do Message Router e a matriz
-              de interfaces de fundação. Todo plugin novo deve obedecer a este documento — a
-              especificação é a fonte de verdade, o código é a prova.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <PhaseStamp phase="SPEC" version="v1.0.0" />
-              <span className="border border-border px-3 py-1 font-mono text-xs text-muted-foreground">
-                11 PLUGINS · API 1
-              </span>
-            </div>
-          </header>
 
           {/* 01 Topologia */}
           <section id="sfps-01" className="mb-14">

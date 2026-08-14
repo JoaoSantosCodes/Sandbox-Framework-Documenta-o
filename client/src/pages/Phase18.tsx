@@ -39,19 +39,39 @@ const PHASE18_CHECKLIST_ITEMS = [
 export default function Phase18() {
   return (
     <DocsLayout>
+      {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
+      <section className="paper-grain border-b border-border relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
+          <span className="font-display font-black leading-[0.85] text-center text-engineering/[0.09] dark:text-engineering/[0.14] whitespace-nowrap" style={{ fontSize: "clamp(4rem, 13vw, 14rem)" }}>
+            FASE 18
+          </span>
+        </div>
+        <div className="container relative py-12 lg:py-16">
+          <div className="fade-up">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              doc. 18 · implantation plan
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <PhaseStamp phase="18" version="v1.8.0" warn />
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                homologada · 32/32 specs no Vault
+              </span>
+            </div>
+          </div>
+          <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
+            Interface Dinâmica e{" "}
+            <em className="not-italic text-engineering">HUD Reativo</em>
+          </h1>
+          <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Conversão do plugin <code className="font-mono text-sm">09_SandboxUI</code> na camada de
+            apresentação completa e reativa do framework, executando o plano de implantação{" "}
+            <code className="font-mono text-sm">implementation_plan.md</code> registrado no Vault do projeto.
+          </p>
+        </div>
+      </section>
+
       <div className="container py-12 lg:py-16 grid lg:grid-cols-[1fr_240px] gap-10">
         <article className="min-w-0">
-          <PhaseStamp phase="18" version="v1.8.0" />
-          <h1 className="font-display text-4xl font-bold mt-4 leading-tight">
-            Fase 18 — Interface Dinâmica e HUD Reativo
-          </h1>
-          <p className="mt-3 text-muted-foreground text-lg max-w-3xl">
-            Conversão do plugin <code className="font-mono text-sm">09_SandboxUI</code> — atualmente em
-            estágio de stub — na camada de apresentação completa e reativa do framework. A execução segue
-            o plano de implantação <code className="font-mono text-sm">implementation_plan.md</code>
-            registrado no Vault do projeto.
-          </p>
-
           <TechRule label="02.1 · Regra de ouro" />
           <h2 id="regra" className="font-display text-2xl font-bold scroll-mt-24">
             A UI nunca consulta os componentes de gameplay

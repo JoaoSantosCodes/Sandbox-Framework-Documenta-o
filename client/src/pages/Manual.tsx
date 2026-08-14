@@ -19,21 +19,49 @@ const TOC = [
   { id: "integracao", label: "Integração incremental" },
 ];
 
+function scrollToSection(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
+  e.preventDefault();
+  const target = document.getElementById(id);
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+  history.replaceState(null, "", `#${id}`);
+}
+
 export default function Manual() {
   return (
     <DocsLayout>
+      {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
+      <section className="paper-grain border-b border-border relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
+          <span className="font-display font-black leading-[0.85] text-center text-engineering/[0.09] dark:text-engineering/[0.14] whitespace-nowrap" style={{ fontSize: "clamp(3.5rem, 12vw, 12rem)" }}>
+            MANUAL
+          </span>
+        </div>
+        <div className="container relative py-12 lg:py-16">
+          <div className="fade-up">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              doc. mnu · operador
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="phase-stamp">MNU · v1.7.0</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                guia prático no unreal editor
+              </span>
+            </div>
+          </div>
+          <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
+            Manual de Uso — Guia Prático no{" "}
+            <em className="not-italic text-engineering">Unreal Editor</em>
+          </h1>
+          <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Guia operacional para configurar, rodar e testar o Sandbox Framework no Unreal Editor —
+            com os 11 plugins compilando e a suíte verde (31/31 specs).
+          </p>
+        </div>
+      </section>
+
       <div className="container py-12 lg:py-16 grid lg:grid-cols-[1fr_240px] gap-10">
         <article className="min-w-0">
-          <span className="phase-stamp">MNU · v1.7.0</span>
-          <h1 className="font-display text-4xl font-bold mt-4 leading-tight">
-            Manual de Uso — Guia Prático no Unreal Editor
-          </h1>
-          <p className="mt-3 text-muted-foreground text-lg max-w-3xl">
-            Guia operacional para configurar, rodar e testar o Sandbox Framework dentro do Unreal Editor.
-            Assume os 11 plugins compilando e a suíte de automação verde (31/31 specs). Para arquitetura
-            e decisões de design, consulte a especificação, o guia de desenvolvimento C++ e o manifesto.
-          </p>
-
           <TechRule label="06.1 · Ambiente" />
           <h2 id="pre" className="font-display text-2xl font-bold scroll-mt-24">
             Pré-requisitos de ambiente
@@ -509,9 +537,14 @@ export default function Manual() {
               Índice · Manual
             </div>
             <ul className="mt-3 space-y-2">
-              {TOC.map((t) => (
+              {TOC.map((t, i) => (
                 <li key={t.id}>
-                  <a href={`#${t.id}`} className="text-sm text-muted-foreground hover:text-engineering transition-colors">
+                  <a
+                    href={`#${t.id}`}
+                    onClick={(e) => scrollToSection(e, t.id)}
+                    className="text-sm text-muted-foreground hover:text-engineering transition-colors"
+                  >
+                    <span className="font-mono text-[10px] text-engineering mr-2">{String(i + 1).padStart(2, "0")} ·</span>
                     {t.label}
                   </a>
                 </li>

@@ -36,21 +36,41 @@ const PHASE17_CHECKLIST_ITEMS = [
 export default function Phase17() {
   return (
     <DocsLayout>
-      <div className="container py-12 lg:py-16 grid lg:grid-cols-[1fr_240px] gap-10">
-        <article className="min-w-0">
-          <PhaseStamp phase="17" version="v1.7.0" />
-          <h1 className="font-display text-4xl font-bold mt-4 leading-tight">
-            Fase 17 — Gameplay Debugger e Telemetria
+      {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
+      <section className="paper-grain border-b border-border relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
+          <span className="font-display font-black leading-[0.85] text-center text-engineering/[0.09] dark:text-engineering/[0.14] whitespace-nowrap" style={{ fontSize: "clamp(4rem, 13vw, 14rem)" }}>
+            FASE 17
+          </span>
+        </div>
+        <div className="container relative py-12 lg:py-16">
+          <div className="fade-up">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              doc. 17 · phase archive
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <PhaseStamp phase="17" version="v1.7.0" warn />
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                homologada · auditoria de compilação
+              </span>
+            </div>
+          </div>
+          <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
+            Gameplay Debugger e{" "}
+            <em className="not-italic text-engineering">Telemetria</em>
           </h1>
-          <p className="mt-3 text-muted-foreground text-lg max-w-3xl">
+          <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Registro histórico do plugin{" "}
             <code className="font-mono text-sm">10_SandboxDebug</code>, homologado na versão
-            <strong className="text-foreground"> v1.7.0</strong> com 31/31 specs verdes. A Fase 17 abriu a
-            superfície de observabilidade do framework via{" "}
-            <code className="font-mono text-sm">ISBDebugInterface</code> — sem qualquer dependência de
-            compilação entre o plugin de debug e as extensões de gameplay.
+            <strong className="text-foreground"> v1.7.0</strong> com 31/31 specs verdes — observabilidade
+            via <code className="font-mono text-sm">ISBDebugInterface</code> sem dependência de compilação
+            com as extensões de gameplay.
           </p>
+        </div>
+      </section>
 
+      <div className="container py-12 lg:py-16 grid lg:grid-cols-[1fr_240px] gap-10">
+        <article className="min-w-0">
           <TechRule label="17.1 · O plugin 10_SandboxDebug" />
           <h2 id="plugin" className="font-display text-2xl font-bold scroll-mt-24">
             Isolação absoluta: editor-only, zero custo em Shipping

@@ -353,6 +353,23 @@ const DECISIONS: Decision[] = [
     status: "Homologada",
     homologatedAt: "2026-08-14",
   },
+  {
+    id: "DD-14",
+    version: "v1.8.0",
+    title: "Redesign de layout com referência fuch.ai: chips de navegação e hero com wordmark gigante",
+    problem:
+      "O header acumulava 11 entradas de navegação, busca e toggle de tema; em larguras desktop intermediárias (≈1440px) a barra quebrava com scrollbar horizontal, e as páginas de conteúdo não tinham identidade visual de abertura — o layout não transmitia o caráter de documentação técnica homologada.",
+    decision:
+      "Adotar o padrão de layout do fuch.ai: marca compacta à esquerda com sublinha mono, navegação como chips arredondados com numeração (01 · F17, 02 · F18, … 06 · Manual), e hero de cada página com wordmark gigante (FASE 17 · FASE 18 · FASE 19 · MANUAL · SFPS) renderizado como fundo de baixa opacidade atrás do título. Índices laterais numerados com rolagem suave (preventDefault + scrollIntoView) nas páginas longas.",
+    rejected:
+      "Sidebar permanente em todas as páginas — empobrece a leitura de documentos largos e duplica os chips do header; grid simétrico de cards no hero — não carrega hierarquia editorial nem o peso de spec sheet; palavra gigante fora do hero (ex.: rodapé) — perderia a função de identidade de abertura.",
+    consequence:
+      "Header comporta todo o navegação sem overflow em qualquer largura ≥375px; cada página ganha uma abertura editorial com numeração mono (doc. 17 · phase archive); índices numerados criam rota de leitura sequencial; nomes longos permanecem acessíveis via tooltip.",
+    precedent:
+      "Decisões de layout são resposta estrutural, não de conteúdo — nada informativo é removido (chips preservam numeração + tooltip). Paralelo direto com o padrão do Manifesto: acessibilidade auditável sem custo de compilação; e com DD-12: compactar oculta, não deleta.",
+    status: "Homologada",
+    homologatedAt: "2026-08-14",
+  },
 ];
 
 const STATUS_STYLES: Record<DecisionStatus, string> = {

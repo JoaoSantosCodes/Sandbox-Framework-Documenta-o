@@ -39,8 +39,8 @@ const DECISIONS: IndexEntry[] = [
   { id: "DD-11", title: "DD-11 — Deduplicação do indicador de dano via AttackId", subtitle: "Client-side · mapa AttackIds com TTL + bSkipClientNotify · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-11", keywords: "dd-11 deduplicação attackid dano indicador fase 19", group: "decisoes" },
   { id: "DD-12", title: "DD-12 — Header compacto com rótulos curtos de navegação", subtitle: "Labels curtos + tooltip completo · sem overflow horizontal · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-12", keywords: "dd-12 header navegação responsivo compacto", group: "decisoes" },
   { id: "DD-13", title: "DD-13 — Banner persistente de acesso por link direto", subtitle: "Âncora /decisoes#dd-XX com banner âmbar + scroll suave · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-13", keywords: "dd-13 link direto banner âncora scroll", group: "decisoes" },
+  { id: "DD-14", title: "DD-14 — Redesign de layout com referência fuch.ai", subtitle: "Chips de navegação · hero wordmark gigante · índices numerados · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-14", keywords: "dd-14 layout fuch.ai hero wordmark chips navegação redesign", group: "decisoes" },
 ];
-
 const PAGES: IndexEntry[] = [
   { id: "inicio", title: "Início", subtitle: "Visão geral, topologia e métricas do framework", page: "/", keywords: "home dashboard métricas topologia", group: "paginas" },
   { id: "fase17", title: "Fase 17 — Gameplay Debugger e Telemetria", subtitle: "10_SandboxDebug · ISBDebugInterface · v1.7.0 concluída", page: "/fase-17", keywords: "fase 17 debug gdt telemetria categoria sandbox", group: "paginas" },
