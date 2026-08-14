@@ -9,8 +9,10 @@ import {
   CalendarDays,
   ClipboardList,
   ExternalLink,
+  FileText,
   Filter,
   Layers,
+  Printer,
   RefreshCcw,
   SortDesc,
 } from "lucide-react";
@@ -26,6 +28,58 @@ import { toast } from "sonner";
 import { sourceForRoute, extractSectionMarkdown } from "@/lib/sectionsMarkdown";
 
 const FILTER_STORAGE_KEY = "sbf-pendencias-filter";
+
+/* Exportação da lista filtrada: Markdown (.md) e PDF (print-to-PDF nativo).
+   O formato de impressão (container oculto em tela, visível na impressão)
+   espelha sempre o estado corrente: filtro de categoria + ordenação ativos. */
+
+function pendingsToMarkdown(pendings: PhasePending[], filter: CategoryFilter, sort: SortKey): string {
+  const lines: string[] = [];
+  lines.push("# Pendências de fases — Snapshot exportado");
+  lines.push("");
+  lines.push(`Fonte oficial: pendencias_de_fases.md (Sandbox-Framework-Vault) · exportado em ${new Date().toLocaleString("pt-BR")} GMT-3`);
+  lines.push("");
+  lines.push(`Filtro aplicado: ${CATEGORY_CHIPS.find((c) => c.key === filter)?.label ?? filter} · ordenação: ${SORT_OPTIONS.find((s) => s.key === sort)?.label ?? sort}`);
+  lines.push("");
+  lines.push("## Regra de homologação");
+  lines.push("");
+  HOMOLOGATION_RULES.forEach((r) => lines.push(`${r.step}. ${r.label}`));
+  lines.push("");
+  lines.push(`## Pendências (${pendings.length})`);
+  lines.push("");
+  pendings.forEach((p) => {
+    const pendingItems = p.itens.filter((i) => i.estado === "Pendente").length;
+    lines.push(`### ${p.id} · ${p.titulo}`);
+    lines.push("");
+    lines.push(`**Categoria:** ${p.categoria}${p.categoria === "Proposta fora da régua" ? " · rascunho" : ""}`);
+    lines.push("");
+    lines.push(p.resumo);
+    lines.push("");
+    lines.push(`**Itens pendentes:** ${pendingItems}/${p.itens.length}`);
+    lines.push("");
+    p.itens.forEach((item) => lines.push(`- [${item.estado === "Pendente" ? " " : "x"}] **${item.id}** — ${item.exige}`));
+    lines.push("");
+  });
+  lines.push(`Ordem de execução recomendada pelo Vault: ${PENDING_ORDER_NOTE}`);
+  lines.push("");
+  return lines.join("\n");
+}
+
+function exportMarkdown(pendings: PhasePending[], filter: CategoryFilter, sort: SortKey) {
+  const markdown = pendingsToMarkdown(pendings, filter, sort);
+  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `pendencias_de_fases_${filter === "todas" ? "todas" : filter}_${new Date().toISOString().slice(0, 10)}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast.success("Markdown exportado", {
+    description: `${pendings.length} pendência(s) com o filtro ativo — pronta para colar no Vault após homologação.`,
+  });
+}
 
 type CategoryFilter = "todas" | "backlog" | "proposta" | "documental";
 type SortKey = "ordem" | "id" | "pendentes";
@@ -196,6 +250,33 @@ export default function Pendencias() {
               </button>
             ))}
           </div>
+          <div className="h-5 w-px bg-border hidden md:block" />
+          {/* Exportação da lista filtrada — respeita o filtro de categoria e a ordenação ativos */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => exportMarkdown(sorted, filter, sort)}
+              className="inline-flex items-center gap-1.5 border border-engineering/60 bg-engineering/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-engineering hover:bg-engineering/10 transition-colors active:scale-[0.97]"
+              title={`Exporta a lista filtrada (${sorted.length} pendência(s)) como Markdown`}
+            >
+              <FileText className="h-3 w-3" />
+              Exportar .md
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.print();
+                toast.success("Preparando PDF", {
+                  description: "Na janela de impressão, escolha \"Salvar como PDF\" — a lista sai com o filtro e a ordenação ativos.",
+                });
+              }}
+              className="inline-flex items-center gap-1.5 border border-border bg-card px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:border-engineering/60 hover:text-engineering transition-colors active:scale-[0.97]"
+              title="Abre a janela de impressão para salvar a lista filtrada como PDF"
+            >
+              <Printer className="h-3 w-3" />
+              Exportar PDF
+            </button>
+          </div>
         </div>
       </div>
 
@@ -246,6 +327,34 @@ export default function Pendencias() {
             </div>
           )}
         </section>
+
+        {/* Formato de impressão (PDF) — oculto em tela, espelha a lista filtrada */}
+        <div className="print-only hidden print:block space-y-4">
+          <h1 className="text-2xl font-bold">
+            Pendências de fases — {CATEGORY_CHIPS.find((c) => c.key === filter)?.label ?? filter} ({sorted.length})
+          </h1>
+          <p className="text-xs">
+            Fonte oficial: pendencias_de_fases.md (Sandbox-Framework-Vault) · exportado em{" "}
+            {new Date().toLocaleString("pt-BR")} · ordenação: {SORT_OPTIONS.find((s) => s.key === sort)?.label ?? sort}
+          </p>
+          {sorted.map((p) => (
+            <div key={p.id} className="border border-gray-300">
+              <h2 className="bg-gray-100 px-3 py-2 font-mono text-sm font-bold">
+                {p.id} · {p.titulo} — {p.categoria}
+              </h2>
+              <div className="px-3 py-2 space-y-2">
+                <p className="text-sm">{p.resumo}</p>
+                <ul className="text-sm space-y-1">
+                  {p.itens.map((item) => (
+                    <li key={item.id}>
+                      [{item.estado === "Pendente" ? " " : "x"}] {item.id} — {item.exige}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
       </main>
     </DocsLayout>
   );

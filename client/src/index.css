@@ -312,4 +312,34 @@ html {
       max-width: 1280px; /* Standard content width */
     }
   }
+
+  /* Formato de impressão (exportar PDF da /pendencias): oculta a UI interativa e
+     exibe apenas o conteúdo técnico + o container print-only da lista filtrada. */
+  @media print {
+    header,
+    footer,
+    .no-print {
+      display: none !important;
+    }
+    main {
+      padding-top: 0;
+    }
+    .print-only {
+      display: block !important;
+    }
+    /* Oculta os cards de tela quando o formato de impressão está ativo */
+    #pendencias-lista > section:has(article) {
+      display: none;
+    }
+    #pendencias-lista > div:has(.print-only) ~ .print-only {
+      display: block;
+    }
+    body {
+      color: #000;
+      background: #fff;
+    }
+    @page {
+      margin: 1.4cm;
+    }
+  }
 }

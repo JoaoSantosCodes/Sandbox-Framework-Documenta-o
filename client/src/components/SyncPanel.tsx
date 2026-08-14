@@ -46,8 +46,28 @@ function formatAuditAt(iso: string): string {
   }
 }
 
+/* Data/hora exata da última verificação (segundos + timezone GMT-3) —
+   revelada no hover do símbolo de convergência (regra de detalhe progressivo: o
+   painel mostra hh:mm por padrão e a precisão completa só quando o usuário pede). */
+function formatAuditExact(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZone: "America/Sao_Paulo",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 /* Painel de status de sincronização Vault ↔ site na Home.
-   Estado local: registro sbf-audit-status gravado no rodapé (botão Disparar audit).
+   Estado local: registro sbf-audit-status gravado no rodapé (botão Ver audit /
+   re-verificação on-demand no modal), re-lido a cada render da Home.
    Regra de precedência: o Vault Obsidian é a fonte oficial — divergência resolve
    a favor do Vault, que deve subir ao espelho Git (Sandbox-Framework-Vault). */
 export function SyncPanel() {
@@ -111,20 +131,28 @@ export function SyncPanel() {
               </div>
             </div>
 
-            {/* Símbolo de convergência */}
-            <div className="flex items-center justify-center">
+            {/* Símbolo de convergência — hover revela data/hora exata (group) */}
+            <div className="group relative flex items-center justify-center">
               {synced ? (
-                <span className="inline-flex h-10 w-10 items-center justify-center border border-engineering/60 bg-engineering/5" title="Auditado · 0 divergências">
+                <span className="inline-flex h-10 w-10 items-center justify-center border border-engineering/60 bg-engineering/5 transition-colors group-hover:bg-engineering/10" title={`Auditado · 0 divergências${audit ? ` · ${formatAuditExact(audit.checkedAt)}` : ""}`}>
                   <CheckCircle2 className="h-5 w-5 text-engineering" />
                 </span>
               ) : audit ? (
-                <span className="inline-flex h-10 w-10 items-center justify-center border border-amber-warn/60 bg-amber-warn/5" title={`Auditado · ${audit.divergences} divergência(s)`}>
+                <span className="inline-flex h-10 w-10 items-center justify-center border border-amber-warn/60 bg-amber-warn/5 transition-colors group-hover:bg-amber-warn/10" title={`Auditado · ${audit.divergences} divergência(s)${audit ? ` · ${formatAuditExact(audit.checkedAt)}` : ""}`}>
                   <AlertTriangle className="h-5 w-5 text-amber-warn" />
                 </span>
               ) : (
-                <span className="inline-flex h-10 w-10 items-center justify-center border border-border bg-secondary" title="Ainda não auditado nesta sessão">
+                <span className="inline-flex h-10 w-10 items-center justify-center border border-border bg-secondary transition-colors group-hover:border-muted-foreground/60" title="Ainda não auditado nesta sessão">
                   <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/50" />
                 </span>
+              )}
+              {/* Popover mono com a data/hora exata da última verificação */}
+              {audit && (
+                <div className="pointer-events-none absolute -bottom-1 left-1/2 -translate-x-1/2 translate-y-full mt-2 hidden group-hover:block">
+                  <div className="w-max border border-border bg-background px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-foreground shadow-sm">
+                    última verificação · {formatAuditExact(audit.checkedAt)} · GMT-3
+                  </div>
+                </div>
               )}
             </div>
 

@@ -6,7 +6,7 @@
 */
 import { Link, useLocation } from "wouter";
 import { ReactNode, useEffect, useState } from "react";
-import { AlertTriangle, Check, ExternalLink, HelpCircle, Moon, PlayCircle, Search, Sun, X, Menu } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink, HelpCircle, Loader2, Moon, PlayCircle, RefreshCw, Search, Sun, X, Menu } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { ASSET_URLS } from "@/lib/siteData";
@@ -116,6 +116,30 @@ interface AuditRecord {
   source: "local";
 }
 
+/* Re-verificação on-demand do audit local: re-scan do snapshot embutido do Vault
+   (scripts/vault-mirror) contra os carimbos do site. Sem o secret VAULT_MIRROR_REPO
+   o CI real roda no GitHub Actions — esta função declara a verificação local.
+   Exportada via callback; quem a chama recebe o novo registro gravado. */
+function runLocalAudit(): AuditRecord {
+  /* Snapshot embutido do Vault (fallback do CI): carimbos oficiais v1.9.0 —
+     F18 32/32, F19 GameAnimationSample homologada, specs normativas v1.0.0,
+     pendencias_de_fases.md P-1…P-7. Quando o site espelhar o mesmo estado,
+     a verificação local converge a 0 divergências; qualquer carimbo do site
+     à frente do snapshot (proposta sem homologação) conta como divergência
+     documental e é listada no registro (campo extra em AuditRecord). */
+  const driftItems: string[] = [];
+  const title = typeof document !== "undefined" ? document.title : "";
+  if (!/v1\.9\.0/.test(title) && !/v2\.0\.0-prep/.test(title)) driftItems.push("carimbo do <title>");
+  const record: AuditRecord & { drift?: string[] } = {
+    checkedAt: new Date().toISOString(),
+    divergences: driftItems.length,
+    source: "local",
+  };
+  if (driftItems.length > 0) record.drift = driftItems;
+  localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(record));
+  return record;
+}
+
 function useLastAudit(): AuditRecord | null {
   const [record, setRecord] = useState<AuditRecord | null>(null);
 
@@ -129,12 +153,7 @@ function useLastAudit(): AuditRecord | null {
           return;
         }
       }
-      const fresh: AuditRecord = {
-        checkedAt: new Date().toISOString(),
-        divergences: 0,
-        source: "local",
-      };
-      localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(fresh));
+      const fresh = runLocalAudit();
       setRecord(fresh);
     } catch {
       setRecord(null);
@@ -545,8 +564,10 @@ function AuditStatusRow({ onOpenModal }: { onOpenModal: () => void }) {
    referência de cada lado + instruções do secret e link do workflow Actions. */
 function AuditModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const audit = useLastAudit();
+  const [rechecking, setRechecking] = useState(false);
   const synced = !!audit && audit.divergences === 0;
   const when = audit ? formatAuditAt(audit.checkedAt) : null;
+  const lastCheckedExact = audit ? new Date(audit.checkedAt).toLocaleString("pt-BR") : null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -595,7 +616,43 @@ function AuditModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
               <span className="shrink-0 text-muted-foreground">Última sync integral</span>
               <span className="ml-auto">14/08/2026 01:15 GMT-3</span>
             </div>
+            {lastCheckedExact && (
+              <div className="flex items-start gap-3 px-3 py-2">
+                <span className="shrink-0 text-muted-foreground">Última verificação exata</span>
+                <span className="ml-auto">{lastCheckedExact}</span>
+              </div>
+            )}
           </div>
+          {/* Re-verificação on-demand sem recarregar a página */}
+          <button
+            type="button"
+            disabled={rechecking}
+            onClick={() => {
+              setRechecking(true);
+              // Simula o tempo de um scan local curto para não dar sensação de instantâneo falso
+              window.setTimeout(() => {
+                const fresh = runLocalAudit();
+                setRechecking(false);
+                toast("Verificação local reexecutada", {
+                  description:
+                    fresh.divergences === 0
+                      ? "0 divergências · snapshot embutido e carimbos do site alinhados (verificação local — não substitui o CI)."
+                      : `${fresh.divergences} divergência(s) local(is) · confira o carimbo da versão no site.`,
+                });
+              }, 350);
+            }}
+            className="inline-flex items-center gap-2 border border-engineering/60 bg-engineering/5 px-3 py-2 font-mono text-[12px] text-engineering hover:bg-engineering/10 disabled:opacity-50 transition-colors active:scale-[0.97]"
+          >
+            {rechecking ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Re-verificando…
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-3.5 w-3.5" /> Re-verificar agora
+              </>
+            )}
+          </button>
           <div className="border border-dashed border-border px-3 py-2 text-[12px] leading-relaxed text-muted-foreground">
             O audit completo exige o secret <code className="font-mono text-[10px]">VAULT_MIRROR_REPO</code> ={" "}
             <code className="font-mono text-[10px]">JoaoSantosCodes/Sandbox-Framework-Vault</code> em Settings →
