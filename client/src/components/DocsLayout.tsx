@@ -5,9 +5,16 @@
 */
 import { Link, useLocation } from "wouter";
 import { ReactNode, useEffect, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Check } from "lucide-react";
 import { Menu, X } from "lucide-react";
 import { ASSET_URLS } from "@/lib/siteData";
+import { CHECKLIST_META, decodeChecklistProgress } from "@/components/PhaseChecklist";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Data registrada da última sincronização integral Vault ↔ site (Dashboard, task.md,
 // sfdg_guide.md, manifesto_and_coding_standards.md e páginas do site).
@@ -17,6 +24,14 @@ const LAST_VAULT_SYNC = "13/08/2026 23:50 GMT-3";
 // sincronização pendente no rodapé: se existe progresso marcado no navegador que ainda não
 // foi homologado/marcado no Vault, o rodapé alerta o auditor.
 const PHASE_CHECKLIST_KEYS = ["sbf-phase17-checklist", "sbf-phase18-checklist", "sbf-phase19-checklist"];
+
+interface PendingDetail {
+  phase: string;
+  title: string;
+  doneCount: number;
+  total: number;
+  pending: string[];
+}
 
 function useUnsyncedChecklists(): boolean {
   const [unsynced, setUnsynced] = useState(false);
@@ -48,6 +63,37 @@ function useUnsyncedChecklists(): boolean {
 
   return unsynced;
 }
+
+// Detalha o progresso pendente por fase — usado pelo tooltip do rodapé.
+function usePendingDetails(): PendingDetail[] {
+  const [details, setDetails] = useState<PendingDetail[]>([]);
+
+  useEffect(() => {
+    const check = () => {
+      setDetails(
+        CHECKLIST_META.map((meta) => {
+          const { done, pending } = decodeChecklistProgress(meta);
+          return {
+            phase: meta.phase,
+            title: meta.title,
+            doneCount: done.length,
+            total: meta.items.length,
+            pending: pending.map((i) => i.label),
+          };
+        }).filter((d) => d.doneCount > 0)
+      );
+    };
+    check();
+    window.addEventListener("storage", check);
+    const interval = window.setInterval(check, 2000);
+    return () => {
+      window.removeEventListener("storage", check);
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  return details;
+}
 import { SearchPalette, SearchShortcut } from "@/components/SearchPalette";
 import { Search } from "lucide-react";
 
@@ -70,6 +116,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const [open, setOpen] = useState(false);
   const unsynced = useUnsyncedChecklists();
+  const pendingDetails = usePendingDetails();
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -168,12 +215,49 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             </span>
             <span className="font-mono text-[10px] text-muted-foreground">·</span>
             {unsynced ? (
-              <span className="inline-flex items-center gap-1.5 border border-amber-warn/70 bg-amber-warn/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-amber-warn animate-pulse">
-                <AlertTriangle className="h-3 w-3" /> Progresso marcado, ainda não sincronizado ao Vault
-              </span>
+              <TooltipProvider>
+              <Tooltip open disableHoverableContent={false} delayDuration={150}>
+              <TooltipTrigger asChild>
+                <span className="inline-flex items-center gap-1.5 cursor-default border border-amber-warn/70 bg-amber-warn/10 px-2 py-0.5 font-mono text-[10px] tracking-wider text-amber-warn animate-pulse">
+                  <AlertTriangle className="h-3 w-3" /> {pendingDetails.length} checklist(s) com progresso pendente
+                </span>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                align="start"
+                className="max-w-md p-0 border-border bg-popover text-popover-foreground"
+              >
+                <div className="max-w-sm">
+                  {pendingDetails.map((d) => (
+                    <div key={d.phase} className="px-3 py-2 border-b border-border/60 last:border-b-0">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-amber-warn mb-1.5">
+                        {d.phase} · {d.doneCount}/{d.total} concluídos
+                      </div>
+                      <ul className="space-y-1">
+                        {d.pending.slice(0, 6).map((p) => (
+                          <li key={p} className="flex items-start gap-1.5 text-[10px] text-foreground/90 leading-snug">
+                            <span className="mt-1 h-1 w-1 shrink-0 bg-amber-warn/80" />
+                            {p}
+                          </li>
+                        ))}
+                        {d.pending.length > 6 && (
+                          <li className="font-mono text-[10px] text-muted-foreground">
+                            + {d.pending.length - 6} itens restantes
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  ))}
+                  <div className="px-3 py-2 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                    Passe no Vault para homologar · depois “Limpar progresso” no site
+                  </div>
+                </div>
+              </TooltipContent>
+              </Tooltip>
+              </TooltipProvider>
             ) : (
               <span className="inline-flex items-center gap-1.5 border border-engineering/60 bg-engineering/5 px-2 py-0.5 font-mono text-[10px] tracking-wider text-engineering">
-                Sem progresso pendente · sincronizado
+                <Check className="h-3 w-3" /> Sem progresso pendente · sincronizado
               </span>
             )}
           </div>

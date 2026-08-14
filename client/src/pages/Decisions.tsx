@@ -6,6 +6,8 @@
 */
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
+import { useState } from "react";
+import { Search } from "lucide-react";
 
 type DecisionStatus = "Homologada" | "Homologada com nota" | "Pendente";
 
@@ -250,7 +252,25 @@ function DecisionRecord({ d, index }: { d: Decision; index: number }) {
   );
 }
 
+const STATUS_FILTERS: (DecisionStatus | "Todas")[] = ["Todas", "Homologada", "Homologada com nota", "Pendente"];
+
 export default function Decisions() {
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<DecisionStatus | "Todas">("Todas");
+
+  const filtered = DECISIONS.filter((d) => {
+    if (statusFilter !== "Todas" && d.status !== statusFilter) return false;
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (
+      d.id.toLowerCase().includes(q) ||
+      d.title.toLowerCase().includes(q) ||
+      d.problem.toLowerCase().includes(q) ||
+      d.decision.toLowerCase().includes(q) ||
+      d.precedent.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <DocsLayout>
       <div className="container py-10 lg:py-14 max-w-5xl">
@@ -281,10 +301,54 @@ export default function Decisions() {
           </p>
         </div>
 
+        <div className="mb-8 border border-border bg-card">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-border bg-secondary/60">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Buscar por identificador, título ou conteúdo
+            </span>
+            <span className="font-mono text-[11px] text-engineering ml-auto">
+              {filtered.length}/{DECISIONS.length} registro(s)
+            </span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Ex.: DD-03, uilocalplayersubsystem, deduplicação..."
+                className="w-full border border-border bg-background px-3 pl-9 py-2 text-sm font-mono placeholder:text-muted-foreground/60 focus:outline-none focus:border-engineering/60 transition-colors"
+              />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {STATUS_FILTERS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatusFilter(s)}
+                  className={`border px-3 py-2 text-xs font-mono uppercase tracking-wider transition-colors duration-150 ${
+                    statusFilter === s
+                      ? "border-engineering bg-engineering/10 text-engineering"
+                      : "border-border bg-card text-muted-foreground hover:border-engineering/60 hover:text-engineering"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-8">
-          {DECISIONS.map((d, i) => (
-            <DecisionRecord key={d.id} d={d} index={i} />
-          ))}
+          {filtered.length > 0 ? (
+            filtered.map((d, i) => <DecisionRecord key={d.id} d={d} index={i} />)
+          ) : (
+            <div className="border border-dashed border-border px-6 py-10 text-center font-mono text-sm text-muted-foreground">
+              Nenhum registro corresponde à busca "{query}" {statusFilter !== "Todas" && `com status "${statusFilter}"`}.
+              Tente outro identificador (DD-01…DD-11) ou amplie o filtro de status.
+            </div>
+          )}
         </div>
 
         <AuditNote tone="warn">

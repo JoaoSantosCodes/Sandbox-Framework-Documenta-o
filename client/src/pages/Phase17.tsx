@@ -221,6 +221,7 @@ public:
           <PhaseChecklist
             storageKey={PHASE17_CHECKLIST_KEY}
             items={PHASE17_CHECKLIST_ITEMS}
+            phaseLabel="Fase 17 — Gameplay Debugger e Telemetria (v1.7.0)"
             completeMessage="Checklist completo — Fase 17 (v1.7.0) confirmada e auditada."
           />
 

@@ -3,7 +3,7 @@
   localStorage. Contém os botões "Limpar progresso" e "Copiar status" para
   reiniciar o acompanhamento ou exportar o progresso como texto copiável.
 */
-import { Check, Copy, RotateCcw } from "lucide-react";
+import { Check, Copy, FileDown, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,11 +12,88 @@ export interface ChecklistItem {
   label: string;
 }
 
+export interface ChecklistMeta {
+  phase: string;
+  title: string;
+  storageKey: string;
+  items: ChecklistItem[];
+}
+
+// Registro central dos checklists interativos por fase — usado pelo indicador de
+// sincronização do rodapé (decodificar itens pendentes) e pela exportação em Markdown.
+export const CHECKLIST_META: ChecklistMeta[] = [
+  {
+    phase: "Fase 17",
+    title: "Gameplay Debugger e Telemetria (v1.7.0 · retrospectivo)",
+    storageKey: "sbf-phase17-checklist",
+    items: [
+      { key: "iface", label: "ISBDebugInterface + FSBDebugLine criados em 02_SandboxInterfaces" },
+      { key: "stack", label: "ISBDebugInterface implementada em USBBehaviorStackComponent (01_SandboxCommon)" },
+      { key: "character", label: "ISBDebugInterface em USBAttribute/USBState/USBAbilityComponent (05_SandboxCharacter)" },
+      { key: "extensoes", label: "ISBDebugInterface em USBInventoryComponent (08) e USBCombatComponent (06)" },
+      { key: "atores", label: "ISBDebugInterface nos atores de teste de interação (ASBTestLockedChest em 07)" },
+      { key: "plugin", label: "Plugin 10_SandboxDebug inicializado (.uplugin, Build.cs, módulo)" },
+      { key: "coletor", label: "FGameplayDebuggerCategory_Sandbox implementado e registrado no módulo" },
+      { key: "isolamento", label: "Teste de desacoplamento: remover dependência de 08_SandboxInventory e validar o build" },
+      { key: "tests", label: "V1Editor compila e a suíte de testes permanece verde (31/31)" },
+    ],
+  },
+  {
+    phase: "Fase 18",
+    title: "Interface Dinâmica e HUD Reativo (v1.8.0)",
+    storageKey: "sbf-phase18-checklist",
+    items: [
+      { key: "payloads", label: "SBEventPayloads.h criado em 04_SandboxCore (UObject, GC) — sem #include de 06/07/08" },
+      { key: "subsystem", label: "USBUIManager como ULocalPlayerSubsystem — isolamento por local player (split-screen / listen server)" },
+      { key: "unsubscribe", label: "Auto-unsubscribe cirúrgico em NativeDestruct (FSBWidgetEventSubscription tag + delegate)" },
+      { key: "antispill", label: "Filtro anti-spill em todos os widgets (TargetPawn == GetOwningPlayerPawn())" },
+      { key: "throttle", label: "Throttle de 60 Hz no acumulador do hold (USBInteractionComponent::TickComponent)" },
+      { key: "inventorio", label: "Grade de inventário assinando os 4 eventos canônicos (ItemAdded/Removed/Equipped/Unequipped)" },
+      { key: "sutest", label: "SBUITests verde (32/32 specs) — Cenário 1: unsubscribe/idempotência; Cenário 2: TargetPawn mismatch" },
+      { key: "isolamento", label: "Isolamento simétrico: hide 05+06+07+08 → 09 compila; hide 09 → gameplay e suíte preservados" },
+      { key: "playtest", label: "Playtest multiplayer: vida/mana, prompt de interação, progresso de hold síncrono, grid e cooldowns" },
+      { key: "vault", label: "Vault e site carimbados v1.8.0 (Dashboard, task.md, siteData, manual de uso)" },
+    ],
+  },
+  {
+    phase: "Fase 19",
+    title: "Indicador Direcional de Dano (planejamento)",
+    storageKey: "sbf-phase19-checklist",
+    items: [
+      { key: "payload", label: "SBEventPayloads.h — USBDamageEventPayload (AttackId, Direction, bIsFatal)" },
+      { key: "produtor", label: "Ponto autoritativo de publicação no Hitscan (HasAuthority já ativo)" },
+      { key: "widget", label: "USBUIDamageIndicator assinando com prioridade Low + anti-spill" },
+      { key: "dedupe", label: "Deduplicação client-side via AttackId (TTL ou bSkipClientNotify)" },
+      { key: "cenario7", label: "SBUITests Cenário 7: indicador no ângulo esperado" },
+      { key: "cenario8", label: "SBUITests Cenário 8: TargetPawn mismatch não renderiza" },
+      { key: "isolamento", label: "Teste de isolamento simétrico (hide 06 + hide 09, Exit Code 0)" },
+      { key: "playtest", label: "Playtest Dedicated Server: indicador só no pawn afetado" },
+      { key: "dd11", label: "DD-11 registrado e homologado: deduplicação client-side via AttackId" },
+      { key: "vault", label: "Vault + site carimbados v1.9.0 (Dashboard, task.md, siteData)" },
+    ],
+  },
+];
+
+// Decodifica o progresso salvo de um checklist: retorna { done, pending } de itens.
+export function decodeChecklistProgress(meta: ChecklistMeta): { done: ChecklistItem[]; pending: ChecklistItem[] } {
+  try {
+    const raw = localStorage.getItem(meta.storageKey);
+    const state: Record<string, boolean> = raw ? JSON.parse(raw) : {};
+    const done = meta.items.filter((i) => !!state[i.key]);
+    const pending = meta.items.filter((i) => !state[i.key]);
+    return { done, pending };
+  } catch {
+    return { done: [], pending: meta.items };
+  }
+}
+
 interface PhaseChecklistProps {
   storageKey: string;
   items: ChecklistItem[];
   headerNote?: string;
   completeMessage?: string;
+  /** Título da fase para o arquivo exportado em Markdown (ex.: "Fase 17"). */
+  phaseLabel?: string;
 }
 
 export function PhaseChecklist({
@@ -24,8 +101,10 @@ export function PhaseChecklist({
   items,
   headerNote = "Progresso salvo automaticamente no localStorage (por navegador)",
   completeMessage = "Checklist completo — pronto para submeter o plano executado à revisão.",
+  phaseLabel,
 }: PhaseChecklistProps) {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const label = phaseLabel || storageKey;
   const [loaded, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -60,6 +139,40 @@ export function PhaseChecklist({
     }
     toast("Checklist reiniciado", {
       description: "Todo o progresso foi limpo deste navegador.",
+    });
+  };
+
+  const buildMarkdown = () => {
+    const done = items.filter((i) => checked[i.key]);
+    const lines = [
+      `# Checklist — ${label}`,
+      "",
+      `Progresso: ${done.length}/${items.length} itens concluídos (${pct}%).`,
+      "",
+      ...items.map((item, idx) => {
+        const mark = checked[item.key] ? "x" : " ";
+        return `- [${mark}] ${idx + 1}. ${item.label}`;
+      }),
+      "",
+      `Exportado do site de documentação do Sandbox Framework em ${new Date().toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}.`,
+      "",
+    ];
+    return lines.join("\n");
+  };
+
+  const downloadMarkdown = () => {
+    const text = buildMarkdown();
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `checklist-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Checklist exportado em Markdown", {
+      description: `Arquivo salvo para o Vault ou para arquivamento da auditoria.`,
     });
   };
 
@@ -157,6 +270,13 @@ export function PhaseChecklist({
           className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:border-engineering/60 hover:text-engineering transition-colors"
         >
           <Copy className="h-3 w-3" /> Copiar status
+        </button>
+        <button
+          type="button"
+          onClick={downloadMarkdown}
+          className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:border-engineering/60 hover:text-engineering transition-colors"
+        >
+          <FileDown className="h-3 w-3" /> Exportar Markdown
         </button>
         {copied && (
           <span className="self-center font-mono text-[10px] uppercase tracking-wider text-engineering">
