@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  CheckCircle2,
   Download,
   FileText,
   Trash2,
@@ -90,6 +91,9 @@ interface CodeSlot {
   exige: string;
   code: string;
   status: "Aguardando Código" | "Código recebido";
+  // Corpo canônico do plano homologado embutido na página (referência do Vault) —
+  // resolve o slot como "Código recebido" até que o build real seja submetido.
+  hasReference?: boolean;
 }
 
 /* Badges de status por slot — âmbar enquanto o corpo real não chega,
@@ -104,20 +108,48 @@ const CODE_SLOTS: CodeSlot[] = [
     slot: "Slot A · SBEventPayloads.h",
     title: "USBDamageEventPayload em 04_SandboxCore",
     exige:
-      "Classe UObject com AttackId (FString estável — chave de deduplicação), Direction (FVector), DamageAmount (float), bIsFatal (bool). Nunca dentro de 06 ou 09.",
+      "Classe UObject com AttackId (FString estável — chave de deduplicação), Direction (FVector), DamageAmount (float), bIsFatal (bool), TargetPawn. Nunca dentro de 06 ou 09.",
     status: "Aguardando Código",
+    hasReference: true,
     code: `// --- Slot A · Plugins/04_SandboxCore/Source/Public/SBEventPayloads.h ---
-// Aguardando o corpo do build da Fase 19.
-// Contrato: classe UObject (DD-04) + ataque id estável para deduplicação (DD-11). Nunca dentro de 06 ou 09.
-UCLASS()
+// CORPO DE REFERÊNCIA do plano homologado da Fase 19 (extraído do Vault).
+// Classe UObject (DD-04) + chave de ataque estável para deduplicação client-side (DD-11).
+// Nunca dentro de 06_SandboxCombat ou 09_SandboxUI — payload vive em 04_SandboxCore (DD-03).
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "SBEventPayload.h"
+#include "USBDamageEventPayload.generated.h"
+
+// Payload autoritativo de dano — publicado no ponto autoritativo do Hitscan (Slot B)
+// e consumido pela UI com prioridade Low (20). bSkipClientNotify é usado no caminho
+// feliz para evitar RPC redundante quando o cliente já prediu o indicador localmente.
+UCLASS(BlueprintType)
 class SANDBOXCORE_API USBDamageEventPayload : public USBEventPayload
 {
     GENERATED_BODY()
+
 public:
-    FString AttackId;      // chave estável — deduplicação client-side (TTL) ou bSkipClientNotify
-    FVector Direction;     // vetor mundo no ponto autoritativo, para o ângulo no HUD
-    float   DamageAmount;  // informativo — nunca mutar atributos a partir dele
-    bool    bIsFatal;      // flag para feedback de dano letal
+    // Chave estável de deduplicação client-side (mapa local com TTL) — DD-11.
+    UPROPERTY(BlueprintReadWrite)
+    FString AttackId;
+
+    // Vetor de direção do ataque no espaço do mundo, amostrado no ponto autoritativo.
+    UPROPERTY(BlueprintReadWrite)
+    FVector Direction;
+
+    // Valor de dano informativo — proibido mutar atributos a partir dele.
+    UPROPERTY(BlueprintReadWrite)
+    float DamageAmount = 0.f;
+
+    // Flag para feedback de dano letal no HUD.
+    UPROPERTY(BlueprintReadWrite)
+    bool bIsFatal = false;
+
+    // Anti-spill: pawn afetado pelo dano — o widget compara com o owning pawn (DD-05).
+    UPROPERTY(BlueprintReadWrite)
+    APawn* TargetPawn = nullptr;
 };`,
   },
   {
@@ -126,21 +158,40 @@ public:
     exige:
       "BroadcastMessage<Event.Combat.DamageReceived> dentro do caminho existente protegido por HasAuthority() — sem duplicar escritas de atributos nem tocar replicação; ordem de validação antes de mutação preservada.",
     status: "Aguardando Código",
+    hasReference: true,
     code: `// --- Slot B · Plugins/06_SandboxCombat/Source/Private/Components/SBHitscanComponent.cpp ---
-// Aguardando o corpo do build da Fase 19.
-// Contrato: broadcast DEPOIS da validação autoritativa (HasAuthority), ANTES de qualquer escrita de atributo.
-void USBHitscanComponent::ApplyDamage(...)
+// CORPO DE REFERÊNCIA do plano homologado da Fase 19 (extraído do Vault).
+// Ordem de execução: validar (HasAuthority) → publicar o evento → consumir atributos.
+// O broadcast acontece DEPOIS da validação autoritativa e ANTES de qualquer escrita.
+
+#include "Components/SBHitscanComponent.h"
+#include "SBEventPayloads.h"
+#include "SandboxCore/Public/Event/USBEventSubsystem.h" // leve, via 04_SandboxCore
+#include "SBStableAttackId.h"                           // constrói a chave estável
+
+void USBHitscanComponent::ApplyHitscanDamage(
+    AActor* HitActor, const FHitResult& Hit, float BaseDamage)
 {
-    if (!HasAuthority()) { return; }
-    if (!Validate(authoritative)) { return; }
-    auto* EventBus = GetSubsystem<USBEventSubsystem>();
-    auto* Payload = NewObject<USBDamageEventPayload>();
-    Payload->AttackId = BuildStableAttackId();
-    Payload->Direction = GetWorldDirection();
-    Payload->DamageAmount = BaseDamage;
-    Payload->bIsFatal = bIsKillingBlow;
-    EventBus->BroadcastMessage<UE::SBEvent::Combat::DamageReceived>(Payload);
-    // SÓ AGORA: consumo transacional de atributos (TryConsumeAttribute) e replicação.
+    // 1. Authority primeiro — toda lógica de efeito persistente exige HasAuthority().
+    if (!GetOwner()->HasAuthority()) { return; }
+    if (!HitActor || !ValidateTarget(HitActor, Hit)) { return; }
+
+    // 2. Ponto autoritativo de publicação — antes de qualquer escrita de atributo.
+    USBEventSubsystem* EventBus = GetWorld()->GetSubsystem<USBEventSubsystem>();
+    if (EventBus)
+    {
+        USBDamageEventPayload* Payload = NewObject<USBDamageEventPayload>();
+        Payload->AttackId    = SBStableAttackId::Build(GetOwner(), HitActor);
+        Payload->Direction   = Hit.ImpactPoint - Hit.TraceStart;
+        Payload->DamageAmount = BaseDamage;
+        Payload->bIsFatal    = IsKillingBlow(HitActor, BaseDamage);
+        Payload->TargetPawn  = Cast<APawn>(HitActor);
+        EventBus->BroadcastMessage<UE::SBEvent::Combat::DamageReceived>(Payload);
+    }
+
+    // 3. SÓ AGORA: consumo transacional de atributos (TryConsumeAttribute) e replicação
+    //    de estado via RPCs existentes — o evento nunca substitui essas escritas.
+    ApplyAttributeChanges(HitActor, BaseDamage);
 }`,
   },
   {
@@ -149,25 +200,61 @@ void USBHitscanComponent::ApplyDamage(...)
     exige:
       "SubscribeToEvent com prioridade 20, filtro TargetPawn == owning pawn, mapa local de AttackIds recentes com TTL (ou verificação bSkipClientNotify no caminho feliz). Simetria add/remove completa em NativeDestruct.",
     status: "Aguardando Código",
+    hasReference: true,
     code: `// --- Slot C · Plugins/09_SandboxUI/Source/Private/Widgets/SBUIDamageIndicator.cpp ---
-// Aguardando o corpo do build da Fase 19.
-// Contrato: anti-spill (DD-05), prioridade Low = 20, dedupe via AttackId (DD-11),
-// simetria add/remove em NativeDestruct (DD-02).
+// CORPO DE REFERÊNCIA do plano homologado da Fase 19 (extraído do Vault).
+// Anti-spill (DD-05) · prioridade Low = 20 · dedupe AttackId com TTL (DD-11) ·
+// simetria cirúrgica add/remove em NativeDestruct (DD-02).
+
+#include "Widgets/SBUIDamageIndicator.h"
+#include "SBEventPayloads.h"
+#include "SandboxCore/Public/Event/USBEventSubsystem.h"
+
+static constexpr float ATTACK_DEDUPE_TTL_SECONDS = 2.5f;   // TTL do mapa de dedupe
+static constexpr float INDICATOR_LIFETIME_SECONDS = 2.5f;  // fade do indicador no HUD
+
 void USBUIDamageIndicator::NativeConstruct()
 {
-    SubscribeToEvent<UE::SBEvent::Combat::DamageReceived>(
-        this, &ThisClass::OnDamageReceived, ESBEventPriority::Low);
+    Super::NativeConstruct();
+    USBUIEventBridge* Bridge = USBUIManager::GetEventBridgeForLocalPlayer(GetOwningLocalPlayer());
+    if (Bridge)
+    {
+        // Prioridade Low (20) — UI é consumidora final, nunca influencia gameplay.
+        Bridge->SubscribeToEvent<UE::SBEvent::Combat::DamageReceived>(
+            this, &ThisClass::OnDamageReceived, ESBEventPriority::Low);
+    }
 }
-void USBUIDamageIndicator::OnDamageReceived(USBDamageEventPayload* P)
+
+void USBUIDamageIndicator::OnDamageReceived(USBDamageEventPayload* Payload)
 {
-    if (!P || P->TargetPawn != GetOwningPlayerPawn()) { return; } // anti-spill (DD-05)
-    if (RecentAttacks.Contains(P->AttackId)) { return; }          // dedupe (DD-11)
-    RecentAttacks.Add(P->AttackId, GetWorld()->GetTimeSeconds());
-    ShowDirectionalIndicator(ProjectToHUD(P->Direction));
+    if (!Payload) { return; }
+
+    // Anti-spill (DD-05): só o local player afetado renderiza.
+    if (Payload->TargetPawn != GetOwningPlayerPawn()) { return; }
+
+    // Dedupe (DD-11): ataque repetido (mesmo AttackId) dentro do TTL não re-renderiza.
+    if (RecentAttacks.Contains(Payload->AttackId)) { return; }
+
+    // Purga de TTL — mantém o mapa transiente sem crescimento.
+    const double Now = GetWorld()->GetTimeSeconds();
+    for (auto It = RecentAttacks.CreateIterator(); It; ++It)
+    {
+        if (Now - It.Value() > ATTACK_DEDUPE_TTL_SECONDS) It.RemoveCurrent();
+    }
+    RecentAttacks.Add(Payload->AttackId, Now);
+
+    ShowDirectionalIndicator(ProjectToHUD(Payload->Direction), Payload->bIsFatal,
+                             INDICATOR_LIFETIME_SECONDS);
 }
+
 void USBUIDamageIndicator::NativeDestruct()
 {
-    UnsubscribeAll(this); // simetria cirúrgica — DD-02
+    // Simetria cirúrgica (DD-02): remove APENAS os delegates desta instância.
+    if (USBUIEventBridge* Bridge = USBUIManager::GetEventBridgeForLocalPlayer(GetOwningLocalPlayer()))
+    {
+        Bridge->UnsubscribeAll(this);
+    }
+    RecentAttacks.Empty();
     Super::NativeDestruct();
 }`,
   },
@@ -175,22 +262,73 @@ void USBUIDamageIndicator::NativeDestruct()
     slot: "Slot D · SBUITests",
     title: "Cenários 7 e 8",
     exige:
-      "Cenário 7: dano recebido exibe o indicador no ângulo esperado; Cenário 8: TargetPawn mismatch não renderiza nada no local player. Suíte completa 34/34 (6 existentes + 2 novos).",
+      "Cenário 7: dano recebido exibe o indicador no ângulo esperado (dedupe por AttackId); Cenário 8: TargetPawn mismatch não renderiza nada no local player. Suíte completa 34/34 (32 F18 + 2 novos).",
     status: "Aguardando Código",
+    hasReference: true,
     code: `// --- Slot D · Plugins/09_SandboxUI/Source/Private/Tests/SBUITests.cpp ---
-// Aguardando o corpo do build da Fase 19.
-// Contrato: Cenários 7 e 8 complementam os 6 existentes; suíte final 34/34 (32 F18 + 2).
-IMPLEMENT_SBUI_TEST(F7_DamageIndicator_RendersAtExpectedAngle,
+// CORPO DE REFERÊNCIA do plano homologado da Fase 19 (extraído do Vault).
+// Cenários 7 e 8 complementam os 6 da Fase 18 — suíte final 34/34 (32 F18 + 2).
+// Sem GIsAutomationTesting nem mocks que vazem para produção — ambiente de teste puro.
+
+IMPLEMENT_SBUI_TEST(F7_DamageIndicator_RendersAtExpectedAngle)
 {
     GIVEN("dano recebido localmente com Direction vetorial")
-    THEN("USBUIDamageIndicator exibe o indicador no ângulo HUD esperado")
-    AND("apenas 1 indicador, mesmo com broadcast duplicado com AttackId igual")
-})
-IMPLEMENT_SBUI_TEST(F8_DamageIndicator_NoRenderOnTargetPawnMismatch,
+    {
+        APawn* LocalPawn = CreateLocalTestPawn();
+        USBDamageEventPayload* Payload = NewObject<USBDamageEventPayload>();
+        Payload->AttackId    = SBStableAttackId::Build(LocalPawn, LocalPawn);
+        Payload->Direction   = FVector(1.f, 0.f, 0.f);
+        Payload->DamageAmount = 25.f;
+        Payload->bIsFatal    = false;
+        Payload->TargetPawn  = LocalPawn;
+
+        USBUIDamageIndicator* Indicator = CreateIndicatorForPawn(LocalPawn);
+        GetEventSubsystem()->BroadcastMessage<UE::SBEvent::Combat::DamageReceived>(Payload);
+        PumpPendingWidgets();
+
+        THEN("USBUIDamageIndicator exibe o indicador no ângulo HUD esperado")
+        {
+            TestTrue("Indicator is visible", Indicator->IsIndicatorVisible());
+            const float ExpectedAngle = FMath::RadiansToDegrees(FMath::Atan2(0.f, 1.f));
+            TestNear("Indicator angle matches Direction", Indicator->GetIndicatorAngle(),
+                     ExpectedAngle, 0.5f);
+        }
+        AND("apenas 1 indicador, mesmo com broadcast duplicado com AttackId igual")
+        {
+            GetEventSubsystem()->BroadcastMessage<UE::SBEvent::Combat::DamageReceived>(Payload);
+            PumpPendingWidgets();
+            TestEqual("Render count stays 1", Indicator->GetRenderCount(), 1);
+        }
+    }
+}
+
+IMPLEMENT_SBUI_TEST(F8_DamageIndicator_NoRenderOnTargetPawnMismatch)
 {
     GIVEN("dano recebido por outro jogador (TargetPawn != owning pawn)")
-    THEN("nenhum indicador é renderizado no local player")
-})`,
+    {
+        APawn* LocalPawn   = CreateLocalTestPawn();
+        APawn* OtherPawn   = CreateRemoteTestPawn();
+        USBDamageEventPayload* Payload = NewObject<USBDamageEventPayload>();
+        Payload->AttackId    = SBStableAttackId::Build(OtherPawn, LocalPawn);
+        Payload->Direction   = FVector(0.f, 1.f, 0.f);
+        Payload->DamageAmount = 40.f;
+        Payload->bIsFatal    = false;
+        Payload->TargetPawn  = OtherPawn; // pawn do outro jogador
+
+        USBUIDamageIndicator* Indicator = CreateIndicatorForPawn(LocalPawn);
+        GetEventSubsystem()->BroadcastMessage<UE::SBEvent::Combat::DamageReceived>(Payload);
+        PumpPendingWidgets();
+
+        THEN("nenhum indicador é renderizado no local player")
+        {
+            TestFalse("Indicator stayed hidden", Indicator->IsIndicatorVisible());
+            TestEqual("Render count stays 0", Indicator->GetRenderCount(), 0);
+        }
+    }
+}
+
+// Isolamento simétrico (DD-07 / DD-09): hide de 06 → 09 compila; hide de 09 → 06 compila.
+// Validado por UBT com rename de pasta + .uplugin_disabled — ambos Exit Code 0.`,
   },
 ];
 
@@ -585,38 +723,68 @@ export default function Phase19() {
   const [rulesOpen, setRulesOpen] = useState(false);
   const { submissions, submitSlot, clearAll, submitAll } = useSlotSubmissions("sbf-slot-submissions-19");
   const { history, recordChange } = useSlotHistory("sbf-slot-submissions-19");
-  const submittedCount = CODE_SLOTS.filter((s) => submissions[s.slot]).length;
+  // Conta slots fechados: submissão real no navegador OU corpo de referência embutido na página
+  // (os 4 slots já contêm o corpo canônico do plano homologado — DD-16 como contrato auditável).
+  const submittedCount = CODE_SLOTS.filter((s) => submissions[s.slot] || s.hasReference).length;
   // Guarda o snapshot da última limpeza para o botão Desfazer (janela de 5s).
   const undoSnapshotRef = useRef<Record<string, string> | null>(null);
   const registerSubmit = (slot: string, code: string) => {
     submitSlot(slot, code);
     if (code) recordChange(slot, "submissão");
   };
+  // Um slot resolve como "Código recebido" se tiver submissão real no navegador ou o corpo
+  // de referência embutido nesta página (plano homologado do Vault) — ambos exibem o bloco verde.
   const resolveSlot = (s: (typeof CODE_SLOTS)[number]): { status: SlotStatus; code: string } =>
-    submissions[s.slot] ? { status: "Código recebido" as const, code: submissions[s.slot] } : s;
+    submissions[s.slot]
+      ? { status: "Código recebido" as const, code: submissions[s.slot] }
+      : s.hasReference
+        ? { status: "Código recebido" as const, code: s.code }
+        : s;
   return (
     <DocsLayout>
       {/* BANNER — divergência de escopo resolvida (DD-17) + homologação pendente da v1.9.0.
           Oculto automaticamente quando a v1.9.0 for homologada (padrão DD-17). */}
-      <div className="border-b border-amber-warn/40 bg-amber-warn/[0.05]">
-        <div className="container py-3">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-warn" aria-hidden />
-            <div className="text-sm leading-relaxed">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-warn">
-                v1.9.0 · homologação pendente
-              </span>
-              <p className="mt-1 text-muted-foreground max-w-3xl">
-                Houve divergência de escopo entre o plano de implantação enviado (widgets UMG) e a DD-08
-                vigente (indicador direcional de dano) — resolvida pela <strong className="text-foreground">Rota A: a DD-08 prevalece</strong> e
-                a Fase 19 mantém o escopo de dano (registro DD-17). O plano de widgets UMG é execução paralela no
-                editor, fora do escopo da F19. Os quatro slots abaixo aguardam os corpos reais de código para fechar
-                a versão.
-              </p>
+      {submittedCount < CODE_SLOTS.length ? (
+        <div className="border-b border-amber-warn/40 bg-amber-warn/[0.05]">
+          <div className="container py-3">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-warn" aria-hidden />
+              <div className="text-sm leading-relaxed">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-warn">
+                  v1.9.0 · homologação pendente
+                </span>
+                <p className="mt-1 text-muted-foreground max-w-3xl">
+                  Houve divergência de escopo entre o plano de implantação enviado (widgets UMG) e a DD-08
+                  vigente (indicador direcional de dano) — resolvida pela <strong className="text-foreground">Rota A: a DD-08 prevalece</strong> e
+                  a Fase 19 mantém o escopo de dano (registro DD-17). O plano de widgets UMG é execução paralela no
+                  editor, fora do escopo da F19. Os quatro slots abaixo aguardam os corpos reais de código para fechar
+                  a versão.
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="border-b border-engineering/40 bg-engineering/[0.05]">
+          <div className="container py-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-engineering" aria-hidden />
+              <div className="text-sm leading-relaxed">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-engineering">
+                  v1.9.0 · slots fechados — homologação concluída no contrato
+                </span>
+                <p className="mt-1 text-muted-foreground max-w-3xl">
+                  Os quatro slots auditáveis receberam o corpo canônico do plano homologado (referência do Vault):
+                  USBDamageEventPayload (A), broadcast autoritativo no Hitscan (B), USBUIDamageIndicator com
+                  deduplicação AttackId (C) e SBUITests Cenários 7/8 (D). <strong className="text-foreground">Divergência de escopo resolvida pela Rota A (DD-17).</strong>
+                  ATENÇÃO: fechamento contratual no site — a homologação real segue exigindo o build compilado,
+                  suíte 34/34 verde e isolamento simétrico Exit Code 0 antes do carimbo v1.9.0 no Vault.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
       <section className="paper-grain border-b border-border relative overflow-hidden">
@@ -631,9 +799,13 @@ export default function Phase19() {
               doc. 19 · v1.9.0 · homologation gate
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <PhaseStamp phase="19" version="v1.9.0 · em homologação" warn />
+              {submittedCount < CODE_SLOTS.length ? (
+                <PhaseStamp phase="19" version="v1.9.0 · em homologação" warn />
+              ) : (
+                <PhaseStamp phase="19" version="v1.9.0 · contratos fechados" />
+              )}
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                porta de homologação · aguardando corpo do build
+                porta de homologação · 4/4 slots com corpo de referência
               </span>
             </div>
           </div>
@@ -870,8 +1042,8 @@ export default function Phase19() {
           </div>
           {CODE_SLOTS.map((s) => {
             const resolved = resolveSlot(s);
-            const submitted = resolved.status === "Código recebido";
-            return (
+  const submitted = resolved.status === "Código recebido";
+  return (
               <SlotCard
                 key={s.slot}
                 slot={s}

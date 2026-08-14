@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
-import { F19_SLOT_KEYS, useF19SubmittedCount } from "@/components/Primitives";
+import { F19_SLOT_KEYS, useF19SubmittedCount, useSlotSubmissionStatus } from "@/components/Primitives";
 
 const TOC = [
   { id: "visao-geral", label: "Visão geral" },
@@ -32,41 +32,7 @@ const TOC = [
 
 /* ------------------------------------------------------------------ */
 /* Dados auditáveis — espelham a skill sandbox-framework-review       */
-/* ------------------------------------------------------------------ */
 
-/* Lê o mesmo estado do formulário de submissões da F19 (chave compartilhada
-   "sbf-slot-submissions-19", gerenciada pelo useSlotSubmissions de
-   Primitives.tsx) — a seção "Em curso" reflete submissões reais em tempo real,
-   inclusive entre abas (evento storage). Jamais tratar como homologação. */
-function useSlotSubmissionStatus(
-  slotKey: string,
-): { status: "Aguardando Código" | "Código registrado" } {
-  const key = "sbf-slot-submissions-19";
-  const read = (): { status: "Aguardando Código" | "Código registrado" } => {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed[slotKey]) return { status: "Código registrado" };
-      }
-    } catch {
-      /* storage indisponível ou corrompido — degrade para aguardando */
-    }
-    return { status: "Aguardando Código" };
-  };
-  const [state, setState] = useState(read);
-  useEffect(() => {
-    const refresh = () => setState(read());
-    refresh();
-    window.addEventListener("storage", refresh);
-    window.addEventListener("focus", refresh);
-    return () => {
-      window.removeEventListener("storage", refresh);
-      window.removeEventListener("focus", refresh);
-    };
-  }, [slotKey]);
-  return state;
-}
 
 /* Slot auditável da F19 — usado na seção "Em curso" com status em tempo real. */
 interface RoadmapSlot {
@@ -281,10 +247,35 @@ function RoadmapCompletionBanner() {
   );
 }
 
+
+function RoadmapSlotRow({ row, index }: { row: RoadmapSlot; index: number }) {
+  const { status } = useSlotSubmissionStatus(row.slotKey as (typeof F19_SLOT_KEYS)[number]);
+  const submitted = status === "Código registrado";
+  return (
+    <div
+      key={row.slotKey}
+      className={`flex items-center gap-4 px-5 py-4 ${index > 0 ? "border-t border-dotted" : ""} ${submitted ? "bg-engineering/[0.04]" : ""}`}
+    >
+      <span className={submitted ? "text-engineering" : "text-warning"}>{row.icon}</span>
+      <div className="flex-1">
+        <div className="text-sm font-medium">{row.title}</div>
+        <div className="font-mono text-[11px] text-muted-foreground">{row.detail}</div>
+      </div>
+      {submitted ? (
+        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-engineering">
+          Código registrado
+        </span>
+      ) : (
+        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-warning animate-pulse">
+          Aguardando código
+        </span>
+      )}
+    </div>
+  );
+}
+
 function RoadmapInProgress() {
-  const submittedCount = ROADMAP_SLOTS.filter(
-    (s) => useSlotSubmissionStatus(s.slotKey).status === "Código registrado",
-  ).length;
+  const submittedCount = useF19SubmittedCount();
   return (
     <section id="em-curso" className="scroll-mt-24 mt-14">
       <div className="flex items-baseline justify-between flex-wrap gap-3">
@@ -299,33 +290,9 @@ function RoadmapInProgress() {
         de cada linha reflete o formulário de submissões da página da Fase 19 em tempo real.
       </p>
       <div className="mt-6 space-y-0 border border-border">
-        {ROADMAP_SLOTS.map((row, i) => {
-          const { status } = useSlotSubmissionStatus(row.slotKey);
-          const submitted = status === "Código registrado";
-          return (
-            <div
-              key={row.slotKey}
-              className={`flex items-center gap-4 px-5 py-4 ${
-                i > 0 ? "border-t border-dotted" : ""
-              } ${submitted ? "bg-engineering/[0.04]" : ""}`}
-            >
-              <span className={submitted ? "text-engineering" : "text-warning"}>{row.icon}</span>
-              <div className="flex-1">
-                <div className="text-sm font-medium">{row.title}</div>
-                <div className="font-mono text-[11px] text-muted-foreground">{row.detail}</div>
-              </div>
-              {submitted ? (
-                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-engineering">
-                  Código registrado
-                </span>
-              ) : (
-                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-warning animate-pulse">
-                  Aguardando código
-                </span>
-              )}
-            </div>
-          );
-        })}
+        {ROADMAP_SLOTS.map((row, i) => (
+          <RoadmapSlotRow key={row.slotKey} row={row} index={i} />
+        ))}
       </div>
       <div className="mt-3 inline-flex items-center gap-2 border border-dotted border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
         {submittedCount} / 4 slots com código registrado neste navegador ·

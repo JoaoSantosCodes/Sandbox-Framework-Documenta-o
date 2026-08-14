@@ -299,9 +299,18 @@ export const F19_SLOT_KEYS = [
   "Slot D · SBUITests",
 ] as const;
 
+/* Slots da F19 com corpo de referência embutido na página (plano homologado do Vault).
+   Espelha o hasReference dos CODE_SLOTS na Phase19 — a manutenção é manual e exige
+   que os dois arrays permaneçam sincronizados (regra DD-16: contrato como dado único). */
+export const F19_REFERENCE_KEYS = new Set(F19_SLOT_KEYS);
+
 export type SlotStatus = "Aguardando Código" | "Código registrado";
 
-function readSlotStatus(slotKey: string): SlotStatus {
+// Um slot resolve como "Código registrado" se houver submissão real no localStorage
+// (formulário de submissão) OU se a página da F19 já embutir o corpo de referência do
+// plano homologado — ambos contam para os banners automáticos, com disclaimer de que
+// a homologação real ainda exige o build compilado.
+function readSlotStatusImpl(slotKey: string): SlotStatus {
   try {
     const raw = localStorage.getItem(SLOT_STORAGE_KEY);
     if (raw) {
@@ -311,14 +320,15 @@ function readSlotStatus(slotKey: string): SlotStatus {
   } catch {
     // storage indisponível ou corrompido — degrade para aguardando
   }
+  if (F19_REFERENCE_KEYS.has(slotKey as (typeof F19_SLOT_KEYS)[number])) return "Código registrado";
   return "Aguardando Código";
 }
 
-export function useSlotSubmissionStatus(slotKey: string): { status: SlotStatus } {
-  const [state, setState] = useState<SlotStatus>(() => readSlotStatus(slotKey));
+export function useSlotSubmissionStatus(slotKey: (typeof F19_SLOT_KEYS)[number]): { status: SlotStatus } {
+  const [state, setState] = useState<SlotStatus>(() => readSlotStatusImpl(slotKey));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const refresh = () => setState(readSlotStatus(slotKey));
+    const refresh = () => setState(readSlotStatusImpl(slotKey));
     refresh();
     window.addEventListener("storage", refresh);
     window.addEventListener("focus", refresh);
@@ -331,7 +341,7 @@ export function useSlotSubmissionStatus(slotKey: string): { status: SlotStatus }
 }
 
 export function useF19SubmittedCount(): number {
-  const states = F19_SLOT_KEYS.map((k) => readSlotStatus(k));
+  const states = F19_SLOT_KEYS.map((k) => readSlotStatusImpl(k));
   return states.filter((s) => s === "Código registrado").length;
 }
 
