@@ -16,7 +16,7 @@ const METRICS = [
   { value: "11", label: "Plugins unidirecionais" },
   { value: "31/31", label: "Testes verdes (Exit Code 0)" },
   { value: "0", label: "Dependências circulares" },
-  { value: "13", label: "Decisões homologadas (DD)" },
+  { value: "18", label: "Decisões homologadas (DD)" },
 ];
 
 export default function Home() {
@@ -100,7 +100,10 @@ export default function Home() {
                   &gt; quais os 10 princípios?
                 </Link>
                 <Link href="/decisoes" className="text-muted-foreground hover:text-engineering transition-colors">
-                  &gt; ver as 16 decisões DD?
+                  &gt; ver as 18 decisões DD?
+                </Link>
+                <Link href="/roadmap" className="text-muted-foreground hover:text-engineering transition-colors">
+                  &gt; linha do tempo &amp; roadmap?
                 </Link>
               </div>
               <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">

@@ -34,6 +34,48 @@ const TOC = [
 /* Dados auditáveis — espelham a skill sandbox-framework-review       */
 /* ------------------------------------------------------------------ */
 
+/* Lê o mesmo estado do formulário de submissões da F19 (chave compartilhada
+   "sbf-slot-submissions-19", gerenciada pelo useSlotSubmissions de
+   Primitives.tsx) — a seção "Em curso" reflete submissões reais em tempo real,
+   inclusive entre abas (evento storage). Jamais tratar como homologação. */
+function useSlotSubmissionStatus(
+  slotKey: string,
+): { status: "Aguardando Código" | "Código registrado" } {
+  const key = "sbf-slot-submissions-19";
+  const read = (): { status: "Aguardando Código" | "Código registrado" } => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed[slotKey]) return { status: "Código registrado" };
+      }
+    } catch {
+      /* storage indisponível ou corrompido — degrade para aguardando */
+    }
+    return { status: "Aguardando Código" };
+  };
+  const [state, setState] = useState(read);
+  useEffect(() => {
+    const refresh = () => setState(read());
+    refresh();
+    window.addEventListener("storage", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [slotKey]);
+  return state;
+}
+
+/* Slot auditável da F19 — usado na seção "Em curso" com status em tempo real. */
+interface RoadmapSlot {
+  slotKey: string;
+  icon: React.ReactNode;
+  title: string;
+  detail: string;
+}
+
 type MilestoneStatus = "done" | "active" | "planned";
 
 interface Milestone {
@@ -173,6 +215,86 @@ function StatusBadge({ status }: { status: MilestoneStatus }) {
       />
       {meta.label}
     </span>
+  );
+}
+
+/* Seção "Em curso" — linhas dos slots A–D da F19 com status em tempo real
+   (verde quando submetido no formulário da F19, âmbar pulsante caso contrário). */
+const ROADMAP_SLOTS: RoadmapSlot[] = [
+  {
+    slotKey: "Slot A · SBEventPayloads.h",
+    icon: <Milestone className="h-4 w-4" />,
+    title: "Slot A · Payload em 04_SandboxCore",
+    detail: "USBDamageEventPayload — chave estável, nunca índice",
+  },
+  {
+    slotKey: "Slot B · 06_SandboxCombat",
+    icon: <TerminalSquare className="h-4 w-4" />,
+    title: "Slot B · Broadcast autoritativo no Hitscan",
+    detail: "HasAuthority() explícito · validar → mutar → notificar",
+  },
+  {
+    slotKey: "Slot C · USBUIDamageIndicator (09_SandboxUI)",
+    icon: <Map className="h-4 w-4" />,
+    title: "Slot C · USBUIDamageIndicator em 09_SandboxUI",
+    detail: "Anti-spill por ULocalPlayer + dedup por AttackId",
+  },
+  {
+    slotKey: "Slot D · SBUITests",
+    icon: <Check className="h-4 w-4" />,
+    title: "Slot D · SBUITests cenários 7 e 8",
+    detail: "Anti-spill e deduplicação — elevar a suíte a 34/34",
+  },
+];
+
+function RoadmapInProgress() {
+  const submittedCount = ROADMAP_SLOTS.filter(
+    (s) => useSlotSubmissionStatus(s.slotKey).status === "Código registrado",
+  ).length;
+  return (
+    <section id="em-curso" className="scroll-mt-24 mt-14">
+      <h2 className="font-display text-3xl font-bold">Em curso</h2>
+      <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+        A Fase 19 (Damage Indicator) é o único trabalho ativo — tudo abaixo é pré-requisito
+        do carimbo v1.9.0 e segue a porta de homologação com slots auditáveis A–D. O status
+        de cada linha reflete o formulário de submissões da página da Fase 19 em tempo real.
+      </p>
+      <div className="mt-6 space-y-0 border border-border">
+        {ROADMAP_SLOTS.map((row, i) => {
+          const { status } = useSlotSubmissionStatus(row.slotKey);
+          const submitted = status === "Código registrado";
+          return (
+            <div
+              key={row.slotKey}
+              className={`flex items-center gap-4 px-5 py-4 ${
+                i > 0 ? "border-t border-dotted" : ""
+              } ${submitted ? "bg-engineering/[0.04]" : ""}`}
+            >
+              <span className={submitted ? "text-engineering" : "text-warning"}>{row.icon}</span>
+              <div className="flex-1">
+                <div className="text-sm font-medium">{row.title}</div>
+                <div className="font-mono text-[11px] text-muted-foreground">{row.detail}</div>
+              </div>
+              {submitted ? (
+                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-engineering">
+                  Código registrado
+                </span>
+              ) : (
+                <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-warning animate-pulse">
+                  Aguardando código
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-3 inline-flex items-center gap-2 border border-dotted border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+        {submittedCount} / 4 slots com código registrado neste navegador ·
+        {submittedCount === 4
+          ? " pendência final: build compilado + suíte 34/34 + isolamento Exit 0"
+          : " submissões são simulação de fluxo — não homologam a versão"}
+      </div>
+    </section>
   );
 }
 
@@ -356,9 +478,9 @@ export default function Roadmap() {
                 },
                 {
                   icon: <Lock className="h-4 w-4" />,
-                  title: "DD-01…DD-17 · Registro de Decisões",
-                  body: "Decisões de simetria Exit, anti-reflexão por string, deduplicação AttackId (DD-11), slots auditáveis (DD-16) e divergência de escopo (DD-17).",
-                  metric: "15 homologadas",
+                  title: "DD-01…DD-18 · Registro de Decisões",
+                  body: "Decisões de simetria Exit, anti-reflexão por string, deduplicação AttackId (DD-11), slots auditáveis (DD-16), divergência de escopo (DD-17) e a página permanente de linha do tempo & roadmap (DD-18).",
+                  metric: "16 homologadas",
                 },
                 {
                   icon: <Compass className="h-4 w-4" />,
@@ -379,54 +501,8 @@ export default function Roadmap() {
             </div>
           </section>
 
-          {/* Em curso */}
-          <section id="em-curso" className="scroll-mt-24 mt-14">
-            <h2 className="font-display text-3xl font-bold">Em curso</h2>
-            <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-              A Fase 19 (Damage Indicator) é o único trabalho ativo — tudo abaixo é pré-requisito
-              do carimbo v1.9.0 e segue a porta de homologação com slots auditáveis A–D.
-            </p>
-            <div className="mt-6 space-y-0 border border-border">
-              {[
-                {
-                  icon: <Milestone className="h-4 w-4" />,
-                  title: "Slot A · Payload em 04_SandboxCore",
-                  detail: "USBDamageEventPayload — chave estável, nunca índice",
-                },
-                {
-                  icon: <TerminalSquare className="h-4 w-4" />,
-                  title: "Slot B · Broadcast autoritativo no Hitscan",
-                  detail: "HasAuthority() explícito · validar → mutar → notificar",
-                },
-                {
-                  icon: <Map className="h-4 w-4" />,
-                  title: "Slot C · USBUIDamageIndicator em 09_SandboxUI",
-                  detail: "Anti-spill por ULocalPlayer + dedup por AttackId",
-                },
-                {
-                  icon: <Check className="h-4 w-4" />,
-                  title: "Slot D · SBUITests cenários 7 e 8",
-                  detail: "Anti-spill e deduplicação — elevar a suíte a 34/34",
-                },
-              ].map((row, i) => (
-                <div
-                  key={row.title}
-                  className={`flex items-center gap-4 px-5 py-4 ${
-                    i > 0 ? "border-t border-dotted" : ""
-                  }`}
-                >
-                  <span className="text-warning">{row.icon}</span>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{row.title}</div>
-                    <div className="font-mono text-[11px] text-muted-foreground">{row.detail}</div>
-                  </div>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-warning animate-pulse">
-                    Aguardando código
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
+          {/* Em curso — status em tempo real via formulário de submissões da F19 */}
+          <RoadmapInProgress />
 
           {/* Roadmap */}
           <section id="roadmap" className="scroll-mt-24 mt-14">

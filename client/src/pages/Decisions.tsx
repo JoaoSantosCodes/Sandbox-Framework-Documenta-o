@@ -421,6 +421,23 @@ const DECISIONS: Decision[] = [
     status: "Homologada",
     homologatedAt: "2026-08-14",
   },
+  {
+    id: "DD-18",
+    version: "v1.9.0 · planejada",
+    title: "Página de Linha do Tempo & Roadmap como página permanente do site",
+    problem:
+      "Com três fases homologadas, 17 decisões registradas e uma versão em homologação, o progresso do projeto passou a viver espalhado entre Home, páginas de fase, /historico e /decisoes — sem uma página que consolide a régua de marcos, o que está em curso e o que se desbloqueia na sequência. Cada rodada de sincronização Vault ↔ site exigia reconstruir manualmente a narrativa de estado.",
+    decision:
+      "Adicionar a página /roadmap como página permanente do site (chip \"13 · Roadmap\" nos chips de navegação), seguindo o padrão visual DD-14: hero com wordmark gigante, TOC lateral numerado com scroll-spy (useActiveSection) e BackToTop. Estrutura fixa: (a) cards de estatísticas (plugins · versão homologada · nº de DDs · próxima versão); (b) linha do tempo qualitativa Foundation → v2.0.0, onde cada marco só avança com prova de engenharia; (c) seção \"Em curso\" ligada em tempo real ao estado das submissões dos slots auditáveis da F19 (localStorage compartilhado sbf-slot-submissions-19); (d) roadmap em colunas de dependência; (e) tabela de riscos & mitigação. A página é indexada na busca ⌘K, no atalho ⌘⇧C e recebe link de acesso rápido na Home. Ao carimbar cada versão, a régua, os cards homologados e a seção em curso atualizam simultaneamente com Home, skill e Vault — nunca antecipando carimbo sem evidência (DD-16).",
+    rejected:
+      "Atualizar apenas o /historico com o roadmap — o histórico é retrospectivo (o que aconteceu) e o roadmap é prospectivo (o que desbloqueia); misturá-los perde as duas leituras; widget isolado de roadmap na Home — duplicaria os chips permanentes e envelheceria ao lado deles sem TOC próprio; manter a narrativa só na skill — a skill é contrato entre sessões de IA, não superfície de navegação para o leitor humano do site.",
+    consequence:
+      "O estado do projeto passa a ser legível em uma página: marcos passados com prova, trabalho em curso refletido em tempo real e sequência de dependência projetada. Novas versões atualizam uma régua fixa em vez de reescrever páginas. A Home ganha um único link de acesso rápido (os chips permanentes), sem duplicar superfície de navegação.",
+    precedent:
+      "Mesma disciplina da DD-12/DD-13 (cada mudança de layout do site vira decisão registrada) e da DD-16 (porta de homologação com ponto de auditoria explícito): a seção \"Em curso\" reutiliza a chave de storage das submissões da F19 — uma única fonte de verdade, dois consumidores — e o roadmap em colunas de dependência espelha a ordem unidirecional dos plugins do próprio framework.",
+    status: "Homologada",
+    homologatedAt: "2026-08-14",
+  },
 ];
 
 const STATUS_STYLES: Record<DecisionStatus, string> = {
