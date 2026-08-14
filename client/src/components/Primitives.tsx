@@ -13,7 +13,7 @@ export function PhaseStamp({ phase, version, warn }: { phase: string; version: s
   );
 }
 
-export function CopyButton({ value, label = "Copiar" }: { value: string; label?: string }) {
+export function CopyButton({ value, label = "Copiar", onCopy }: { value: string; label?: string; onCopy?: () => void }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -26,6 +26,7 @@ export function CopyButton({ value, label = "Copiar" }: { value: string; label?:
           return;
         }
         setCopied(true);
+        onCopy?.();
         window.setTimeout(() => setCopied(false), 1500);
       }}
       className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] px-2 py-1 border transition-colors active:scale-[0.97] ${

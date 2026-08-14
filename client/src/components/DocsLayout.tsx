@@ -8,8 +8,38 @@ import { Link, useLocation } from "wouter";
 import { ReactNode, useEffect, useState } from "react";
 import { AlertTriangle, Check, Moon, Search, Sun, X, Menu } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { toast } from "sonner";
 import { ASSET_URLS } from "@/lib/siteData";
 import { CHECKLIST_META, decodeChecklistProgress } from "@/components/PhaseChecklist";
+
+/* Rota → checklist ativo: ⌘⇧C copia o Markdown do checklist da fase em foco
+   (par com o botão "Copiar status" do checklist interativo). */
+const ROUTE_PHASE_INDEX: Record<string, number> = {
+  "/fase-17": 0,
+  "/fase-18": 1,
+  "/fase-19": 2,
+};
+
+function buildPhaseMarkdown(index: number): string | null {
+  const meta = CHECKLIST_META[index];
+  if (!meta) return null;
+  const { done } = decodeChecklistProgress(meta);
+  const pct = Math.round((done.length / meta.items.length) * 100);
+  const lines = [
+    `# Checklist — ${meta.phase} · ${meta.title}`,
+    "",
+    `Progresso: ${done.length}/${meta.items.length} itens concluídos (${pct}%).`,
+    "",
+    ...meta.items.map((item, idx) => {
+      const mark = done.includes(item) ? "x" : " ";
+      return `- [${mark}] ${idx + 1}. ${item.label}`;
+    }),
+    "",
+    `Exportado do site de documentação do Sandbox Framework em ${new Date().toLocaleString("pt-BR", { dateStyle: "medium", timeStyle: "short" })}.`,
+    "",
+  ];
+  return lines.join("\n");
+}
 import {
   Tooltip,
   TooltipContent,
@@ -182,6 +212,40 @@ export function DocsLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const unsynced = useUnsyncedChecklists();
   const pendingDetails = usePendingDetails();
+
+  /* Atalho ⌘⇧C — copiar o checklist da fase ativa sem usar o mouse.
+     Ignora quando o foco está em campo de texto (para não colidir com ⌘C nativo). */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || !e.shiftKey || e.key.toLowerCase() !== "c") return;
+      const tag = (document.activeElement?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || (document.activeElement as HTMLElement)?.isContentEditable) return;
+      const index = ROUTE_PHASE_INDEX[location];
+      const text = index !== undefined ? buildPhaseMarkdown(index) : null;
+      if (!text) {
+        toast("Nenhuma fase ativa nesta página", {
+          description: "⌘⇧C copia o checklist das páginas /fase-17, /fase-18 e /fase-19.",
+        });
+        return;
+      }
+      e.preventDefault();
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          const meta = CHECKLIST_META[index];
+          toast(`Checklist da ${meta.phase} copiado`, {
+            description: `Markdown da fase ativa pronto para colar no Vault.`,
+          });
+        })
+        .catch(() => {
+          toast("Falha ao copiar", {
+            description: "O navegador bloqueou o acesso à área de transferência.",
+          });
+        });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [location]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">

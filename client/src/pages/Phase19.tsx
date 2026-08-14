@@ -11,6 +11,7 @@ import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { AuditNote, CodeBlock, CopyButton, PhaseStamp, TechRule } from "@/components/Primitives";
+import { toast } from "sonner";
 
 const TOC = [
   { id: "DD-08", label: "Por que adiar (DD-08)" },
@@ -365,6 +366,11 @@ export default function Phase19() {
             <CopyButton
               label="Copiar tudo"
               value={CODE_SLOTS.map((s) => `=== ${s.slot} ===\n${s.title}\n\n${s.code}`).join("\n\n")}
+              onCopy={() =>
+                toast("Contrato completo copiado", {
+                  description: "Os 4 slots de homologação concatenados, prontos para a sprint no Vault.",
+                })
+              }
             />
           </div>
           {CODE_SLOTS.map((s) => (

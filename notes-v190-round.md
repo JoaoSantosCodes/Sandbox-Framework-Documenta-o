@@ -85,3 +85,26 @@ State atual relevante:
 - Fase 3 (highlight) CONCLUÍDA: SearchPalette.tsx — import Command (do ui/command, usado? não — remover import se não usado no render; tsc já passou então pode estar como side import, remover para cleanliness), highlightText() com escape regex e mark bg-amber-warn/25, CommandInput value={query} onValueChange={setQuery}, query resetado no onOpenChange(false), aplicado em CommandItem de grupos e POPULAR_TAGS.
 - FALTA: Fase 2 — botão "Copiar Tudo" na seção "Corpo do código" da Phase19.tsx. Slots definidos inline (~linha 261-350) com campo code. Extrair const CODE_SLOTS acima do componente, adicionar botão CopyButton value={CODE_SLOTS.map(s=>s.code).join("\n\n")} acima do .map, label "Copiar tudo". CopyButton assinatura: { value, label? }.
 - Depois: tsc, screenshots, checkpoint, entrega.
+
+## Rodada 4 — URL params, toast Copiar Tudo, atalho ⌘⇧C (em andamento)
+
+### Fase 1 — URL params no /historico (planejado)
+- History.tsx já tem: readStored<T>(key, fallback, validação) com chaves `sbf-history-layer` e `sbf-history-dd-filter`; useState lazy com inicialização via readStored; setLayer/setDdFilter com helpers persistLayer/persistDd (try/catch).
+- Plano: na inicialização, ler também `new URLSearchParams(window.location.search)` — `?layer=X&dd=V` com validação contra LAYER_IDS/ddVersions; URL prevalece sobre localStorage. Ao mudar filtro: persist + `window.history.replaceState(null, "", ...)` (não push — não poluir o histórico). Fallback: sem History API, só localStorage.
+- LAYER_IDS: "todos"(?) + "foundation"(F1-F9), "gameplay-base"(F10-F11), "gameplay-ext"(F12-F16), "presentation"(F17), "tools"(F19). Verificar nomes exatos no History.tsx (grep 'layer' em History.tsx).
+
+### Fase 2 — Toast no Copiar Tudo (planejado)
+- Phase19.tsx: CopyButton já importado de Primitives. Ver assinatura do CopyButton em Primitives.tsx (value, label, sucesso?); toast = `toast.success(...)` de sonner (verificar import existente de sonner/toast no projeto — grep 'sonner' ou 'toast' em Primitives.tsx).
+- Copiar Tudo é um CopyButton novo com label="Copiar tudo"; se o botão não emite callback, adicionar `onCopy?` no CopyButton (chamar toast lá) — melhor: callback onCopy no componente primitivo, chamado pelos dois pontos de uso.
+
+### Fase 3 — Atalho ⌘⇧C global (planejado)
+- DocsLayout.tsx (layout global): listener keydown global — (e.metaKey||e.ctrlKey) && e.shiftKey && e.key==='C' → copiar checklist da fase ativa.
+- Fase ativa = a página atual. Rotas: /fase-17 (F17), /fase-18 (F18), /fase-19 (F19). Dados de checklist: verificar PhaseChecklist.tsx — storageKey (sbf-phase17-checklist etc.), items (passar para Props). Precisa exportar getChecklistData(phase) ou usar location da rota.
+- Formato do texto copiado: cabeçalho "Fase N — <nome> · <status>", lista "- [x]/- [ ] <item>", rodapé. toast.success de confirmação.
+- Prevenir colisão com ⌘C nativo: aplicar só se document.activeElement não for input/textarea e shiftKey presente (C com shift).
+
+### Estado geral (checkpoint anterior 2fc7f08d publicado)
+- Histórico: filtros persistidos em localStorage (feito na rodada 3).
+- F19: CODE_SLOTS no topo do arquivo; botões copiar por slot e Copiar Tudo (feito).
+- SearchPalette: highlight âmbar implementado (feito).
+- Auto-publish ativo: checkpoint = publicação imediata.

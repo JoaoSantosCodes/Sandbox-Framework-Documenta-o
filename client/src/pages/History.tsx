@@ -104,14 +104,63 @@ function readStored<T extends string>(key: string, valid: T[], fallback: T): T {
   return fallback;
 }
 
+/* Filtro compartilhável via URL: ?layer=<id>&dd=<versão> espelham os filtros
+   (prevalecem sobre localStorage na entrada; toda mudança reescreve a query
+   sem poluir o histórico do navegador — replaceState, não push). */
+function readUrlParams(): { layer: string | null; dd: string | null } {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const layer = params.get("layer");
+    const dd = params.get("dd");
+    return { layer, dd };
+  } catch {
+    return { layer: null, dd: null };
+  }
+}
+
+function writeUrlParams(layer: Layer, ddFilter: string | null) {
+  try {
+    const params = new URLSearchParams();
+    if (layer !== "todas") params.set("layer", layer);
+    if (ddFilter) params.set("dd", ddFilter);
+    const qs = params.toString();
+    window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  } catch {
+    /* History API indisponível — persistência segue só em localStorage */
+  }
+}
+
 export default function History() {
   const active = useActiveSection(TOC.map((t) => t.id));
-  const [layer, setLayer] = useState<Layer>(() => readStored<Layer>(LS_LAYER_KEY, LAYER_IDS, "todas"));
+  const urlParams = readUrlParams();
+  const [layer, setLayer] = useState<Layer>(() =>
+    readStored<Layer>(LS_LAYER_KEY, LAYER_IDS, urlParams.layer && LAYER_IDS.includes(urlParams.layer as Layer) ? (urlParams.layer as Layer) : "todas")
+  );
   const foundationVisible = layer === "todas" || layer === "foundation";
   const ddVersions = Object.keys(DD_BY_VERSION);
-  const [ddFilter, setDdFilter] = useState<string | null>(() =>
-    readStored<string>(LS_DDFILTER_KEY, ["Todas as versões", ...ddVersions], "Todas as versões")
-  );
+  const [ddFilter, setDdFilter] = useState<string | null>(() => {
+    const stored = readStored<string>(LS_DDFILTER_KEY, ["Todas as versões", ...ddVersions], "Todas as versões");
+    // null explícito = filtro removido (localStorage.removeItem), "Todas as versões" = sem filtro ativo.
+    try {
+      const raw = localStorage.getItem(LS_DDFILTER_KEY);
+      const storedValue: string | null = raw && ["Todas as versões", ...ddVersions].includes(raw) ? raw : null;
+      if (urlParams.dd && (urlParams.dd === "Todas as versões" || ddVersions.includes(urlParams.dd))) return urlParams.dd;
+      return storedValue;
+    } catch {
+      return stored;
+    }
+  });
+  // Espelhar a seleção inicial (incluindo vinda da URL) de volta para localStorage e query.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const synced = layer !== readStored<Layer>(LS_LAYER_KEY, LAYER_IDS, "todas") || ddFilter !== null;
+  if (synced) {
+    try {
+      localStorage.setItem(LS_LAYER_KEY, layer);
+      if (ddFilter) localStorage.setItem(LS_DDFILTER_KEY, ddFilter);
+      else localStorage.removeItem(LS_DDFILTER_KEY);
+    } catch { /* storage indisponível — comportamento segue normal */ }
+    writeUrlParams(layer, ddFilter);
+  }
 
   const persistLayer = (next: Layer) => {
     try {
@@ -120,6 +169,7 @@ export default function History() {
       /* storage indisponível — comportamento segue normal */
     }
     setLayer(next);
+    writeUrlParams(next, ddFilter);
   };
   const persistDd = (next: string | null) => {
     try {
@@ -129,6 +179,7 @@ export default function History() {
       /* storage indisponível — comportamento segue normal */
     }
     setDdFilter(next);
+    writeUrlParams(layer, next);
   };
   return (
     <DocsLayout>
