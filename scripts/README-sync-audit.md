@@ -92,6 +92,28 @@ fine-grained, as permissões equivalentes são `contents:write` + `workflows:wri
 [2]: https://github.com/orgs/community/discussions/35410
 [3]: https://github.com/orgs/community/discussions/35410#discussioncomment-9508716
 
+### Espelho privado do Vault (criado 14/08 — C2 fechado)
+
+O repositório espelho **JoaoSantosCodes/Sandbox-Framework-Vault** (privado) foi
+criado e recebeu o snapshot inicial do Vault na branch `main` (commit `ba4597d`,
+válido contra o snapshot de 14/08/2026). O workflow
+`.github/workflows/sync-audit.yml` (copiado de `scripts/sync-audit-workflow.yml`)
+clona esse espelho a cada push na `main` e seg/qui 09:00 UTC (cron) e roda o
+`sync-audit.py --fail-on-diff`. Para ativar o caminho completo:
+
+1. No repositório do site: **Settings → Secrets and variables → Actions → New repository secret**
+   → nome `VAULT_MIRROR_REPO` → valor `JoaoSantosCodes/Sandbox-Framework-Vault`.
+2. Garantir que o GitHub Actions tem acesso ao repo privado do espelho
+   (mesma conta dona dos dois repos — `GITHUB_TOKEN` padrão já cobre).
+3. Disparar manualmente uma vez (**Actions → sync-audit (Vault mirror) → Run workflow**)
+   para confirmar o job verde; sem o segredo, o job ainda roda com o fallback
+   embutido em `scripts/vault-mirror/` (snapshot commitado no próprio repo do site).
+
+Manutenção do espelho: a cada mudança relevante no Vault Windows (novo carimbo de
+versão, nova fase/DD), atualizar o repo do espelho com o conteúdo de
+`projects/sandbox-framework-*` (push da `main`). O CI então compara sempre a fonte
+de verdade mais recente.
+
 Alternativa em `actions/checkout` direto quando houver espelho privado:
 
 ```yaml
