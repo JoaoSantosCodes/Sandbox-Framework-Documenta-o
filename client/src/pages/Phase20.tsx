@@ -7,8 +7,9 @@
 */
 import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, CheckCircle2, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DocsLayout } from "@/components/DocsLayout";
-import { PhaseChecklist } from "@/components/PhaseChecklist";
+import { PhaseChecklist, decodeChecklistProgress } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 
@@ -140,6 +141,70 @@ const CHECKLIST_ITEMS = [
   { key: "dd19", label: "Novo registro DD-19 homologando o mecanismo transacional" },
   { key: "vault", label: "Vault e site carimbados v2.0.0 (Dashboard, task.md, siteData)" },
 ];
+
+const CHECKLIST_META = {
+  phase: "Fase 20",
+  title: "Persistência Transacional de Atributos (v2.0.0 · planejada)",
+  storageKey: "sbf-phase20-checklist",
+  items: CHECKLIST_ITEMS,
+};
+
+/* Barra de progresso visual da Fase 20 — lê o checklist persistido em localStorage
+   (mesma chave do PhaseChecklist) e reage a alterações de outras abas via storage event. */
+function F20ProgressBanner() {
+  const [revision, setRevision] = useState(0);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === CHECKLIST_KEY) setRevision((r) => r + 1);
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", () => setRevision((r) => r + 1));
+    return () => {
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  // Recalcula done/pending a cada tick de revisão (localStorage ou focus).
+  const { done: doneNow, pending: pendingNow } = decodeChecklistProgress(CHECKLIST_META);
+  const total = CHECKLIST_ITEMS.length;
+  const pct = Math.round((doneNow.length / total) * 100);
+
+  return (
+    <div className="mt-4 border border-border bg-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Progresso da Fase 20
+          </span>
+          <span className="font-mono text-[11px] text-engineering font-semibold">
+            {doneNow.length}/{total} itens concluídos ({pct}%)
+          </span>
+        </div>
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          {pendingNow.length} pendente{pendingNow.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      <div className="h-2 w-full bg-secondary">
+        <div
+          className="h-2 bg-engineering transition-[width] duration-200"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 py-3 font-mono text-[10px] uppercase tracking-wider">
+        <span className="text-engineering">■ concluído</span>
+        <span className="text-muted-foreground">{doneNow.length} de {total}</span>
+        <span className="text-border">■ pendente</span>
+        <span className="text-muted-foreground">{pendingNow.length} de {total}</span>
+      </div>
+      {doneNow.length === total && (
+        <div className="px-4 py-3 border-t border-engineering/50 bg-engineering/5 font-mono text-[11px] uppercase tracking-wider text-engineering">
+          Plano de implantação concluído — pronto para homologação da v2.0.0
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Phase20() {
   const active = useActiveSection(TOC.map((t) => t.id));
@@ -329,6 +394,7 @@ export default function Phase20() {
         <h2 id="checklist" className="sr-only">
           Checklist interativo
         </h2>
+        <F20ProgressBanner />
         <PhaseChecklist
           phaseLabel="Fase 20 — Persistência Transacional de Atributos (v2.0.0 · planejada)"
           storageKey={CHECKLIST_KEY}

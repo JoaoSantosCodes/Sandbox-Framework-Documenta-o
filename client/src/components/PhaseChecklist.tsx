@@ -72,6 +72,24 @@ export const CHECKLIST_META: ChecklistMeta[] = [
       { key: "vault", label: "Vault + site carimbados v1.9.0 (Dashboard, task.md, siteData)" },
     ],
   },
+  {
+    phase: "Fase 20",
+    title: "Persistência Transacional de Atributos (v2.0.0 · planejada)",
+    storageKey: "sbf-phase20-checklist",
+    items: [
+      { key: "deficao", label: "USBAttributePersistenceDefinition/Instance com chave estável e opt-in" },
+      { key: "translog", label: "TransactionLog por PredictionId com rollback completo" },
+      { key: "checkpoint", label: "Checkpoint/save via USaveGame com HasAuthority() em toda gravação" },
+      { key: "restore", label: "Restore validado por autoridade + rejeição de saves corrompidos" },
+      { key: "rollback", label: "SBAttributePersistenceTests: rollback simétrico (Entry/Exit)" },
+      { key: "concurrence", label: "Cenário de concorrência: duas mutações na mesma chave estável" },
+      { key: "antiSpill", label: "Anti-spill entre local players no mesmo saveslot" },
+      { key: "isolamento", label: "Isolamento simétrico: hide do plugin de persistência, Exit Code 0" },
+      { key: "playtest", label: "Playtest Dedicated Server: save/restore íntegro" },
+      { key: "dd19", label: "Novo registro DD-19 homologando o mecanismo transacional" },
+      { key: "vault", label: "Vault e site carimbados v2.0.0 (Dashboard, task.md, siteData)" },
+    ],
+  },
 ];
 
 // Decodifica o progresso salvo de um checklist: retorna { done, pending } de itens.
