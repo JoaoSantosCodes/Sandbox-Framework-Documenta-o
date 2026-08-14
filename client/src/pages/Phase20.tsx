@@ -6,12 +6,12 @@
   Papel quente, tinta grafite, acento verde-engineering. Carimbo "planejada".
 */
 import { Link } from "wouter";
-import { ArrowLeft, ArrowRight, CheckCircle2, FileText } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Eraser, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist, decodeChecklistProgress } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
-import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
+import { AuditNote, CodeBlock, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning, HomologationRulesModal } from "@/components/Primitives";
 
 const CHECKLIST_KEY = "sbf-phase20-checklist";
 
@@ -19,8 +19,10 @@ const TOC = [
   { id: "por-que-f20", label: "Por que a Fase 20 — e o momento dela" },
   { id: "pre-requisitos", label: "Pré-requisitos homologados" },
   { id: "escopo", label: "Escopo proposto (contrato de homologação)" },
+  { id: "playtest-painel", label: "Playtest F20-9 — painel de status" },
   { id: "aceite", label: "Critérios de aceite preliminares" },
   { id: "checklist", label: "Checklist interativo" },
+  { id: "trechos-vault", label: "Trechos do Vault" },
 ];
 
 interface Prerequisite {
@@ -142,6 +144,239 @@ const CHECKLIST_ITEMS = [
   { key: "vault", label: "Vault e site carimbados v2.0.0 (Dashboard, task.md, siteData)" },
 ];
 
+/* Trechos exatos para colar no Vault após a homologação real (mesmo padrão F17/F18/F19).
+   A F20 não tem slots A–D ainda — o carimbo v2.0.0 só vale depois do playtest F20-9
+   com suíte 100% e isolamento simétrico Exit Code 0. */
+const VAULT20_DASHBOARD_SNIPPET = `### Fase 20 Concluída · v2.0.0 (Persistência Transacional de Atributos)
+Homologação fechada: USBAttributePersistenceDefinition/Instance com opt-in e chave estável
+(upsert — F20-1), TransactionLog por PredictionId com rollback simétrico (F20-2), checkpoint
+e restore via USaveGame com HasAuthority() e rejeição de saves corrompidos (F20-3),
+SBAttributePersistenceTests (concorrência em chave estável + anti-spill entre local players —
+F20-4) e playtest em Dedicated Server com save/restore íntegro (F20-9 / F20-5).
+DD-19 homologada. 11 de 11 plugins implementados · 0 em backlog.`;
+/* Painel interativo de playtest F20-9 (Persistência transacional de atributos).
+   Roteiro real do playtest em Dedicated Server, com verificação independente por etapa —
+   cada passo só libera o próximo, e o estado sobrevive ao recarregamento (localStorage).
+   O painel é roteiro de auditoria, NÃO é evidência: a homologação exige o playtest real. */
+const F20_PLAYTEST_KEY = "sbf-f20-playtest";
+interface PlaytestStep {
+  id: string;
+  label: string;
+  expected: string;
+  passLabel: string;
+  failLabel: string;
+}
+const PLAYTEST_STEPS: PlaytestStep[] = [
+  {
+    id: "conn",
+    label: "01 · Conexão", expected: "Cliente conecta ao Dedicated Server; handshake de sessão ok",
+    passLabel: "Conexão ok", failLabel: "Falha de conexão",
+  },
+  {
+    id: "mut",
+    label: "02 · Mutação predita", expected: "Ação de gameplay prediz consumo de atributo localmente via PredictionId",
+    passLabel: "Predição ok", failLabel: "Sem predição local",
+  },
+  {
+    id: "log",
+    label: "03 · TransactionLog", expected: "Mutação registrada no log com PredictionId + chave estável (upsert)",
+    passLabel: "Log registrado", failLabel: "Log não gravado",
+  },
+  {
+    id: "confirm",
+    label: "04 · Confirmação server", expected: "Servidor valida e confirma (ou reverte) — cliente aplica o caminho do servidor",
+    passLabel: "Confirmação ok", failLabel: "Sem confirmação",
+  },
+  {
+    id: "checkpoint",
+    label: "05 · Checkpoint authoritativo", expected: "Checkpoint gravado via USaveGame com HasAuthority() — nenhum write client-side",
+    passLabel: "Checkpoint ok", failLabel: "Write sem authority",
+  },
+  {
+    id: "disconnect",
+    label: "06 · Saída limpa", expected: "Jogador fecha a sessão; save persistido e rollback simétrico intacto",
+    passLabel: "Saída limpa", failLabel: "Estado perdido/corrompido",
+  },
+  {
+    id: "restore",
+    label: "07 · Restore validado", expected: "Nova sessão restaura atributos/inventário/checkpoint exatamente como deixou",
+    passLabel: "Restore íntegro", failLabel: "Restore divergente",
+  },
+];
+type PlaytestVerdict = "pass" | "fail" | null;
+function readPlaytest(): Record<string, PlaytestVerdict> {
+  try {
+    const raw = localStorage.getItem(F20_PLAYTEST_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    const out: Record<string, PlaytestVerdict> = {};
+    for (const step of PLAYTEST_STEPS) out[step.id] = parsed[step.id] === "pass" ? "pass" : parsed[step.id] === "fail" ? "fail" : null;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/* Componente do painel F20-9 — cada etapa libera a próxima (sequencialidade do roteiro).
+   Passa para verde, falha para âmbar, e o status do painel reflete o pior estado. */
+function PlaytestPanel() {
+  const [revision, setRevision] = useState(0);
+  const [verdicts, setVerdicts] = useState<Record<string, PlaytestVerdict>>(() => readPlaytest());
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === F20_PLAYTEST_KEY) setRevision((r) => r + 1);
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", () => setRevision((r) => r + 1));
+    return () => window.removeEventListener("storage", onStorage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const resolved = readPlaytest();
+  const verdictsNow = revision >= 0 ? { ...verdicts } : resolved;
+  Object.assign(verdictsNow, resolved);
+
+  const record = (stepId: string, verdict: PlaytestVerdict) => {
+    const next = { ...verdictsNow, [stepId]: verdict };
+    setVerdicts(next);
+    try {
+      localStorage.setItem(F20_PLAYTEST_KEY, JSON.stringify(next));
+    } catch {
+      /* storage indisponível — comportamento segue em memória */
+    }
+  };
+  const clearAll = () => {
+    setVerdicts({});
+    try {
+      localStorage.removeItem(F20_PLAYTEST_KEY);
+    } catch {
+      /* storage indisponível */
+    }
+  };
+  const allSteps = PLAYTEST_STEPS.map((s) => verdictsNow[s.id]);
+  const concluded = allSteps.filter((v): v is NonNullable<PlaytestVerdict> => v !== null);
+  const allPass = concluded.length === PLAYTEST_STEPS.length && concluded.every((v) => v === "pass");
+  const hasFail = concluded.some((v) => v === "fail");
+  const unlockedCount = (() => {
+    let n = 0;
+    for (const step of PLAYTEST_STEPS) {
+      const prevDone = n === 0 || verdictsNow[PLAYTEST_STEPS[n - 1].id] === "pass";
+      if (!prevDone) break;
+      n++;
+    }
+    return n;
+  })();
+
+  const pct = Math.round((concluded.filter((v) => v === "pass").length / PLAYTEST_STEPS.length) * 100);
+  return (
+    <div className="mt-6 border border-border bg-card">
+      <div className="px-4 py-3 border-b border-border bg-secondary/60 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            F20-9 · Playtest Dedicated Server — roteio de auditoria
+          </span>
+          <p className="mt-1 text-[13px] text-muted-foreground leading-relaxed max-w-3xl">
+            Marque cada etapa conforme o resultado observado na sessão. Etapas só liberam depois que a
+            anterior passar; falha trava o roteiro e o status do painel vira âmbar — exatamente a disciplina
+            de auditoria que a homologação exige.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={clearAll}
+          className="inline-flex items-center gap-1.5 border border-border text-muted-foreground hover:text-foreground hover:border-amber-warn/60 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] transition-colors active:scale-[0.97]"
+        >
+          <Eraser className="h-3 w-3" /> Limpar roteiro
+        </button>
+      </div>
+      {/* Traço de progresso do roteiro */}
+      <div className="h-1.5 w-full bg-secondary overflow-hidden">
+        <div
+          className={`h-1.5 ${allPass ? "bg-engineering" : hasFail ? "bg-amber-warn" : "bg-engineering/60"}`}
+          style={{
+            width: `${pct}%`,
+            transition: `width 380ms ${F20_BAR_EASE}`,
+          }}
+        />
+      </div>
+      <ul className="divide-y divide-border">
+        {PLAYTEST_STEPS.map((step, i) => {
+          const v = verdictsNow[step.id];
+          const locked = i >= unlockedCount && verdictsNow[PLAYTEST_STEPS[i - 1]?.id] !== "pass" && i > 0;
+          return (
+            <li key={step.id} className={`px-4 py-3 grid md:grid-cols-[1fr_auto] gap-3 items-start ${locked ? "opacity-45" : ""}`}>
+              <div className="flex items-start gap-3 min-w-0">
+                <span
+                  className={`mt-0.5 h-3.5 w-3.5 shrink-0 border ${
+                    v === "pass" ? "bg-engineering border-engineering" : v === "fail" ? "bg-amber-warn border-amber-warn" : "border-border bg-secondary/60"
+                  }`} aria-hidden
+                />
+                <div className="min-w-0">
+                  <p className="font-mono text-[12px] font-semibold text-foreground">{step.label}</p>
+                  <p className="mt-0.5 text-[13px] text-muted-foreground leading-relaxed">
+                    Esperado: <span className="text-foreground/80">{step.expected}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 md:justify-self-end">
+                {v === null && !locked && (
+                  <>
+                    <button type="button" onClick={() => record(step.id, "pass")} className="inline-flex items-center gap-1 border border-engineering/50 text-engineering hover:bg-engineering/8 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors active:scale-[0.97]">
+                      <CheckCircle2 className="h-3 w-3" /> {step.passLabel}
+                    </button>
+                    <button type="button" onClick={() => record(step.id, "fail")} className="inline-flex items-center gap-1 border border-amber-warn/60 text-amber-warn hover:bg-amber-warn/8 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors active:scale-[0.97]">
+                      <AlertTriangle className="h-3 w-3" /> {step.failLabel}
+                    </button>
+                  </>
+                )}
+                {v === "pass" && (
+                  <span className="inline-flex items-center gap-1 border border-engineering/60 bg-engineering/8 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-engineering">
+                    <CheckCircle2 className="h-3 w-3" /> {step.passLabel} — <button type="button" onClick={() => record(step.id, null)} className="underline underline-offset-2 hover:text-foreground">desfazer</button>
+                  </span>
+                )}
+                {v === "fail" && (
+                  <span className="inline-flex items-center gap-1 border border-amber-warn/60 bg-amber-warn/8 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-amber-warn">
+                    <AlertTriangle className="h-3 w-3" /> {step.failLabel} — <button type="button" onClick={() => record(step.id, null)} className="underline underline-offset-2 hover:text-foreground">desfazer</button>
+                  </span>
+                )}
+                {locked && (
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">bloqueado · etapa anterior pendente</span>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {/* Faixa de conclusão — mesma disciplina da barra de progresso (transição maxHeight/opacity) */}
+      <div
+        className="overflow-hidden"
+        style={{
+          maxHeight: concluded.length === PLAYTEST_STEPS.length ? "3.5rem" : "0rem",
+          opacity: concluded.length === PLAYTEST_STEPS.length ? 1 : 0,
+          transition: `max-height 320ms ${F20_BAR_EASE}, opacity 240ms ${F20_BAR_EASE}`,
+        }}
+      >
+        <div className={`px-4 py-3 border-t font-mono text-[11px] uppercase tracking-wider ${allPass ? "border-engineering/50 bg-engineering/5 text-engineering" : "border-amber-warn/50 bg-amber-warn/5 text-amber-warn"}`}>
+          {allPass ? "Roteiro completo — playtest F20-9 íntegro · submeta o resultado à revisão" : "Roteiro concluído com falha · corrija antes de submeter à revisão"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const VAULT20_TASK_SNIPPET = `## Fase 20 — Persistência Transacional de Atributos (v2.0.0)
+- [x] 11.1. USBAttributePersistenceDefinition/Instance (opt-in + chave estável, upsert — F20-1)
+- [x] 11.2. TransactionLog por PredictionId: rollback simétrico Entry/Exit (F20-2)
+- [x] 11.3. Checkpoint/save via USaveGame — HasAuthority() em toda gravação (F20-3)
+- [x] 11.4. Restore validado por autoridade + rejeição de saves corrompidos (F20-3)
+- [x] 11.5. SBAttributePersistenceTests: concorrência em chave estável + anti-spill (F20-4)
+- [x] 11.6. Isolamento simétrico: hide do plugin de persistência — Exit Code 0 (F20-5)
+- [x] 11.7. Playtest Dedicated Server: save/restore íntegro (F20-9)
+- [x] 11.8. DD-19 homologada (persistência transacional ancorada no PredictionId)
+- [x] 11.9. Carimbo v2.0.0: task.md, Dashboard, walkthrough, V1 Unreal Engine, /fase-20`;
+
 const CHECKLIST_META = {
   phase: "Fase 20",
   title: "Persistência Transacional de Atributos (v2.0.0 · planejada)",
@@ -255,6 +490,7 @@ function F20ProgressBanner() {
 
 export default function Phase20() {
   const active = useActiveSection(TOC.map((t) => t.id));
+  const [rulesOpen, setRulesOpen] = useState(false);
 
   return (
     <DocsLayout>
@@ -448,6 +684,70 @@ export default function Phase20() {
           items={CHECKLIST_ITEMS}
           completeMessage="Checklist completo — pronto para submeter o plano executado da Fase 20 à revisão."
         />
+
+        <TechRule label="Playtest F20-9" />
+        <h2 id="playtest-painel" className="font-display text-2xl font-bold scroll-mt-24">
+          Playtest F20-9 — painel de status
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+          Roteiro de auditoria do playtest em Dedicated Server: sete verificações sequenciais, da conexão ao
+          restore validado. Marque cada etapa conforme o resultado observado na sessão real — o roteiro é
+          ponto de entrada da evidência, não a evidência em si. Persistido em localStorage e sincronizado
+          entre abas; uma falha trava o roteiro e marca o painel em âmbar até a correção.
+        </p>
+        <PlaytestPanel />
+
+        <TechRule label="Trechos do Vault" />
+        <h2 id="trechos-vault" className="font-display text-2xl font-bold scroll-mt-24">
+          Trechos do Vault
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+          Mesma disciplina das Fases 17, 18 e 19: os blocos abaixo são os trechos exatos para o Dashboard e
+          o task.md — mas a colagem só é permitida depois da homologação real (playtest F20-9 com save/restore
+          íntegro, suíte de testes fechando 100% e isolamento simétrico Exit Code 0). O painel de playtest logo
+          acima é o ponto de entrada da evidência; nenhum item aqui homologa a v2.0.0.
+        </p>
+        <VaultCopyWarning onOpenRules={() => setRulesOpen(true)} />
+        <div className="mt-4 space-y-4">
+          <div className="border border-border">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+              <span className="font-mono text-[11px] text-engineering">
+                00_Sandbox_Framework_Dashboard.md · F20 homologada · v2.0.0
+              </span>
+              <VaultCopyButton
+                label="Copiar"
+                value={VAULT20_DASHBOARD_SNIPPET}
+                toastTitle="Trecho do Dashboard copiado"
+                toastDesc="Cole no 00_Sandbox_Framework_Dashboard.md APENAS após a homologação real (playtest F20-9 íntegro + suíte 100% + isolamento Exit 0)."
+                onOpenRules={() => setRulesOpen(true)}
+              />
+            </div>
+            <CodeBlock path="00_Sandbox_Framework_Dashboard.md · v2.0.0 (pós-homologação)" language="text">
+              {VAULT20_DASHBOARD_SNIPPET}
+            </CodeBlock>
+          </div>
+          <div className="border border-border">
+            <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+              <span className="font-mono text-[11px] text-engineering">task.md · itens da Fase 20</span>
+              <VaultCopyButton
+                label="Copiar"
+                value={VAULT20_TASK_SNIPPET}
+                toastTitle="Trecho do task.md copiado"
+                toastDesc="Cole no task.md APENAS após a homologação real (playtest F20-9 íntegro + suíte 100% + isolamento Exit 0)."
+                onOpenRules={() => setRulesOpen(true)}
+              />
+            </div>
+            <CodeBlock path="task.md · Fase 20 (checklist pós-homologação)" language="text">
+              {VAULT20_TASK_SNIPPET}
+            </CodeBlock>
+          </div>
+        </div>
+        <HomologationRulesModal open={rulesOpen} onOpenChange={setRulesOpen} />
+        <AuditNote tone="warn">
+          A Fase 20 ainda não tem porta de homologação aberta (os slots A–D da F19 não se transferem de fase):
+          antes de colar qualquer trecho acima, a página da Fase 20 deve receber os slots de contrato (F20-A…F20-D,
+          padrão DD-16) com o corpo real do build — a colagem antecipada quebra a auditoria Vault ↔ site.
+        </AuditNote>
 
         <TechRule label="Navegação" />
         <div className="mt-10 flex items-center gap-3">

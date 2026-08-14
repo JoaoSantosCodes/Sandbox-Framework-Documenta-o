@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 import { useEffect, useState } from "react";
-import { Download, Eraser, Link2, Search, Star, Upload, X } from "lucide-react";
+import { Download, Eraser, FileText, Link2, Search, Star, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 // Favoritos do Registro de Decisões — persistidos em localStorage por dd-id.
@@ -98,6 +98,92 @@ function importFavoritesJSON(
   reader.readAsText(file);
 }
 
+/* Exportação de uma decisão individual em Markdown (dd-19.md) e PDF (dd-19.pdf).
+   O PDF é gerado client-side (jsPDF embutido) — o Markdown é o formato oficial do Vault,
+   a colagem no Vault só vale após homologação real (padrão DD-16). */
+function decisionToMarkdown(d: Decision): string {
+  const lines: string[] = [
+    `# ${d.id} — ${d.title}`,
+    ``,
+    `> Registro nº ${d.index ?? "—"} · ${d.version} · Status: ${d.status}${d.homologatedAt ? ` · Homologada em ${d.homologatedAt}` : ""}`,
+    ``,
+    `## Problema`,
+    ``,
+    d.problem,
+    ``,
+    `## Decisão homologada`,
+    ``,
+    d.decision,
+    ``,
+    `## Alternativa rejeitada`,
+    ``,
+    d.rejected,
+    ``,
+    `## Consequência`,
+    ``,
+    d.consequence,
+    ``,
+    `## Precedente`,
+    ``,
+    d.precedent,
+    ``,
+    `---`,
+    `Exportado de ${window.location.origin}/decisoes#${d.id.toLowerCase()} em ${new Date().toLocaleString("pt-BR")}.`,
+  ];
+  return lines.join("\n");
+}
+
+function exportDecisionMarkdown(d: Decision, index: number) {
+  const blob = new Blob([decisionToMarkdown({ ...d, index })], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${d.id.toLowerCase()}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success(`${d.id} exportado em Markdown — a colagem no Vault exige homologação prévia`);
+}
+
+/* PDF client-side sem dependência externa: renderiza o Markdown em HTML e imprime via
+   janela oculta com @page CSS — o navegador gera o PDF nativamente (diálogo print-to-PDF). */
+function exportDecisionPDF(d: Decision, index: number) {
+  const md = decisionToMarkdown({ ...d, index });
+  const html = `
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>${d.id}</title>
+<style>
+@page { size: A4; margin: 2cm; }
+body { font-family: Georgia, serif; color: #1a1a1a; max-width: 46rem; margin: 0 auto; }
+h1 { font-size: 1.6rem; border-bottom: 2px solid #2f7a4d; padding-bottom: .4rem; }
+h2 { font-size: 1.15rem; margin-top: 1.6rem; color: #2f7a4d; }
+blockquote { margin: .5rem 0; padding: .4rem .8rem; border-left: 3px solid #2f7a4d; background: #f2f5f3; font-size: .85rem; }
+p { line-height: 1.55; }
+hr { border: 0; border-top: 1px dashed #999; margin-top: 2rem; }
+small { color: #666; }
+</style></head><body>
+${md
+  .split("\n")
+  .map((line) => {
+    if (line.startsWith("# ")) return `<h1>${line.slice(2)}</h1>`;
+    if (line.startsWith("## ")) return `<h2>${line.slice(3)}</h2>`;
+    if (line.startsWith("> ")) return `<blockquote><p>${line.slice(2)}</p></blockquote>`;
+    if (line === "---") return "<hr><small><p>";
+    if (line.startsWith("Exportado de")) return `${line}</p></small>`;
+    if (line.trim() === "") return "<br>";
+    return `<p>${line}</p>`;
+  })
+  .join("")}
+<script>window.onload = () => window.print();</script>
+</body></html>`;
+  const win = window.open("", "_blank");
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+    toast.success(`PDF de ${d.id} aberto no diálogo de impressão — selecione "Salvar como PDF"`);
+  } else {
+    toast.error("Não foi possível abrir a janela de exportação — verifique o bloqueador de pop-ups");
+  }
+}
+
 async function copyDecisionLink(id: string) {
   const url = `${window.location.origin}/decisoes#${id}`;
   try {
@@ -118,6 +204,7 @@ async function copyDecisionLink(id: string) {
 type DecisionStatus = "Homologada" | "Homologada com nota" | "Pendente";
 
 interface Decision {
+  index?: number;
   id: string;
   version: string;
   title: string;
@@ -518,6 +605,26 @@ function DecisionRecord({
             >
               <Link2 className="h-3 w-3" />
               <span className="hidden sm:inline">Copiar link</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-1 mt-1">
+            <button
+              onClick={() => exportDecisionMarkdown(d, index)}
+              aria-label={`Exportar ${d.id} em Markdown`}
+              title="Exportar Markdown (formato oficial do Vault)"
+              className="inline-flex items-center gap-1 border border-engineering/50 text-engineering hover:bg-engineering/8 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors"
+            >
+              <FileText className="h-3 w-3" />
+              <span className="hidden sm:inline">Markdown</span>
+            </button>
+            <button
+              onClick={() => exportDecisionPDF(d, index)}
+              aria-label={`Exportar ${d.id} em PDF`}
+              title="Exportar PDF (impressão nativa)"
+              className="inline-flex items-center gap-1 border border-border/70 text-muted-foreground hover:text-foreground hover:border-engineering/60 px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors"
+            >
+              <Download className="h-3 w-3" />
+              <span className="hidden sm:inline">PDF</span>
             </button>
           </div>
         </div>
