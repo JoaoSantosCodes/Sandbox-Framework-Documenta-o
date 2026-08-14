@@ -10,7 +10,7 @@ import { AlertTriangle, ArrowLeft, ArrowRight, FileText } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
-import { AuditNote, CodeBlock, CopyButton, PhaseStamp, TechRule } from "@/components/Primitives";
+import { AuditNote, CodeBlock, CopyButton, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning } from "@/components/Primitives";
 import { toast } from "sonner";
 
 /* Trechos exatos para colar no Vault após a homologação — mantidos como dado
@@ -432,11 +432,28 @@ export default function Phase19() {
             />
           </div>
           {CODE_SLOTS.map((s) => (
-            <div key={s.slot} className="border border-dashed border-amber-warn/50 bg-amber-warn/[0.04]">
+            <div
+              key={s.slot}
+              className={`border ${
+                s.status === "Aguardando Código"
+                  ? "border-dashed border-amber-warn/60 bg-amber-warn/[0.05] slot-waiting"
+                  : "border border-engineering/50 bg-engineering/[0.04]"
+              }`}
+            >
               <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
-                <span className="font-mono text-[11px] text-amber-warn">{s.slot}</span>
+                <span className="flex items-center gap-2 font-mono text-[11px]">
+                  <span
+                    className={`inline-block h-1.5 w-1.5 rounded-full ${
+                      s.status === "Aguardando Código" ? "bg-amber-warn waiting-dot" : "bg-engineering"
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className={s.status === "Aguardando Código" ? "text-amber-warn" : "text-engineering"}>
+                    {s.slot}
+                  </span>
+                </span>
                 <span
-                  className={`font-mono text-[10px] uppercase tracking-[0.14em] border px-2 py-0.5 ${SLOT_STATUS_STYLES[s.status]}`}
+                  className={`font-mono text-[10px] uppercase tracking-[0.14em] border px-2 py-0.5 whitespace-nowrap ${SLOT_STATUS_STYLES[s.status]}`}
                 >
                   {s.status}
                 </span>
@@ -495,20 +512,22 @@ export default function Phase19() {
           Trechos do Vault
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
-          Os dois blocos abaixo são os trechos exatos para colar nos documentos do Vault assim que os quatro
-          slots receberem os corpos reais e a suíte fechar 34/34 — mantidos aqui para cópia rápida, com botão
-          dedicado por arquivo.
+          Os dois blocos abaixo são os trechos exatos para colar nos documentos do Vault — mas com uma regra
+          dura: a colagem só é permitida depois da homologação real (slots A–D com corpos do build + suíte
+          34/34 + isolamento simétrico). Cada botão leva esse aviso embutido no próprio toast de confirmação.
         </p>
+        <VaultCopyWarning />
         <div className="mt-4 space-y-4">
           <div className="border border-border">
             <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
               <span className="font-mono text-[11px] text-engineering">
                 00_Sandbox_Framework_Dashboard.md · F19 homologada · v1.9.0
               </span>
-              <CopyButton
+              <VaultCopyButton
                 label="Copiar"
                 value={VAULT_DASHBOARD_SNIPPET}
-                onCopy={() => toast("Trecho do Dashboard copiado", { description: "Cole no 00_Sandbox_Framework_Dashboard.md após a homologação." })}
+                toastTitle="Trecho do Dashboard copiado"
+                toastDesc="Cole no 00_Sandbox_Framework_Dashboard.md APENAS após a homologação real (slots A–D com corpo do build + suíte 34/34)."
               />
             </div>
             <CodeBlock path="00_Sandbox_Framework_Dashboard.md · Execução paralela + v1.9.0" language="text">
@@ -518,10 +537,11 @@ export default function Phase19() {
           <div className="border border-border">
             <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
               <span className="font-mono text-[11px] text-engineering">task.md · itens da Fase 19</span>
-              <CopyButton
+              <VaultCopyButton
                 label="Copiar"
                 value={VAULT_TASK_SNIPPET}
-                onCopy={() => toast("Trecho do task.md copiado", { description: "Cole no task.md substituindo os itens de planejamento." })}
+                toastTitle="Trecho do task.md copiado"
+                toastDesc="Cole no task.md APENAS após a homologação real (slots A–D com corpo do build + suíte 34/34)."
               />
             </div>
             <CodeBlock path="task.md · Fase 19 (checklist pós-homologação)" language="text">

@@ -3,7 +3,8 @@
   e botão de copiar, bloco de auditoria (nota de revisor), régua técnica.
 */
 import { ReactNode, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { AlertTriangle, Check, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 export function PhaseStamp({ phase, version, warn }: { phase: string; version: string; warn?: boolean }) {
   return (
@@ -82,6 +83,50 @@ export function AuditNote({ children, tone = "warn" }: { children: ReactNode; to
       </span>
       {children}
     </aside>
+  );
+}
+
+/* DESIGN "Blueprint Técnico": aviso fixo de que copiar trechos Vault só é válido
+   após homologação real (corpo do build + testes verdes) — repetido no toast, não só
+   no rótulo, para que quem copia sem ler o texto ainda receba o alerta. */
+export function VaultCopyWarning() {
+  return (
+    <div className="mt-4 flex items-start gap-3 border border-amber-warn/60 bg-amber-warn/[0.06] px-4 py-3">
+      <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-warn" />
+      <p className="text-[13px] leading-relaxed text-amber-warn/90">
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] block mb-1 text-amber-warn">
+          Regra de homologação
+        </span>
+        Copiar este trecho não homologa nada. A colagem no Vault só é válida depois de: corpos reais de
+        C++ nos slots auditáveis, suíte de testes fechando 100% e isolamento simétrico com Exit Code 0.
+        Colar antes disso quebra a auditoria de sincronização Vault ↔ site.
+      </p>
+    </div>
+  );
+}
+
+export function VaultCopyButton({
+  value,
+  label = "Copiar",
+  toastTitle,
+  toastDesc,
+  onCopy,
+}: {
+  value: string;
+  label?: string;
+  toastTitle: string;
+  toastDesc: string;
+  onCopy?: () => void;
+}) {
+  return (
+    <CopyButton
+      label={label}
+      value={value}
+      onCopy={() => {
+        toast.warning(toastTitle, { description: toastDesc, duration: 6000 });
+        onCopy?.();
+      }}
+    />
   );
 }
 

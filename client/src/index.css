@@ -1,4 +1,28 @@
 @import "tailwindcss";
+
+/* Dot pulsante dos slots "Aguardando Código" — apenas transform/opacity (GPU). */
+@keyframes waiting-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.75);
+  }
+}
+
+.waiting-dot {
+  animation: waiting-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waiting-dot {
+    animation: none;
+    opacity: 0.7;
+  }
+}
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));

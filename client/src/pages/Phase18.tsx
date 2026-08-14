@@ -4,7 +4,8 @@
 */
 import { DocsLayout } from "@/components/DocsLayout";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
-import { AuditNote, CodeBlock, PhaseStamp, TechRule } from "@/components/Primitives";
+import { AuditNote, CodeBlock, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning } from "@/components/Primitives";
+import { toast } from "sonner";
 import { CheckCircle2, Circle, X } from "lucide-react";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { PHASE18_ACCEPTANCE_V2, PHASE18_EVENTS, PHASE18_WIDGETS } from "@/lib/siteData";
@@ -20,7 +21,31 @@ const TOC = [
   { id: "verificacao", label: "Verificação" },
   { id: "aceite", label: "Critérios de aceite" },
   { id: "checklist", label: "Checklist interativo" },
+  { id: "trechos-vault", label: "Trechos do Vault" },
 ];
+
+/* Trechos exatos para colar no Vault após a homologação — mantidos como dado
+   único, consumidos pelos blocos copiáveis da seção "Trechos do Vault" (id trechos-vault).
+   Regra: não colar no Vault antes de o corpo real do build fechar 32/32 + isolamento simétrico. */
+const VAULT18_DASHBOARD_SNIPPET = `### Fase 18 Concluída · v1.8.0 (Interface Dinâmica — 09_SandboxUI)
+Homologação fechada: SBEventPayloads.h em 04_SandboxCore (UObject, DD-03), USBUIManager como
+ULocalPlayerSubsystem (split-screen/listen server), auto-unsubscribe cirúrgico em NativeDestruct
+(DD-02), filtro anti-spill em todos os widgets (DD-05), throttle de 60 Hz no hold, grade de
+inventário nos 4 eventos canônicos, SBUITests 32/32 (Cenários 1/2) e isolamento simétrico Exit 0.
+Decisões DD-04 · DD-05 · DD-06 · DD-07 · DD-02 vigentes. 10 de 11 plugins implementados · 1 em backlog.`;
+
+const VAULT18_TASK_SNIPPET = `## Fase 18 — Interface Dinâmica (v1.8.0)
+
+- [x] 9.1. SBEventPayloads.h em 04_SandboxCore — payloads UObject sem dependência de 06/07/08
+- [x] 9.2. USBUIManager como ULocalPlayerSubsystem com instâncias por local player
+- [x] 9.3. USBUserWidget + auto-unsubscribe cirúrgico em NativeDestruct (FSBWidgetEventSubscription)
+- [x] 9.4. Filtro anti-spill (TargetPawn == GetOwningPlayerPawn) em todos os widgets de gameplay
+- [x] 9.5. Throttle 60 Hz no acumulador do hold (USBInteractionComponent::TickComponent)
+- [x] 9.6. WBP_InventoryGrid assinando ItemAdded/Removed/Equipped/Unequipped
+- [x] 9.7. SBUITests 32/32 — Cenário 1 (unsubscribe/idempotência) + Cenário 2 (TargetPawn mismatch)
+- [x] 9.8. Isolamento simétrico: hide 05+06+07+08 → 09 compila; hide 09 → gameplay intacto (Exit 0)
+- [x] 9.9. Playtest multiplayer PIE com Gameplay Debugger (F17) auditando vida/mana/hold/grid/cooldown
+- [x] 9.10. Carimbo v1.8.0: task.md, Dashboard, walkthrough, V1 Unreal Engine, /fase-18`;
 
 const PHASE18_CHECKLIST_KEY = "sbf-phase18-checklist";
 
@@ -313,6 +338,49 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
             items={PHASE18_CHECKLIST_ITEMS}
             completeMessage="Checklist completo — Fase 18 pronta para homologação final (9/9 itens, v1.8.0)."
           />
+
+          <TechRule label="03.1 · Trechos do Vault" />
+          <h2 id="trechos-vault" className="font-display text-2xl font-bold scroll-mt-24">
+            Trechos do Vault
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+            Os dois blocos abaixo são os trechos exatos para colar nos documentos do Vault — mas com a mesma
+            regra dura da Fase 19: a colagem só é válida depois da homologação real (corpo do build compilado,
+            SBUITests 32/32 e isolamento simétrico com Exit Code 0). O aviso está embutido no toast de cada botão.
+          </p>
+          <VaultCopyWarning />
+          <div className="mt-4 space-y-4">
+            <div className="border border-border">
+              <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+                <span className="font-mono text-[11px] text-engineering">
+                  00_Sandbox_Framework_Dashboard.md · F18 homologada · v1.8.0
+                </span>
+                <VaultCopyButton
+                  label="Copiar"
+                  value={VAULT18_DASHBOARD_SNIPPET}
+                  toastTitle="Trecho do Dashboard copiado"
+                  toastDesc="Cole no 00_Sandbox_Framework_Dashboard.md APENAS após a homologação real (32/32 specs + isolamento simétrico Exit Code 0)."
+                />
+              </div>
+              <CodeBlock path="00_Sandbox_Framework_Dashboard.md · Fase 18 Concluída · v1.8.0" language="text">
+                {VAULT18_DASHBOARD_SNIPPET}
+              </CodeBlock>
+            </div>
+            <div className="border border-border">
+              <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+                <span className="font-mono text-[11px] text-engineering">task.md · itens da Fase 18</span>
+                <VaultCopyButton
+                  label="Copiar"
+                  value={VAULT18_TASK_SNIPPET}
+                  toastTitle="Trecho do task.md copiado"
+                  toastDesc="Cole no task.md APENAS após a homologação real — substituir os itens de planejamento pelos checkados."
+                />
+              </div>
+              <CodeBlock path="task.md · Fase 18 (checklist pós-homologação)" language="text">
+                {VAULT18_TASK_SNIPPET}
+              </CodeBlock>
+            </div>
+          </div>
         </article>
 
         {/* Sumário sticky */}
