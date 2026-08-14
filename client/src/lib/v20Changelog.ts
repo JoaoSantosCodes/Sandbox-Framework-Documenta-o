@@ -1,6 +1,9 @@
 /* Estilo do site: blueprint técnico (DD-14) — dados compartilhados do
    changelog v2.0.0-prep entre a Home (visão consolidada) e a /fase-20
-   (changelog completo). Fonte única de verdade: este arquivo. */
+   (changelog completo). Fonte única de verdade: este arquivo.
+   NOTA (reconciliação · Vault oficial): o Vault (Obsidian) é a fonte oficial —
+   v1.9.0 homologada (F19 GameAnimationSample). As propostas v2.0.0/F20 (P-1 dano, P-2 persistência)
+   seguem como rascunhos fora da régua; pendencias_de_fases.md registra as 7 pendências. */
 import { useEffect, useState } from "react";
 
 export interface ChangelogEntry {
@@ -24,6 +27,12 @@ const CHANGELOG_FILTER_META: Record<ChangelogFilterKey, { label: string }> = {
 
 /* Alterações da pré-versão v2.0.0-prep — registro documental; nenhum item homologa a fase. */
 export const V20_CHANGELOG: ChangelogEntryCategory[] = [
+  {
+    tag: "Reconciliação",
+    category: "Correção",
+    title: "Site alinhado ao Vault oficial: v1.9.0 homologada (F19 GameAnimationSample)",
+    body: "A reconciliação seguiu a regra de precedência do Vault (Obsidian): F19 = Integração e Replicação no GameAnimationSample concluída (241 passos UBT Exit 0, suíte 32/32), F99 = dano rascunho (P-1), F20 = persistência rascunho (P-2), e o novo documento pendencias_de_fases.md consolida as 7 pendências (P-1…P-7). Home, Roadmap, Histórico, Fases, Fase 19 (dano) e Fase 20 atualizados — páginas de rascunho mantidas fora da régua com selo explícito. O carimbo global e o <title> voltaram para v1.9.0.",
+  },
   {
     tag: "F20 · F20-1",
     category: "Novidade",

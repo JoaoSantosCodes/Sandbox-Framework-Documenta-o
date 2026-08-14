@@ -30,21 +30,25 @@ export default function Phases() {
             <li key={p.phase} className="ml-7 relative">
               <span
                 className={`absolute -left-[37px] top-1 h-4 w-4 rounded-full border-2 ${
-                  p.status === "Concluída"
-                    ? "border-engineering bg-engineering"
-                    : "border-amber-warn bg-background"
+                  p.draft
+                    ? "border-dashed border-muted-foreground/60 bg-muted/30"
+                    : p.status === "Concluída"
+                      ? "border-engineering bg-engineering"
+                      : "border-amber-warn bg-background"
                 }`}
               />
               <div className="flex items-center gap-3 flex-wrap">
                 <PhaseStamp phase={String(p.phase)} version={p.version} warn={p.status !== "Concluída"} />
                 <span className={`font-mono text-[10px] uppercase tracking-wider px-2 py-1 border ${
-                  p.status === "Concluída"
-                    ? "border-engineering/60 text-engineering"
-                    : p.status === "Em execução"
-                      ? "border-amber-warn/60 text-amber-warn"
-                      : "border-muted-foreground/40 text-muted-foreground"
+                  p.draft
+                    ? "border-dashed border-muted-foreground/60 text-muted-foreground"
+                    : p.status === "Concluída"
+                      ? "border-engineering/60 text-engineering"
+                      : p.status === "Em execução"
+                        ? "border-amber-warn/60 text-amber-warn"
+                        : "border-muted-foreground/40 text-muted-foreground"
                 }`}>
-                  {p.status === "Concluída" ? "Homologada" : p.status}
+                  {p.draft ? "Rascunho · fora do Vault" : p.status === "Concluída" ? "Homologada" : p.status}
                 </span>
               </div>
               <h2 className="font-display text-2xl font-bold mt-3">{p.title}</h2>
@@ -69,19 +73,19 @@ export default function Phases() {
         <div className="border-l-2 border-amber-warn bg-[oklch(0.62_0.13_65)]/7 p-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="font-mono text-xs uppercase tracking-[0.16em] text-amber-warn font-semibold">
-              Em aberto · Fase 18 · Interface Dinâmica (09_SandboxUI)
+              Pendências · P-1…P-7 · documentadas no Vault oficial
             </div>
             <p className="mt-1.5 text-sm text-muted-foreground max-w-xl">
-              Plano de implantação homologado e publicado: arquitetura de eventos via
-              USBEventSubsystem e hierarquia de widgets reativos. Checklist em aberto no task.md:
-              0/9 itens, alvo de 32/32 specs após a suíte SBUITests.
+              A v1.9.0 está homologada no Vault (F19 · GameAnimationSample). O que falta das fases
+              anteriores está registrado em pendencias_de_fases.md: indicador de dano (P-1),
+              persistência transacional (P-2), widgets UMG restantes (P-3) e demais frentes.
             </p>
           </div>
           <Link
-            href="/fase-18"
+            href="/roadmap#em-curso"
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 text-sm font-semibold hover:opacity-90"
           >
-            Abrir o plano <ArrowRight className="h-4 w-4" />
+            Abrir o roadmap <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>

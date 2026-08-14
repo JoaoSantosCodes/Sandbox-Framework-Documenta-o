@@ -214,7 +214,7 @@ const NAV_CHIPS = [
   { href: "/historico", label: "Histórico Consolidado", short: "11 · Hist" },
   { href: "/fase-19-umg", label: "F19 — Widgets UMG", short: "12 · UMG" },
   { href: "/roadmap", label: "Linha do Tempo & Roadmap", short: "13 · Roadmap" },
-  { href: "/fase-20", label: "F20 — Planejamento", short: "14 · F20" },
+  { href: "/fase-20", label: "Rascunhos — Dano & Persistência (P-1/P-2)", short: "14 · Rascunhos" },
 ];
 
 function ThemeToggle({ compact = false }: { compact?: boolean }) {
@@ -441,7 +441,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
         <div className="container py-5">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Spec · v1.8.0
+              Spec · v1.9.0
             </span>
             <div className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.12em] text-muted-foreground flex-wrap justify-center">
               <span>11 plugins</span>
@@ -450,7 +450,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
               <span>·</span>
               <span>Fase 18 homologada 32/32</span>
               <span>·</span>
-              <span>Fase 19 em homologação (v1.9.0)</span>
+              <span className="text-engineering">Fase 19 homologada (v1.9.0)</span>
               <span>·</span>
               <span>UE5.8 · C++</span>
             </div>

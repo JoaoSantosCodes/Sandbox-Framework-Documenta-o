@@ -1466,7 +1466,7 @@ export default function Phase20() {
             <span>DD-19 · D1–D6</span>
             <span>Escopo F20-1…F20-9</span>
             <span>Slots F20-A…F20-D</span>
-            <span>Versão v2.0.0-prep</span>
+            <span className="text-muted-foreground/50">v2.0.0-prep · rascunho</span>
             <span className="mt-2 flex items-center gap-1.5 text-muted-foreground/70">
               <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" aria-hidden>
                 <rect x="2" y="2" width="20" height="4" rx="1" fill="oklch(0.55 0.11 165)" />
@@ -1481,9 +1481,12 @@ export default function Phase20() {
               doc. 20 · v2.0.0 · planning gate
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <PhaseStamp phase="20" version="v2.0.0 · planejada" warn />
+              <PhaseStamp phase="99" version="v2.0.0 · rascunho" warn />
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                persistência transacional de atributos · 11 plugins atuais · 0 em backlog
+                pendência P-2 · fora da régua oficial
+              </span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.14em] px-1.5 py-0.5 border border-dashed border-muted-foreground/60 text-muted-foreground">
+                Rascunho · não homologada no Vault
               </span>
             </div>
             <h1 className="mt-6 font-display font-black text-4xl md:text-5xl leading-[1.05] max-w-3xl">
@@ -1492,9 +1495,13 @@ export default function Phase20() {
             <p className="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed max-w-3xl">
               O jogador deve poder sair da partida e voltar encontrando exatamente o estado que deixou —
               atributos, inventário e progresso confirmados pelo servidor, nunca a última predição local. A
-              Fase 20 introduz o{" "}
+              proposta introduz o{" "}
               <strong className="text-foreground">TransactionLog transacional</strong> ancorado no
               PredictionId da DD-10, fechado pelo checkpoint autorizado via SaveGame.
+              <strong className="text-foreground"> Status: rascunho fora da régua oficial</strong> — a
+              v1.9.0 está homologada no Vault e o documento pendencias_de_fases.md registra esta frente
+              como P-2; nenhuma próxima fase entra na régua sem corpo real de código, suíte verde e
+              isolamento simétrico.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {TOC.map((t, i) => (

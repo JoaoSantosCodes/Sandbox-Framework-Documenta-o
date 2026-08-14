@@ -10,8 +10,10 @@ import {
   Check,
   CircleAlert,
   Compass,
+  Layers,
   Lock,
   Map,
+  Paintbrush,
   Milestone,
   RotateCcw,
   ShieldCheck,
@@ -21,7 +23,6 @@ import {
 import { Link } from "wouter";
 import { DocsLayout } from "@/components/DocsLayout";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
-import { F19_SLOT_KEYS, useF19SubmittedCount, useSlotSubmissionStatus } from "@/components/Primitives";
 
 const TOC = [
   { id: "visao-geral", label: "Visão geral" },
@@ -143,22 +144,22 @@ const MILESTONES: Milestone[] = [
     id: "m-f19",
     tag: "v1.9.0",
     date: "Fase 19",
-    title: "Damage Indicator — em homologação",
+    title: "Integração e Replicação no GameAnimationSample",
     description:
-      "Slots auditáveis A–D: payload em 04_SandboxCore, broadcast autoritativo no Hitscan, USBUIDamageIndicator em 09_SandboxUI (anti-spill + dedup AttackId) e SBUITests cenários 7/8. Suíte precisa fechar 34/34.",
-    status: "active",
-    metric: "4/4 slots · Aguardando código",
-    blocking: true,
+      "Portabilidade oficial homologada no Vault (14/08/2026): módulo C++ nativo com Target.cs, 11 plugins habilitados no .uproject, 241 passos de compilação UBT e suíte 32/32 verde no contexto integrado.",
+    status: "done",
+    metric: "32/32 · Exit 0",
   },
   {
-    id: "m-f20",
-    tag: "v2.0.0",
-    date: "Roadmap",
-    title: "Fase 20 — Persistência Transacional de Atributos",
+    id: "m-pend",
+    tag: "Vault",
+    date: "Contínuo",
+    title: "Pendências de fases consolidadas",
     description:
-      "Planejamento registrado em /fase-20: TransactionLog ancorado no PredictionId (DD-10), chave estável (DD-02), checkpoint autorizado via USaveGame, SBAttributePersistenceTests e playtest Dedicated Server. Entra em execução com a homologação real da F19 (build real nos slots + suíte verde + isolamento simétrico).",
-    status: "planned",
-    href: "/fase-20",
+      "Documento oficial pendencias_de_fases.md no Vault: propostas sem corpo real (dano · P-1, persistência transacional · P-2), backlog de frentes (UMG · P-3, rede · P-4, polimento · P-5/P-6) e specs normativas desatualizadas (P-7). Nada entra na régua sem build + suíte + isolamento.",
+    status: "active",
+    metric: "7 pendências · 0 homologadas",
+    blocking: true,
   },
 ];
 
@@ -197,53 +198,50 @@ function StatusBadge({ status }: { status: MilestoneStatus }) {
   );
 }
 
-/* Seção "Em curso" — linhas dos slots A–D da F19 com status em tempo real
-   (verde quando submetido no formulário da F19, âmbar pulsante caso contrário). */
+/* Seção "Em curso" — pendências oficiais do Vault (pendencias_de_fases.md).
+   Não há slots de homologação ativos (nenhuma fase com corpo real em execução). */
 const ROADMAP_SLOTS: RoadmapSlot[] = [
   {
-    slotKey: "Slot A · SBEventPayloads.h",
-    icon: <Milestone className="h-4 w-4" />,
-    title: "Slot A · Payload em 04_SandboxCore",
-    detail: "USBDamageEventPayload — chave estável, nunca índice",
+    slotKey: "P-3 · Montagem UMG",
+    icon: <Paintbrush className="h-4 w-4" />,
+    title: "P-3 · Widget Blueprints no UMG Designer",
+    detail: "Backing classes C++ do 09_SandboxUI + WatchedAbilityTag",
   },
   {
-    slotKey: "Slot B · 06_SandboxCombat",
+    slotKey: "P-4 · Segurança de rede",
+    icon: <ShieldCheck className="h-4 w-4" />,
+    title: "P-4 · RPC Rate-Limiting & Anti-cheat",
+    detail: "Validação de distância e posse no frame exato da RPC",
+  },
+  {
+    slotKey: "P-5 · Polimento de gameplay",
+    icon: <Layers className="h-4 w-4" />,
+    title: "P-5 · Status Effects & Lag Compensation",
+    detail: "Buff/debuff genérico + rewind de rede para hitscan",
+  },
+  {
+    slotKey: "P-7 · Specs normativas",
     icon: <TerminalSquare className="h-4 w-4" />,
-    title: "Slot B · Broadcast autoritativo no Hitscan",
-    detail: "HasAuthority() explícito · validar → mutar → notificar",
-  },
-  {
-    slotKey: "Slot C · USBUIDamageIndicator (09_SandboxUI)",
-    icon: <Map className="h-4 w-4" />,
-    title: "Slot C · USBUIDamageIndicator em 09_SandboxUI",
-    detail: "Anti-spill por ULocalPlayer + dedup por AttackId",
-  },
-  {
-    slotKey: "Slot D · SBUITests",
-    icon: <Check className="h-4 w-4" />,
-    title: "Slot D · SBUITests cenários 7 e 8",
-    detail: "Anti-spill e deduplicação — elevar a suíte a 34/34",
+    title: "P-7 · Specs atualizadas (DD-09…DD-19)",
+    detail: "SFPS/SFDG/Manifesto: carimbar versão nova",
   },
 ];
 
-/* Banner automático: aparece quando os 4 slots recebem código (submissão local).
-   Texto deixa explícito que é estado local — homologação real exige build + suíte 34/34. */
+/* Banner de contexto: F19 oficial concluída no Vault — a régua reflete o estado homologado. */
 function RoadmapCompletionBanner() {
-  const count = useF19SubmittedCount();
-  const allSubmitted = count === 4;
-  if (!allSubmitted) return null;
   return (
     <div className="mb-6 border border-engineering/60 bg-engineering/[0.06] px-4 py-3">
       <div className="flex items-start gap-3">
         <Check className="h-4 w-4 mt-0.5 shrink-0 text-engineering" />
         <div className="text-sm leading-relaxed">
           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering block mb-1">
-            Homologação concluída · 4/4 slots — submissões locais
+            v1.9.0 homologada no Vault oficial · 32/32 · Exit 0
           </span>
           <span className="text-muted-foreground">
-            Os quatro slots da Fase 19 receberam código neste navegador — a régua abaixo reflete
-            o estado local. <strong>A homologação real da v1.9.0 exige</strong> build UBT Exit 0 +
-            suíte 34/34 + isolamento simétrico, antes de qualquer carimbo no Vault.
+            A Fase 19 (Integração e Replicação no GameAnimationSample) está concluída no cofre
+            Obsidian — fonte oficial do projeto. <strong>Nenhuma fase entra na régua</strong> sem
+            build UBT Exit 0 + suíte verde + isolamento simétrico, conforme as regras de
+            homologação em pendencias_de_fases.md.
           </span>
         </div>
       </div>
@@ -253,45 +251,36 @@ function RoadmapCompletionBanner() {
 
 
 function RoadmapSlotRow({ row, index }: { row: RoadmapSlot; index: number }) {
-  const { status } = useSlotSubmissionStatus(row.slotKey as (typeof F19_SLOT_KEYS)[number]);
-  const submitted = status === "Código registrado";
+  /* Pendências do Vault — não há formulário de submissão; estado sempre "Pendente". */
   return (
-    <div
-      key={row.slotKey}
-      className={`flex items-center gap-4 px-5 py-4 ${index > 0 ? "border-t border-dotted" : ""} ${submitted ? "bg-engineering/[0.04]" : ""}`}
-    >
-      <span className={submitted ? "text-engineering" : "text-warning"}>{row.icon}</span>
+    <div className={`flex items-center gap-4 px-5 py-4 ${index > 0 ? "border-t border-dotted" : ""}`}>
+      <span className="text-warning">{row.icon}</span>
       <div className="flex-1">
         <div className="text-sm font-medium">{row.title}</div>
         <div className="font-mono text-[11px] text-muted-foreground">{row.detail}</div>
       </div>
-      {submitted ? (
-        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-engineering">
-          Código registrado
-        </span>
-      ) : (
-        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-warning animate-pulse">
-          Aguardando código
-        </span>
-      )}
+      <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-warning animate-pulse">
+        Pendente
+      </span>
     </div>
   );
 }
 
 function RoadmapInProgress() {
-  const submittedCount = useF19SubmittedCount();
+  const [submittedCount, _setSubmittedCount] = useState(0);
   return (
     <section id="em-curso" className="scroll-mt-24 mt-14">
       <div className="flex items-baseline justify-between flex-wrap gap-3">
         <h2 className="font-display text-3xl font-bold">Em curso</h2>
         <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-          {submittedCount} / 4 slots neste navegador
+          Pendências do Vault oficial
         </span>
       </div>
       <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-        A Fase 19 (Damage Indicator) é o único trabalho ativo — tudo abaixo é pré-requisito
-        do carimbo v1.9.0 e segue a porta de homologação com slots auditáveis A–D. O status
-        de cada linha reflete o formulário de submissões da página da Fase 19 em tempo real.
+        A Fase 19 (Integração no GameAnimationSample) foi concluída no Vault oficial — não há
+        fase com corpo real em execução. As linhas abaixo vêm do documento
+        <code className="mx-1 border border-dotted px-1 py-0.5 font-mono text-[11px]">pendencias_de_fases.md</code>
+        e avançam somente com build UBT Exit 0 + suíte verde + isolamento simétrico.
       </p>
       <div className="mt-6 space-y-0 border border-border">
         {ROADMAP_SLOTS.map((row, i) => (
@@ -299,10 +288,8 @@ function RoadmapInProgress() {
         ))}
       </div>
       <div className="mt-3 inline-flex items-center gap-2 border border-dotted border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-        {submittedCount} / 4 slots com código registrado neste navegador ·
-        {submittedCount === 4
-          ? " pendência final: build compilado + suíte 34/34 + isolamento Exit 0"
-          : " submissões são simulação de fluxo — não homologam a versão"}
+        4 de 7 pendências do Vault em foco na régua ·
+        P-1 (dano) e P-2 (persistência) seguem como rascunhos fora da régua numerada
       </div>
     </section>
   );
@@ -317,7 +304,6 @@ export default function Roadmap() {
     return () => clearTimeout(t);
   }, [copiedRoute]);
 
-  const submittedCount = useF19SubmittedCount();
   const [filter, setFilter] = useState<StatusFilter>("all");
 
   useEffect(() => {
@@ -396,27 +382,28 @@ export default function Roadmap() {
           {/* Visão geral */}
           <section id="visao-geral" className="scroll-mt-24">
             <h2 className="font-display text-3xl font-bold">
-              O projeto em uma página — de Foundation a v2.0.0
+              O projeto em uma página — de Foundation a v1.9.0
             </h2>
             <div className="mt-4 max-w-3xl space-y-3 text-sm leading-relaxed text-muted-foreground">
               <p>
                 A linha do tempo abaixo consolida o caminho dos 11 plugins UE5.8 C++, das versões
-                homologadas (v1.7.0 · v1.8.0) e das decisões de design (DD-01…DD-18) até o estado
-                atual — a <b className="text-warning">Fase 19 em homologação</b>, único bloqueante
-                para a v1.9.0.
+                homologadas (v1.7.0 · v1.8.0 · v1.9.0) e das decisões de design (DD-01…DD-19) até
+                o estado atual — a <b className="text-engineering">Fase 19 concluída</b> no Vault
+                oficial (Obsidian), com a portabilidade do GameAnimationSample.
               </p>
               <p>
-                O roadmap projeta o que se desbloqueia após o fechamento da F19: a próxima fase de
-                gameplay (F20) e a consolidação do playtest multiplayer como critério de aceite
-                oficial — mantendo a mesma porta de homologação com slots auditáveis (padrão DD-16).
+                O roadmap oficial é o backlog de pendências do Vault (pendencias_de_fases.md):
+                as frentes de polimento UMG, segurança de rede e lag compensation, além das
+                propostas de dano e persistência transacional — que seguem como rascunhos até
+                receberem corpo real de código homologado (padrão DD-16).
               </p>
             </div>
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-px bg-border/60 border border-border">
               {[
                 { label: "Plugins", value: "11/11", detail: "implementados" },
-                { label: "Versões", value: "v1.8.0", detail: "homologada" },
-                { label: "Decisões DD", value: "18", detail: "registradas" },
-                { label: "Próxima", value: "v1.9.0", detail: "em homologação" },
+                { label: "Versões", value: "v1.9.0", detail: "homologada" },
+                { label: "Decisões DD", value: "19", detail: "registradas" },
+                { label: "Próxima", value: "P-3…P-6", detail: "backlog do Vault" },
               ].map((s) => (
                 <div key={s.label} className="bg-background px-4 py-4">
                   <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
@@ -571,7 +558,7 @@ export default function Roadmap() {
             </div>
           </section>
 
-          {/* Em curso — status em tempo real via formulário de submissões da F19 */}
+          {/* Em curso — pendências oficiais do Vault (não há slots de homologação ativos) */}
           <RoadmapInProgress />
 
           {/* Roadmap */}
@@ -585,39 +572,39 @@ export default function Roadmap() {
               {[
                 {
                   step: "01",
-                  icon: <Wrench className="h-4 w-4" />,
-                  title: "Fechar a v1.9.0",
+                  icon: <Paintbrush className="h-4 w-4" />,
+                  title: "Frente 1 · Montagem UMG (P-3)",
                   items: [
-                    "Submeter corpo real dos slots A–D",
-                    "UBT Exit 0 · suíte 34/34",
-                    "Grep de acoplamento limpo",
-                    "Carimbo simultâneo (site · Vault · GitHub)",
+                    "Widget Blueprints das backing classes C++ do 09_SandboxUI",
+                    "Slots de habilidade com WatchedAbilityTag",
+                    "Playtests em Listen Server e Split-Screen local",
+                    "Validar anti-spill de escopo local sem vazamento",
                   ],
-                  state: "Depende de: plano executado do Vault",
+                  state: "Backlog oficial do Vault",
                 },
                 {
                   step: "02",
                   icon: <ShieldCheck className="h-4 w-4" />,
-                  title: "Correções de processo (C2–C5)",
+                  title: "Frente 2 · Segurança de rede (P-4)",
                   items: [
-                    "Ritual de sync + sync-audit.py",
-                    "GitHub Action de build",
-                    "Bloco de evidência de homologação na F19",
-                    "Banner de modo demonstração",
+                    "RPC Rate-Limiting em chamadas críticas",
+                    "Anti-cheat: validação de distância no frame da RPC",
+                    "Validação de posse do item no servidor",
+                    "Sem branch de teste vazando para produção",
                   ],
-                  state: "Esforço total: ~4–6 h",
+                  state: "Backlog oficial do Vault",
                 },
                 {
                   step: "03",
                   icon: <RotateCcw className="h-4 w-4" />,
-                  title: "F20 · próxima fase de gameplay",
+                  title: "Frente 3 · Polimento (P-5 · P-6)",
                   items: [
-                    "Porta de homologação com slots A–D (DD-16)",
-                    "Candidata: persistência transacional de atributos",
-                    "Playtest multiplayer como critério oficial",
-                    "Parecer técnico pré-execução via skill",
+                    "Status Effects genéricos (buff / debuff / DOT)",
+                    "Lag compensation (rewind de rede para hitscan)",
+                    "Restauração visual de equipamento nos sockets",
+                    "Specs normativas atualizadas (P-7 · DD-09…DD-19)",
                   ],
-                  state: "Pré-requisito: v1.9.0 homologada",
+                  state: "Backlog oficial do Vault",
                 },
               ].map((col) => (
                 <div key={col.step} className="border border-border bg-background">
@@ -650,28 +637,28 @@ export default function Roadmap() {
             <div className="mt-6 border border-border">
               {[
                 {
-                  title: "F19 sem corpo real de código",
+                  title: "Duplicação de numeração F19 (Vault · GameAnimationSample vs site · dano)",
                   level: "Bloqueante",
                   mitigation:
-                    "Roteiro de 4–7 h: plano executado do Vault → validação tripla → carimbo simultâneo.",
+                    "Régua oficial = Vault: F19 portabilidade concluída; proposta de dano vira Pendência P-1, fora da régua numerada.",
+                },
+                {
+                  title: "Propostas sem corpo real (P-1 dano, P-2 persistência)",
+                  level: "Alto",
+                  mitigation:
+                    "Rascunhos mantidos apenas como páginas com selo de proposta; nenhuma entra na régua sem build + suíte + isolamento.",
                 },
                 {
                   title: "Sync Vault ↔ site manual",
                   level: "Médio",
                   mitigation:
-                    "Ritual de 3 pontos por rodada + script sync-audit.py comparando hashes.",
+                    "Ritual de 3 pontos por rodada + sync-audit.py — Vault Obsidian é a fonte oficial, site espelha o Vault.",
                 },
                 {
                   title: "GitHub sem sync automático",
                   level: "Médio",
                   mitigation:
-                    "Push por checkpoint + GitHub Action que valida build:vercel antes do deploy Vercel.",
-                },
-                {
-                  title: "Evidência de build não exposta",
-                  level: "Baixo",
-                  mitigation:
-                    "Bloco 'Evidência de homologação' na F19 — carimbo retido sem o bloco.",
+                    "Push por checkpoint + GitHub Action + secret VAULT_MIRROR_REPO para auditoria do Vault privado.",
                 },
               ].map((r, i) => (
                 <div
@@ -695,7 +682,7 @@ export default function Roadmap() {
           </section>
 
           <div className="mt-14 border-t border-dotted pt-5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Estado de referência: skill sandbox-framework-review v1.9.0-prep ·{" "}
+            Estado de referência: Vault oficial · pendencias_de_fases.md · v1.9.0 ·{" "}
             <button
               onClick={() => {
                 navigator.clipboard?.writeText(window.location.href);

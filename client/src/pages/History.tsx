@@ -16,7 +16,8 @@ import { PHASES } from "@/lib/siteData";
 
 /* Camada estrutural de cada fase homologada — espelha a topologia de plugins do framework:
    foundation (F1–F9), gameplay-base (F10–11: predição + suíte), gameplay-ext (F12–16: interação,
-   inventário, stack, save, habilidades), presentation (F17: debugger), tools (F19: planejamento). */
+   inventário, stack, save, habilidades), presentation (F17–19: debugger, UI, GameAnimationSample),
+   rascunho (F99: propostas sem homologação no Vault). */
 type Layer = "todas" | "foundation" | "gameplay-base" | "gameplay-ext" | "presentation" | "tools";
 
 const LAYERS: { id: Layer; label: string }[] = [
@@ -24,23 +25,23 @@ const LAYERS: { id: Layer; label: string }[] = [
   { id: "foundation", label: "Foundation (F1–F9)" },
   { id: "gameplay-base", label: "Gameplay Base (F10–11)" },
   { id: "gameplay-ext", label: "Gameplay Ext (F12–16)" },
-  { id: "presentation", label: "Presentation (F17)" },
-  { id: "tools", label: "Tools (F19)" },
+  { id: "presentation", label: "Presentation (F17–19)" },
+  { id: "tools", label: "Rascunhos (F99)" },
 ];
 
-function layerOf(phase: number, status: string): Layer {
+function layerOf(phase: number, _status: string): Layer {
   if (phase <= 9) return "foundation";
   if (phase <= 11) return "gameplay-base";
   if (phase <= 16) return "gameplay-ext";
-  if (status === "Em planejamento") return "tools"; // F19 em homologação
-  return "presentation"; // F17 e F18
+  if (phase === 99) return "tools"; // F99: rascunhos fora do Vault oficial
+  return "presentation"; // F17, F18, F19 oficial (GameAnimationSample)
 }
 
 const TOC = [
   { id: "linha-do-tempo", label: "Linha do tempo de fases" },
   { id: "decisoes", label: "Decisões por versão" },
   { id: "metricas", label: "Métricas de homologação" },
-  { id: "proximo", label: "Próximo passo: Fase 19" },
+  { id: "proximo", label: "Próximo passo: pendências P-1…P-7" },
 ];
 
 /* Fases 1–9: fundação do framework (antes do registro de homologação digital do site).
@@ -78,21 +79,19 @@ const DD_BY_VERSION: Record<string, DDMilestone[]> = {
     { id: "DD-14", version: "v1.8.0", title: "Redesign de layout com referência fuch.ai", page: "/decisoes#dd-14" },
     { id: "DD-15", version: "v1.9.0 · planejada", title: "Atalhos de produtividade ⌘⇧C e compartilhamento de visualização", page: "/decisoes#dd-15" },
   ],
-  "v1.9.0 · planejada": [
-    { id: "DD-11", version: "v1.9.0 · planejada", title: "Deduplicação client-side do indicador de dano via AttackId", page: "/decisoes#dd-11" },
-    { id: "DD-16", version: "v1.9.0 · planejada", title: "Portas de homologação com slots auditáveis (padrão reutilizável)", page: "/decisoes#dd-16" },
-    { id: "DD-17", version: "v1.9.0 · planejada", title: "Divergência de escopo plano UMG vs. DD-08 — Rota A prevalece", page: "/decisoes#dd-17" },
-    { id: "DD-18", version: "v1.9.0 · planejada", title: "Linha do Tempo & Roadmap como página permanente do site", page: "/decisoes#dd-18" },
-  ],
-  "v2.0.0 · planejada": [
-    { id: "DD-19", version: "v2.0.0 · planejada", title: "Plano homologado da Fase 20 — persistência transacional ancorada no PredictionId", page: "/decisoes#dd-19" },
+  "v1.9.0": [
+    { id: "DD-11", version: "v1.9.0 · rascunho", title: "Deduplicação client-side do indicador de dano via AttackId — Pendência P-1, fora da régua", page: "/decisoes#dd-11" },
+    { id: "DD-16", version: "v1.9.0", title: "Portas de homologação com slots auditáveis (padrão reutilizável)", page: "/decisoes#dd-16" },
+    { id: "DD-17", version: "v1.9.0", title: "Divergência de escopo plano UMG vs. DD-08 — Rota A prevalece", page: "/decisoes#dd-17" },
+    { id: "DD-18", version: "v1.9.0", title: "Linha do Tempo & Roadmap como página permanente do site", page: "/decisoes#dd-18" },
+    { id: "DD-19", version: "v1.9.0 · rascunho", title: "Persistência transacional ancorada no PredictionId — Pendência P-2, fora da régua", page: "/decisoes#dd-19" },
   ],
 };
 
 const METRICS = [
-  { value: "11", label: "plugins implementados · 0 em backlog" },
-  { value: "32/32", label: "SBUITests verdes (F18)" },
-  { value: "31/31", label: "specs verdes (F17)" },
+  { value: "11", label: "plugins implementados" },
+  { value: "32/32", label: "SBUITests verdes (F19 · contexto integrado)" },
+  { value: "7", label: "pendências no Vault oficial (P-1…P-7)" },
   { value: "19", label: "decisões DD-* registradas" },
 ];
 
@@ -204,7 +203,7 @@ export default function History() {
               doc. 00 · consolidated archive
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <PhaseStamp phase="00" version="v1.8.0" />
+              <PhaseStamp phase="00" version="v1.9.0" warn={false} />
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 registro consolidado · Vault ↔ site
               </span>
@@ -332,16 +331,16 @@ export default function History() {
                   }`}
                 />
                 <Link
-                  href={p.phase === 17 ? "/fase-17" : p.phase === 18 ? "/fase-18" : p.phase === 19 ? "/fase-19" : "/"}
+                  href={p.phase === 17 ? "/fase-17" : p.phase === 18 ? "/fase-18" : p.phase === 19 ? "/" : p.phase === 99 ? "/fase-19" : "/"}
                   className="group block border border-border bg-card hover:border-engineering/50 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border bg-secondary/60">
-                    <span className="font-mono text-[11px] text-engineering">
+                    <span className={`font-mono text-[11px] ${p.draft ? "text-muted-foreground" : "text-engineering"}`}>
                       F{p.phase} · {p.title}
                     </span>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                        {p.version}
+                        {p.version}{p.draft ? " · rascunho" : ""}
                       </span>
                       <span
                         className={`font-mono text-[9px] uppercase tracking-[0.14em] px-1.5 py-0.5 border ${
@@ -392,8 +391,9 @@ export default function History() {
                   <div className="px-4 py-3">
                     <p className="text-[13px] text-muted-foreground leading-relaxed">
                       Montagem e verificação PIE dos WBPs (WBP_StatusHUD, WBP_InteractionPrompt, WBP_AbilityBar,
-                      WBP_InventoryGrid) — conteúdo paralelo que consome a infraestrutura da Fase 18 homologada,
-                      sem alterar o escopo da homologação v1.9.0 (indicador de dano).
+                      WBP_InventoryGrid) — conteúdo paralelo homologado no Vault na F19 oficial
+                      (Integração no GameAnimationSample · v1.9.0), registrado como Pendência P-3 para
+                      os widgets restantes.
                     </p>
                   </div>
                 </Link>
@@ -483,8 +483,8 @@ export default function History() {
 
         <AuditNote tone="info">
           A cronologia é bidirecional: clicar em uma fase abre a página da fase; clicar em uma decisão abre
-          o registro correspondente com âncora e banner de link direto. A Fase 19 (v1.9.0) permanece em
-          planejamento — o próximo passo do arquivo está abaixo.
+          o registro correspondente com âncora e banner de link direto. A F19 oficial está concluída no Vault
+          (v1.9.0) — a fase F99 (indicador de dano) aparece como rascunho e não conta na régua oficial.
         </AuditNote>
 
         {/* ========== L4: Métricas de homologação ========== */}
@@ -499,10 +499,10 @@ export default function History() {
         </p>
         <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { value: "34/34", label: "SBUITests alvo da Fase 19" },
-            { value: "32/32", label: "SBUITests — Fase 18 (31 + Cenário anti-spill)" },
-            { value: "31/31", label: "Specs — Fase 17 (Exit Code 0)" },
-            { value: "0", label: "bypasses de teste em produção (F11)" },
+  { value: "32/32", label: "SBUITests verdes — F19 oficial (GameAnimationSample)" },
+  { value: "32/32", label: "SBUITests — Fase 18 (31 + Cenário anti-spill)" },
+  { value: "241", label: "passos UBT Exit 0 — F19 (contexto integrado)" },
+  { value: "0", label: "bypasses de teste em produção (F11)" },
           ].map((m) => (
             <div key={m.label} className="border border-border bg-card px-5 py-4">
               <div className="font-display text-2xl font-bold text-engineering tabular-nums">{m.value}</div>
@@ -517,25 +517,27 @@ export default function History() {
         <TechRule label="Próximo passo" />
 
         <h2 id="proximo" className="mt-12 font-serif text-2xl font-bold scroll-mt-24">
-          04 · Próximo passo: Fase 19
+          04 · Próximo passo: pendências P-1…P-7
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
-          A Fase 19 (Indicador Direcional de Dano) está em planejamento — pré-requisitos homologados
-          (DD-08, DD-03, DD-04, DD-05, DD-11) e escopo proposto documentado. A homologação exige o corpo
-          real do código em C++, SBUITests 34/34 e teste de isolamento simétrico — nunca prosa.
+          A Fase 19 oficial (Integração no GameAnimationSample) está concluída no Vault — v1.9.0 homologada.
+          O próximo passo segue o documento pendencias_de_fases.md: frente de montagem UMG (P-3), segurança
+          de rede (P-4), polimento de gameplay (P-5/P-6) e specs normativas (P-7). As propostas de dano (P-1)
+          e persistência (P-2) seguem como rascunhos fora da régua numerada — nenhuma entra em execução sem
+          corpo real de código, suíte verde e isolamento simétrico.
         </p>
         <div className="mt-6 border border-dashed border-engineering/50 bg-engineering/[0.04] px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <Clock className="h-4 w-4 text-amber-warn" />
             <span className="text-sm text-muted-foreground">
-              Status: <span className="font-mono text-[11px] text-amber-warn uppercase tracking-wider">em planejamento · aguardando execução</span>
+              Status: <span className="font-mono text-[11px] text-amber-warn uppercase tracking-wider">7 pendências · 0 homologadas</span>
             </span>
           </div>
           <Link
-            href="/fase-19"
+            href="/roadmap"
             className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm font-mono hover:border-engineering/60 hover:text-engineering transition-colors"
           >
-            Abrir /fase-19 <ArrowRight className="h-4 w-4" />
+            Abrir /roadmap <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>

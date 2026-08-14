@@ -64,6 +64,11 @@ export interface Phase {
   summary: string;
   highlights: string[];
   tests?: string;
+  /**
+   * Fase proposta/rascunho sem contraparte homologada no Vault oficial (Obsidian).
+   * Não entra na régua oficial nem conta na homologação.
+   */
+  draft?: boolean;
 }
 
 export const PHASES: Phase[] = [
@@ -76,7 +81,8 @@ export const PHASES: Phase[] = [
   { phase: 16, version: "v1.6.0", title: "Habilidades no Behavior Stack", status: "Concluída", summary: "USBAbility herdando de USBGameplayBehavior com consumo preditivo de recursos, FSBCooldownList replicado e Enhanced Input Mapping data-driven.", highlights: ["Consumo preditivo com PredictionId", "CurrentServerPredictionId no servidor", "Cooldowns jitter-free", "31/31 testes verdes"] },
   { phase: 17, version: "v1.7.0", title: "Gameplay Debugger e Telemetria (10_SandboxDebug)", status: "Concluída", summary: "Plugin de debug com dependência exclusiva de 02_SandboxInterfaces e 04_SandboxCore, integrando ISBDebugInterface aos componentes de gameplay e ao ator de teste de interação.", highlights: ["FSBDebugLine (Label/Value/bIsHeader) sem vazamento de ponteiros", "#if WITH_GAMEPLAY_DEBUGGER (zero custo em Shipping)", "Teste de isolamento real (UBT com inventário oculto)", "31/31 testes verdes"] },
   { phase: 18, version: "v1.8.0", title: "Interface Dinâmica (09_SandboxUI)", status: "Concluída", summary: "Widgets reativos via USBEventSubsystem sem dependência de compilação das extensões. SBUITests verde: 32/32 specs. Critérios de aceite da v1.8.0 homologados e publicados neste site.", highlights: ["Plano executado homologado (ULocalPlayerSubsystem, NativeDestruct, anti-spill, throttle 60 Hz)", "4 eventos canônicos de inventário preservados (ItemAdded/Removed/Equipped/Unequipped)", "SBUITests: Cenário 1 (auto-unsubscribe + idempotência) e Cenário 2 (escopo local)", "Teste de isolamento com 05+06+07+08 desabilitados simultaneamente"] },
-  { phase: 19, version: "v1.9.0", title: "Indicador Direcional de Dano (09_SandboxUI)", status: "Em planejamento", summary: "Indicador de dano adiado pela DD-08: novo ponto autoritativo de publicação em 06_SandboxCombat, payload USBDamageEventPayload em 04_SandboxCore e widget com deduplicação client-side via AttackId (DD-11). Alvo: SBUITests 34/34.", highlights: ["USBDamageEventPayload em 04_SandboxCore (nunca em 06 ou 09)", "Broadcast autoritativo dentro de HasAuthority() — sem tocar replicação", "Anti-spill TargetPawn + dedupe AttackId (mapa com TTL)", "SBUITests Cenários 7 e 8 + teste de isolamento simétrico"] },
+  { phase: 19, version: "v1.9.0", title: "Integração e Replicação no GameAnimationSample", status: "Concluída", summary: "Portabilidade completa do Sandbox C++ para o projeto GameAnimationSample (14/08/2026): módulo nativo com Target.cs, 11 plugins habilitados, 241 passos de compilação via UBT e suíte 32/32 verde em ambos os workspaces.", highlights: ["Módulo C++ nativo do jogo com alvos Target.cs e regras Build.cs", "11 plugins habilitados no .uproject do GameAnimationSample", "241 passos de compilação C++ com zero erros (UBT)", "Suíte Sandbox 32/32 verde no contexto integrado (EXIT CODE: 0)"], tests: "32/32" },
+  { phase: 99, version: "rascunho", title: "Indicador Direcional de Dano (09_SandboxUI)", status: "Em planejamento", draft: true, summary: "Proposta nunca homologada no C++ (DD-11): payload USBDamageEventPayload em 04_SandboxCore, broadcast autoritativo e widget com dedupe AttackId. Sem corpo real de código — registrada como Pendência P-1 no Vault.", highlights: ["Proposta de design (rascunho) — sem código homologado no Vault", "Requisitos mapeados no pendencias_de_fases.md (itens P-1.1 a P-1.5)", "Alvo: SBUITests Cenários 7 e 8 + isolamento simétrico — 34/34"], tests: "—" },
 ];
 
 export const PHASE18_EVENTS: { event: string; producer: string; purpose: string; exists: boolean }[] = [

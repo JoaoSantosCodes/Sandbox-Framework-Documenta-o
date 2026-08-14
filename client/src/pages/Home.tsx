@@ -9,7 +9,7 @@ import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, Search, X } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
-import { PhaseStamp, TechRule, useF19SubmittedCount } from "@/components/Primitives";
+import { PhaseStamp, TechRule } from "@/components/Primitives";
 import { ASSET_URLS, MANIFESTO_PRINCIPLES, PHASES, TEST_SUITES } from "@/lib/siteData";
 import {
   ChangelogFilterKey,
@@ -83,7 +83,8 @@ function HomeChangelog() {
             </h2>
             <p className="mt-2 text-sm text-muted-foreground max-w-2xl leading-relaxed">
               Registro documental das mudanças em curso da Fase 20. Nenhum item homologa a fase —
-              a v2.0.0 fecha somente com build UBT + suíte + isolamento Exit 0 (ver porta de homologação).
+              as propostas de v2.0.0 (dano · P-1, persistência · P-2) seguem como rascunhos — a
+              versão fecha somente com build UBT + suíte + isolamento Exit 0 (ver porta de homologação).
             </p>
           </div>
           <Link href="/fase-20" className="inline-flex items-center gap-1.5 text-sm font-semibold text-engineering hover:underline">
@@ -169,24 +170,21 @@ function HomeChangelog() {
   );
 }
 
-/* Banner automático: só aparece quando os 4 slots da F19 recebem código (simulação local).
-   O texto deixa explícito que é submissão local — homologação real exige build + suíte 34/34. */
+/* Banner oficial: F19 homologada no Vault (Integração no GameAnimationSample · v1.9.0).
+   Texto referencia a regra de homologação — nenhuma próxima fase entra sem build + suíte + isolamento. */
 function F19CompletionBanner() {
-  const count = useF19SubmittedCount();
-  const allSubmitted = count === 4;
-  if (!allSubmitted) return null;
   return (
     <div className="mb-6 border border-engineering/60 bg-engineering/[0.06] px-4 py-3">
       <div className="flex items-start gap-3">
         <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-engineering" />
         <div className="text-sm leading-relaxed">
           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering block mb-1">
-            Homologação concluída · 4/4 slots — submissões locais
+            v1.9.0 homologada · Fase 19 concluída no Vault oficial
           </span>
           <span className="text-muted-foreground">
-            Os quatro slots da Fase 19 receberam código neste navegador — a régua do roadmap e o
-            card de status refletem o estado local. <strong>A homologação real da v1.9.0 exige</strong> build
-            UBT Exit 0 + suíte 34/34 + isolamento simétrico, antes de qualquer carimbo no Vault.
+            Integração e Replicação no GameAnimationSample: módulo C++ nativo, 241 passos UBT Exit 0 e
+            suíte 32/32 verde no contexto integrado. <strong>Próximo passo:</strong> pendências P-1…P-7 em
+            pendencias_de_fases.md — nenhuma fase entra na régua sem build + suíte verde + isolamento simétrico.
           </span>
         </div>
       </div>
@@ -196,42 +194,35 @@ function F19CompletionBanner() {
 
 const METRICS = [
   { value: "11", label: "Plugins unidirecionais" },
-  { value: "31/31", label: "Testes verdes (Exit Code 0)" },
+  { value: "32/32", label: "SBUITests verdes (F19 · contexto integrado)" },
   { value: "0", label: "Dependências circulares" },
-  { value: "18", label: "Decisões homologadas (DD)" },
+  { value: "7", label: "Pendências P-1…P-7 no Vault" },
 ];
 
-/* Card de status do hero — verde quando os 4 slots receberam código (simulação local),
-   âmbar pulsante no fluxo normal de homologação. Mesma chave do formulário da F19. */
+/* Card de status do hero — estado oficial do Vault: v1.9.0 homologada (F19 GameAnimationSample). */
 function HomeStatusCard() {
-  const count = useF19SubmittedCount();
-  const homologated = count === 4;
   return (
     <div className="border border-border rounded-md bg-card/95 backdrop-blur px-4 py-3 max-w-[300px] w-full">
       <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
         ··· status atual
       </div>
       <div className="mt-1 font-mono text-sm font-bold">
-        {homologated ? "v1.9.0 · Fase 19 — localmente concluída" : "v1.8.0 · Fase 18"}
+        v1.9.0 · Fase 19 homologada
       </div>
       <div className="text-xs text-muted-foreground mt-0.5">
-        {homologated ? "4/4 slots com código registrado neste navegador" : "32/32 specs homologadas no Vault"}
+        Integração no GameAnimationSample · 32/32 · Exit 0
       </div>
       <div className="mt-2 flex items-center gap-1.5">
-        <span className={`h-1.5 w-1.5 rounded-full ${homologated ? "bg-engineering" : "bg-amber-warn animate-pulse"}`} />
-        <span className={`font-mono text-[10px] uppercase tracking-wider ${homologated ? "text-engineering" : "text-amber-warn"}`}>
-          {homologated
-            ? "Submissões locais completas · aguarda build real"
-            : "Fase 19 em homologação · v1.9.0"}
+        <span className="h-1.5 w-1.5 rounded-full bg-engineering" />
+        <span className="font-mono text-[10px] uppercase tracking-wider text-engineering">
+          Vault oficial (Obsidian) · fonte de verdade
         </span>
       </div>
-      {homologated && (
-        <div className="mt-2 pt-2 border-t border-dotted">
-          <Link href="/roadmap#em-curso" className="font-mono text-[10px] uppercase tracking-wider text-engineering hover:underline">
-            ver no roadmap →
-          </Link>
-        </div>
-      )}
+      <div className="mt-2 pt-2 border-t border-dotted">
+        <Link href="/roadmap#em-curso" className="font-mono text-[10px] uppercase tracking-wider text-engineering hover:underline">
+          ver pendências →
+        </Link>
+      </div>
     </div>
   );
 }
@@ -270,7 +261,7 @@ export default function Home() {
               004 · mounting spec memory
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <PhaseStamp phase={String(latestPhase.phase)} version={latestPhase.version} warn />
+              <PhaseStamp phase="19" version="v1.9.0" warn={false} />
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 documentação viva · auditoria de compilação
               </span>

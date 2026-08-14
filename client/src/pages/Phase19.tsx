@@ -799,13 +799,12 @@ export default function Phase19() {
               doc. 19 · v1.9.0 · homologation gate
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              {submittedCount < CODE_SLOTS.length ? (
-                <PhaseStamp phase="19" version="v1.9.0 · em homologação" warn />
-              ) : (
-                <PhaseStamp phase="19" version="v1.9.0 · contratos fechados" />
-              )}
+              <PhaseStamp phase="99" version="v2.0.0 · rascunho" warn />
+              <span className="font-mono text-[9px] uppercase tracking-[0.14em] px-1.5 py-0.5 border border-dashed border-muted-foreground/60 text-muted-foreground">
+                Rascunho · não homologada no Vault
+              </span>
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                porta de homologação · 4/4 slots com corpo de referência
+                pendência P-1 · fora da régua oficial
               </span>
             </div>
           </div>
@@ -817,7 +816,9 @@ export default function Phase19() {
             Feedback visual direcional no HUD quando o pawn local sofre dano — o{" "}
             <code className="font-mono text-sm">USBUIDamageIndicator</code> adiado pela decisão DD-08,
             com novo ponto de publicação autoritativa em{" "}
-            <code className="font-mono text-sm">06_SandboxCombat</code>.
+            <code className="font-mono text-sm">06_SandboxCombat</code>. <strong className="text-foreground">Status: rascunho</strong> — a
+            F19 oficial está homologada no Vault (Integração no GameAnimationSample · v1.9.0); esta
+            página documenta a proposta como pendência P-1 em pendencias_de_fases.md.
           </p>
         </div>
       </section>
