@@ -62,6 +62,7 @@ const PAGES: IndexEntry[] = [
   { id: "fases", title: "Histórico de Fases", subtitle: "Registro de homologação por versão", page: "/fases", keywords: "fases histórico versões specs", group: "paginas" },
   { id: "manifesto", title: "Manifesto e Padrões de Código", subtitle: "Os 10 princípios e standards A/B/C", page: "/manifesto", keywords: "manifesto princípios standards", group: "paginas" },
   { id: "roadmap", title: "Linha do Tempo & Roadmap", subtitle: "F19 oficial homologada (v1.9.0) · 7 pendências P-1…P-7 · pendencias_de_fases.md", page: "/roadmap", keywords: "roadmap linha do tempo marcos riscos v1.9.0 pendências timeline p-1 p-2 p-3", group: "paginas" },
+  { id: "pendencias", title: "Pendências de Fases — Vault oficial", subtitle: "pendencias_de_fases.md · P-1…P-7 · 4 regras de homologação · filtros por categoria", page: "/pendencias", keywords: "pendências fases backlog vault oficial p-1 p-2 p-3 p-4 p-5 p-6 p-7 dano persistência umg rede lag equipamento documental", group: "paginas" },
   { id: "manual", title: "Manual de Uso (v1.7.0)", subtitle: "Pré-requisitos, playtest, gameplay debugger, checklist", page: "/manual", keywords: "manual uso playtest debug", group: "paginas" },
 ];
 

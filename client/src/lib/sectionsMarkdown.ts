@@ -93,12 +93,38 @@ const ROADMAP_SECTIONS: SectionCopySource = {
   },
 };
 
+const PENDENCIAS_SECTIONS: SectionCopySource = {
+  route: "/pendencias",
+  page: "Pendências de Fases (pendencias_de_fases.md)",
+  ids: [
+    "pendencias-regra",
+    "pendencias-p-1",
+    "pendencias-p-2",
+    "pendencias-p-3",
+    "pendencias-p-4",
+    "pendencias-p-5",
+    "pendencias-p-6",
+    "pendencias-p-7",
+  ],
+  labels: {
+    "pendencias-regra": "Regra de homologação",
+    "pendencias-p-1": "P-1 · Indicador Direcional de Dano",
+    "pendencias-p-2": "P-2 · Persistência Transacional de Atributos",
+    "pendencias-p-3": "P-3 · Montagem Visual UMG",
+    "pendencias-p-4": "P-4 · Infraestrutura de Rede",
+    "pendencias-p-5": "P-5 · Polimento de Gameplay",
+    "pendencias-p-6": "P-6 · Restauração Visual de Equipamento",
+    "pendencias-p-7": "P-7 · Sincronização documental",
+  },
+};
+
 export const SECTION_COPY_SOURCES: SectionCopySource[] = [
   MANUAL_SECTIONS,
   SPEC_SECTIONS,
   GUIDE_SECTIONS,
   ROUTER_SECTIONS,
   ROADMAP_SECTIONS,
+  PENDENCIAS_SECTIONS,
 ];
 
 /** Seleciona a fonte de cópia da rota atual, se houver. */

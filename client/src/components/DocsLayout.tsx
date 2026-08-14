@@ -47,6 +47,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SearchPalette, SearchShortcut } from "@/components/SearchPalette";
 import {
   Sheet,
@@ -215,6 +222,7 @@ const NAV_CHIPS = [
   { href: "/fase-19-umg", label: "F19 — Widgets UMG", short: "12 · UMG" },
   { href: "/roadmap", label: "Linha do Tempo & Roadmap", short: "13 · Roadmap" },
   { href: "/fase-20", label: "Rascunhos — Dano & Persistência (P-1/P-2)", short: "14 · Rascunhos" },
+  { href: "/pendencias", label: "Pendências de Fases — Vault oficial", short: "15 · Pendências" },
 ];
 
 function ThemeToggle({ compact = false }: { compact?: boolean }) {
@@ -284,6 +292,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const unsynced = useUnsyncedChecklists();
   const pendingDetails = usePendingDetails();
+  const [auditOpen, setAuditOpen] = useState(false);
 
   /* Atalho ⌘⇧C — copiar o checklist da fase ativa sem usar o mouse.
      Ignora quando o foco está em campo de texto (para não colidir com ⌘C nativo). */
@@ -458,8 +467,9 @@ export function DocsLayout({ children }: { children: ReactNode }) {
               Vault ↔ site · {LAST_VAULT_SYNC}
             </span>
           </div>
-          {/* Indicador de status da última auditoria de sincronização */}
-          <AuditStatusRow />
+          {/* Indicador de status da última auditoria de sincronização + modal de resultado */}
+          <AuditStatusRow onOpenModal={() => setAuditOpen(true)} />
+          <AuditModal open={auditOpen} onOpenChange={setAuditOpen} />
           <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               {CHECKLIST_META.map((meta) => {
@@ -497,7 +507,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
 /* Linha de status da auditoria no rodapé: dot + rótulo + data/hora pt-BR.
    Verde = auditada nesta sessão (registro sbf-audit-status), âmbar = sem registro.
    Declara "última verificação" para não sugerir que é o resultado do CI Actions. */
-function AuditStatusRow() {
+function AuditStatusRow({ onOpenModal }: { onOpenModal: () => void }) {
   const audit = useLastAudit();
   return (
     <div className="mt-2 flex items-center justify-between flex-wrap gap-2">
@@ -514,42 +524,94 @@ function AuditStatusRow() {
       )}
       <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
         CI GitHub Actions · push na main + seg/qui 09:00 UTC
-        {/* Disparo manual do workflow sync-audit via workflow_dispatch. */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <a
-                href="https://github.com/JoaoSantosCodes/Sandbox-Framework-Documenta-o/actions/workflows/sync-audit.yml"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() =>
-                  toast("Abrindo o workflow sync-audit", {
-                    description:
-                      "No GitHub, clique em \"Run workflow\" → \"Run workflow\" — o resultado aparece nos detalhes do job.",
-                    duration: 8000,
-                  })
-                }
-                className="inline-flex items-center gap-1 border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:border-engineering/60 hover:text-engineering transition-colors"
-                title="Disparar manualmente a auditoria Vault ↔ site (workflow sync-audit)"
-              >
-                <PlayCircle className="h-3 w-3" />
-                Disparar audit
-                <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-              </a>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-[340px] text-[12px] leading-relaxed">
-              <p>
-                O audit completo exige o secret <code className="font-mono text-[10px]">VAULT_MIRROR_REPO</code>
-                = <code className="font-mono text-[10px]">JoaoSantosCodes/Sandbox-Framework-Vault</code> criado em
-                Settings → Secrets → Actions do repositório. Sem ele, o CI usa o espelho embutido
-                (scripts/vault-mirror/), que não acompanha o Vault em tempo real — o resultado
-                reflete o snapshot, não o estado atual da máquina.
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {/* Botão interativo: abre o modal de resultado da auditoria Vault ↔ site. */}
+        <button
+          type="button"
+          onClick={onOpenModal}
+          className="inline-flex items-center gap-1 border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:border-engineering/60 hover:text-engineering transition-colors active:scale-[0.97]"
+          title="Ver o resultado da auditoria Vault ↔ site"
+        >
+          <PlayCircle className="h-3 w-3" />
+          Ver audit
+        </button>
         <HelpCircle className="h-3 w-3 text-muted-foreground/60" />
       </span>
     </div>
+  );
+}
+
+/* Modal de resultado da auditoria Vault ↔ site.
+   Abre com o último registro local de audit (sbf-audit-status) + commits de
+   referência de cada lado + instruções do secret e link do workflow Actions. */
+function AuditModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const audit = useLastAudit();
+  const synced = !!audit && audit.divergences === 0;
+  const when = audit ? formatAuditAt(audit.checkedAt) : null;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-mono text-sm uppercase tracking-[0.14em] flex items-center gap-2">
+            Auditoria Vault ↔ site
+          </DialogTitle>
+          <DialogDescription className="font-mono text-[11px] text-left">
+            Último registro de verificação local + commits de referência de cada lado
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          {audit ? (
+            <div
+              className={`border px-3 py-2 flex items-start gap-3 ${
+                synced ? "border-engineering/60 bg-engineering/[0.05]" : "border-amber-warn/60 bg-amber-warn/[0.05]"
+              }`}
+            >
+              {synced ? (
+                <Check className="h-4 w-4 mt-0.5 shrink-0 text-engineering" />
+              ) : (
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-warn" />
+              )}
+              <div className="font-mono text-[12px] leading-relaxed">
+                <span className={synced ? "text-engineering" : "text-amber-warn"}>
+                  {synced ? "0 divergência(s) · Vault e site alinhados" : `${audit.divergences} divergência(s) detectada(s)`}
+                </span>
+                <span className="block text-muted-foreground mt-1">verificação local · {when}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="border border-border bg-secondary px-3 py-2 font-mono text-[12px]">
+              Nenhuma auditoria registrada nesta sessão — dispare o workflow no GitHub abaixo.
+            </div>
+          )}
+          <div className="border border-border divide-y divide-border/60 bg-card font-mono text-[11px]">
+            <div className="flex items-start gap-3 px-3 py-2">
+              <span className="shrink-0 text-muted-foreground">Vault espelho</span>
+              <span className="ml-auto">JoaoSantosCodes/Sandbox-Framework-Vault · 007cc07</span>
+            </div>
+            <div className="flex items-start gap-3 px-3 py-2">
+              <span className="shrink-0 text-muted-foreground">Site docs</span>
+              <span className="ml-auto">Sandbox-Framework-Documenta-o · 77c1d98</span>
+            </div>
+            <div className="flex items-start gap-3 px-3 py-2">
+              <span className="shrink-0 text-muted-foreground">Última sync integral</span>
+              <span className="ml-auto">14/08/2026 01:15 GMT-3</span>
+            </div>
+          </div>
+          <div className="border border-dashed border-border px-3 py-2 text-[12px] leading-relaxed text-muted-foreground">
+            O audit completo exige o secret <code className="font-mono text-[10px]">VAULT_MIRROR_REPO</code> ={" "}
+            <code className="font-mono text-[10px]">JoaoSantosCodes/Sandbox-Framework-Vault</code> em Settings →
+            Secrets → Actions do repositório. Sem ele o CI usa o espelho embutido (snapshot).
+          </div>
+          <a
+            href="https://github.com/JoaoSantosCodes/Sandbox-Framework-Documenta-o/actions/workflows/sync-audit.yml"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 border border-border bg-card px-3 py-2 font-mono text-[12px] text-engineering hover:border-engineering/60 transition-colors"
+          >
+            <PlayCircle className="h-3.5 w-3.5" /> Run workflow → sync-audit.yml
+            <ExternalLink className="h-3 w-3 opacity-60" />
+          </a>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

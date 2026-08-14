@@ -1,0 +1,338 @@
+/* Design: "Blueprint Técnico" + referência fuch.ai (ver ideas.md / DocsLayout.tsx).
+   Página interna — segue a Internal-page opening rule: header espec assimétrico de
+   2 colunas (trilho mono à esquerda, tese editorial à direita).
+   Acento verde-engineering; tinta grafite sobre papel quente; selo tracejado para rascunhos. */
+import { useState, useEffect, useMemo } from "react";
+import { Link } from "wouter";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  ClipboardList,
+  ExternalLink,
+  Filter,
+  Layers,
+  RefreshCcw,
+  SortDesc,
+} from "lucide-react";
+import { DocsLayout } from "@/components/DocsLayout";
+import {
+  PHASE_PENDINGS,
+  PENDING_ORDER_NOTE,
+  filterAndSortPendings,
+  pendingCount,
+  type PhasePending,
+} from "@/lib/phasePendings";
+import { toast } from "sonner";
+import { sourceForRoute, extractSectionMarkdown } from "@/lib/sectionsMarkdown";
+
+const FILTER_STORAGE_KEY = "sbf-pendencias-filter";
+
+type CategoryFilter = "todas" | "backlog" | "proposta" | "documental";
+type SortKey = "ordem" | "id" | "pendentes";
+
+const CATEGORY_CHIPS: { key: CategoryFilter; label: string; count: number }[] = [
+  { key: "todas", label: "Todas", count: PHASE_PENDINGS.length },
+  {
+    key: "backlog",
+    label: "Backlog oficial",
+    count: PHASE_PENDINGS.filter((p) => p.categoria === "Backlog oficial do Vault").length,
+  },
+  {
+    key: "proposta",
+    label: "Propostas fora da régua",
+    count: PHASE_PENDINGS.filter((p) => p.categoria === "Proposta fora da régua").length,
+  },
+  {
+    key: "documental",
+    label: "Documental",
+    count: PHASE_PENDINGS.filter((p) => p.categoria === "Documental").length,
+  },
+];
+
+const SORT_OPTIONS: { key: SortKey; label: string; icon: typeof SortDesc }[] = [
+  { key: "ordem", label: "Ordem do Vault", icon: SortDesc },
+  { key: "id", label: "ID P-1…P-7", icon: SortDesc },
+  { key: "pendentes", label: "Mais pendentes", icon: ClipboardList },
+];
+
+/* Regras de homologação — do próprio documento Vault */
+const HOMOLOGATION_RULES = [
+  { step: "1", label: "Corpo real de código C++ compilado com UBT Exit 0" },
+  { step: "2", label: "Suíte de testes 100% verde no contexto do projeto" },
+  { step: "3", label: "Isolamento simétrico — desabilitar o plugin e recompilar sem quebra" },
+  {
+    step: "4",
+    label: "Carimbo consistente em 00_Sandbox_Framework_Dashboard.md, task.md e walkthrough.md",
+  },
+];
+
+function useCopySection() {
+  return (sectionId: string) => {
+    const source = sourceForRoute("/pendencias");
+    if (!source) {
+      toast.error("Fonte de exportação indisponível", { description: "Recarregue a página e tente novamente." });
+      return;
+    }
+    const markdown = extractSectionMarkdown(source, sectionId);
+    if (!markdown) {
+      toast.error("Seção não encontrada para exportação", {
+        description: "Recarregue a página e tente novamente.",
+      });
+      return;
+    }
+    navigator.clipboard.writeText(markdown).then(
+      () => toast.success(`Seção copiada — ${source.page}`, { description: "Pronta para colar no Vault após homologação." }),
+      () => toast.error("Falha ao copiar"),
+    );
+  };
+}
+
+export default function Pendencias() {
+  const [filter, setFilter] = useState<CategoryFilter>(() => {
+    try {
+      const raw = localStorage.getItem(FILTER_STORAGE_KEY);
+      if (raw && ["todas", "backlog", "proposta", "documental"].includes(raw)) return raw as CategoryFilter;
+    } catch {
+      // ignore
+    }
+    return "todas";
+  });
+  const [sort, setSort] = useState<SortKey>("ordem");
+  const copySection = useCopySection();
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FILTER_STORAGE_KEY, filter);
+    } catch {
+      // ignore
+    }
+  }, [filter]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === FILTER_STORAGE_KEY && e.newValue) {
+        if (["todas", "backlog", "proposta", "documental"].includes(e.newValue)) {
+          setFilter(e.newValue as CategoryFilter);
+        }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const sorted = useMemo(() => filterAndSortPendings(PHASE_PENDINGS, filter, sort), [filter, sort]);
+  const totalPending = PHASE_PENDINGS.reduce((acc, p) => acc + pendingCount(p), 0);
+
+  return (
+    <DocsLayout>
+      {/* Header espec assimétrico (Internal-page opening rule) */}
+      <div className="border-b border-border bg-secondary/60">
+        <div className="container py-8 grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6">
+          <aside className="font-mono text-[11px] leading-relaxed text-muted-foreground flex flex-col gap-1">
+            <span className="uppercase tracking-[0.18em] text-foreground/70">015 · pendencias_de_fases.md</span>
+            <span className="uppercase tracking-[0.18em] text-foreground/70">
+              docs · {PHASE_PENDINGS.length} pendências · {totalPending} itens
+            </span>
+            <span className="uppercase tracking-[0.18em] text-foreground/70">spec · v1.9.0</span>
+            <span className="mt-2 pt-2 border-t border-border/60 uppercase tracking-[0.18em] text-foreground/70">
+              vault · oficial
+            </span>
+            <span className="text-[10px]">criado em 14/08/2026 · auditoria Vault ↔ site</span>
+            <span className="text-[10px]">3 camadas · 1 arquivo de precedentes</span>
+          </aside>
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-engineering">
+              backlog oficial das fases · espelho do Vault
+            </p>
+            <h1 className="font-display text-3xl md:text-4xl font-bold mt-2 leading-tight">
+              O que o framework ainda não é — pendências de fases
+            </h1>
+            <p className="mt-3 text-muted-foreground leading-relaxed max-w-2xl">
+              Este documento consolida tudo que <strong className="text-foreground">ainda não foi implementado ou
+              homologado</strong> no Vault oficial. O que não está compilado no C++/UE5.8 não conta como concluído,
+              independentemente de existir como plano, rascunho ou proposta em qualquer outro documento — rascunhos,
+              planos e propostas não contam como homologação.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Barra de ferramentas: chips de categoria + ordenação */}
+      <div className="border-b border-border bg-background">
+        <div className="container py-4 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {CATEGORY_CHIPS.map((chip) => (
+              <button
+                key={chip.key}
+                onClick={() => setFilter(chip.key)}
+                className={`inline-flex items-center gap-1.5 border px-3 py-1 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors ${
+                  filter === chip.key
+                    ? "border-engineering bg-engineering/10 text-engineering"
+                    : "border-border bg-card text-muted-foreground hover:border-engineering/60 hover:text-foreground"
+                }`}
+              >
+                <Filter className="h-3 w-3" />
+                {chip.label}
+                <span className="opacity-60">{chip.count}</span>
+              </button>
+            ))}
+          </div>
+          <div className="h-5 w-px bg-border hidden md:block" />
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">ordenar:</span>
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setSort(opt.key)}
+                className={`inline-flex items-center gap-1 border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+                  sort === opt.key
+                    ? "border-foreground/60 bg-secondary text-foreground"
+                    : "border-border text-muted-foreground hover:border-foreground/40"
+                }`}
+                title={opt.label}
+              >
+                <opt.icon className="h-3 w-3" />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <main className="container py-8 space-y-8" id="pendencias-lista">
+        {/* Regra de homologação */}
+        <section className="border border-engineering/40 bg-engineering/[0.04]" id="pendencias-regra">
+          <div className="px-4 py-2 border-b border-dashed border-engineering/40 flex items-center justify-between">
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-engineering">
+              regra de homologação · fonte: pendencias_de_fases.md
+            </span>
+            <button
+              onClick={() => copySection("pendencias-regra")}
+              className="font-mono text-[10px] uppercase tracking-[0.12em] text-engineering hover:underline underline-offset-4 inline-flex items-center gap-1"
+            >
+              <RefreshCcw className="h-3 w-3" /> copiar seção
+            </button>
+          </div>
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {HOMOLOGATION_RULES.map((r) => (
+              <div key={r.step} className="flex items-start gap-3">
+                <span className="font-mono text-[11px] text-engineering border border-engineering/50 px-1.5 py-0.5">
+                  {r.step}
+                </span>
+                <p className="text-sm leading-relaxed text-muted-foreground">{r.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Ordem de execução recomendada */}
+        <div className="flex items-start gap-3 border border-border bg-card px-4 py-3">
+          <Layers className="h-4 w-4 mt-0.5 shrink-0 text-engineering" aria-hidden />
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            <strong className="text-foreground">Ordem de execução recomendada pelo Vault:</strong> {PENDING_ORDER_NOTE}
+          </p>
+        </div>
+
+        {/* Cards de pendências */}
+        <section className="space-y-5">
+          {sorted.map((p) => (
+            <PendingCard key={p.id} pending={p} copySection={copySection} />
+          ))}
+          {sorted.length === 0 && (
+            <div className="border border-dashed border-border px-6 py-10 text-center">
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                Nenhuma pendência nesta categoria
+              </p>
+            </div>
+          )}
+        </section>
+      </main>
+    </DocsLayout>
+  );
+}
+
+function PendingCard({
+  pending,
+  copySection,
+}: {
+  pending: PhasePending;
+  copySection: (id: string) => void;
+}) {
+  const pendingItems = pending.itens.filter((i) => i.estado === "Pendente").length;
+  const isDraft = pending.categoria === "Proposta fora da régua";
+  return (
+    <article
+      className="border border-border bg-card"
+      id={`pendencias-${pending.id.toLowerCase()}`}
+    >
+      <div className="px-4 py-3 border-b border-border flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-engineering">{pending.id}</span>
+          <h2 className="font-display text-xl font-bold">{pending.titulo}</h2>
+          <span
+            className={`font-mono text-[10px] uppercase tracking-[0.12em] px-2 py-0.5 border ${
+              pending.categoria === "Backlog oficial do Vault"
+                ? "border-engineering/60 text-engineering"
+                : isDraft
+                  ? "border-dashed border-muted-foreground/60 text-muted-foreground"
+                  : "border-border/70 text-muted-foreground"
+            }`}
+          >
+            {pending.categoria}
+          </span>
+          {isDraft && (
+            <span className="font-mono text-[10px] uppercase tracking-[0.12em] border border-amber-warn/60 text-amber-warn px-2 py-0.5">
+              rascunho
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <ClipboardList className="h-3 w-3" />
+            {pendingItems}/{pending.itens.length} pendentes
+          </span>
+          <button
+            onClick={() => copySection(`pendencias-${pending.id.toLowerCase()}`)}
+            className="hover:text-engineering inline-flex items-center gap-1 hover:underline underline-offset-4"
+          >
+            <RefreshCcw className="h-3 w-3" /> copiar seção
+          </button>
+        </div>
+      </div>
+      <div className="p-4 space-y-4">
+        <p className="text-sm leading-relaxed text-muted-foreground">{pending.resumo}</p>
+        {pending.paginaRelacionada && (
+          <Link
+            href={pending.paginaRelacionada}
+            className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.12em] text-engineering hover:underline underline-offset-4"
+          >
+            <ArrowUpRight className="h-3 w-3" /> documento no site
+            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+          </Link>
+        )}
+        <div className="border border-border bg-secondary/40">
+          <div className="px-3 py-1.5 border-b border-dashed border-border font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            {pending.itens.length} requisito(s) para sair da lista
+          </div>
+          <ul className="divide-y divide-border/60">
+            {pending.itens.map((item) => (
+              <li key={item.id} className="flex items-start gap-3 px-3 py-2">
+                <span className="font-mono text-[10px] text-muted-foreground pt-0.5 w-12 shrink-0">{item.id}</span>
+                <p className="text-sm leading-relaxed flex-1">{item.exige}</p>
+                <span
+                  className={`font-mono text-[10px] uppercase tracking-[0.1em] px-1.5 py-0.5 border shrink-0 ${
+                    item.estado === "Pendente"
+                      ? "border-amber-warn/60 text-amber-warn"
+                      : "border-engineering/60 text-engineering"
+                  }`}
+                >
+                  {item.estado}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </article>
+  );
+}

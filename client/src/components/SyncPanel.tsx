@@ -1,0 +1,176 @@
+/*
+  DESIGN: "Blueprint Técnico" + fuch.ai — painel de status de sincronização Vault ↔ site.
+  Mono tracejado, verde-engineering para sincronizado, âmbar-warn para pendência.
+  O painel declara o último registro local de auditoria e os commits de referência de cada lado.
+*/
+import { Link } from "wouter";
+import { AlertTriangle, CheckCircle2, GitBranch, RefreshCcw } from "lucide-react";
+
+const AUDIT_STORAGE_KEY = "sbf-audit-status";
+const LAST_VAULT_SYNC = "14/08/2026 01:15 GMT-3";
+const VAULT_COMMIT = "007cc07";
+const SITE_COMMIT = "77c1d98";
+
+interface AuditRecord {
+  checkedAt: string;
+  divergences: number;
+  source: "local";
+}
+
+function readAudit(): AuditRecord | null {
+  try {
+    const raw = localStorage.getItem(AUDIT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && parsed.checkedAt) {
+      return parsed as AuditRecord;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function formatAuditAt(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Sao_Paulo",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+/* Painel de status de sincronização Vault ↔ site na Home.
+   Estado local: registro sbf-audit-status gravado no rodapé (botão Disparar audit).
+   Regra de precedência: o Vault Obsidian é a fonte oficial — divergência resolve
+   a favor do Vault, que deve subir ao espelho Git (Sandbox-Framework-Vault). */
+export function SyncPanel() {
+  const audit = readAudit();
+  const synced = !!audit && audit.divergences === 0;
+  const when = audit ? formatAuditAt(audit.checkedAt) : null;
+
+  return (
+    <section className="border-b border-border bg-secondary/40">
+      <div className="container py-10 grid lg:grid-cols-[minmax(160px,1fr)_3fr] gap-8">
+        <div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">01 / sincronização</div>
+          <div className="mt-4 space-y-2 font-mono text-xs">
+            <Link href="#sync-painel" className="block text-engineering font-semibold">01 · Painel</Link>
+            <Link href="/pendencias" className="block text-muted-foreground hover:text-engineering transition-colors">
+              02 · Pendências P-1…P-7
+            </Link>
+            <Link
+              href="https://github.com/JoaoSantosCodes/Sandbox-Framework-Vault"
+              className="block text-muted-foreground hover:text-engineering transition-colors"
+            >
+              03 · Espelho Vault ↗
+            </Link>
+          </div>
+        </div>
+        <div id="sync-painel">
+          <div className="flex items-end justify-between flex-wrap gap-3">
+            <div>
+              <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                Seção 01 · Vault ↔ site
+              </span>
+              <h2 className="font-display text-3xl font-bold mt-2">
+                O site espelha o Vault — painel de sincronização
+              </h2>
+            </div>
+            <Link
+              href="/pendencias"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-engineering hover:underline"
+            >
+              Ver pendências de fases <RefreshCcw className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-5 grid md:grid-cols-[1fr_auto_1fr] gap-3 items-stretch">
+            {/* Lado Vault */}
+            <div className="border border-border bg-card">
+              <div className="px-3 py-1.5 border-b border-dashed border-border flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  Obsidian Vault · oficial
+                </span>
+                <GitBranch className="h-3 w-3 text-muted-foreground" />
+              </div>
+              <div className="p-3">
+                <div className="font-mono text-sm font-bold">pendencias_de_fases.md + Dashboard</div>
+                <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+                  espelho: {VAULT_COMMIT} · sync {LAST_VAULT_SYNC}
+                </div>
+                <div className="mt-2 text-[13px] text-muted-foreground leading-relaxed">
+                  Fonte oficial. O que não está compilado no C++/UE5.8 não conta como concluído.
+                </div>
+              </div>
+            </div>
+
+            {/* Símbolo de convergência */}
+            <div className="flex items-center justify-center">
+              {synced ? (
+                <span className="inline-flex h-10 w-10 items-center justify-center border border-engineering/60 bg-engineering/5" title="Auditado · 0 divergências">
+                  <CheckCircle2 className="h-5 w-5 text-engineering" />
+                </span>
+              ) : audit ? (
+                <span className="inline-flex h-10 w-10 items-center justify-center border border-amber-warn/60 bg-amber-warn/5" title={`Auditado · ${audit.divergences} divergência(s)`}>
+                  <AlertTriangle className="h-5 w-5 text-amber-warn" />
+                </span>
+              ) : (
+                <span className="inline-flex h-10 w-10 items-center justify-center border border-border bg-secondary" title="Ainda não auditado nesta sessão">
+                  <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/50" />
+                </span>
+              )}
+            </div>
+
+            {/* Lado site */}
+            <div className="border border-border bg-card">
+              <div className="px-3 py-1.5 border-b border-dashed border-border flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  site · documentação
+                </span>
+                <GitBranch className="h-3 w-3 text-muted-foreground" />
+              </div>
+              <div className="p-3">
+                <div className="font-mono text-sm font-bold">sandbox-framework-docs · v1.9.0</div>
+                <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+                  github/main: {SITE_COMMIT} · espelha o Vault
+                </div>
+                <div className="mt-2 text-[13px] text-muted-foreground leading-relaxed">
+                  Rascunhos fora da régua (P-1 · dano, P-2 · persistência) estão marcados como não homologados.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 border border-dashed border-border bg-background px-3 py-2 flex items-center justify-between flex-wrap gap-2">
+            {synced ? (
+              <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-engineering">
+                <CheckCircle2 className="h-3 w-3" /> auditado nesta sessão · 0 divergência(s) · {when}
+              </span>
+            ) : audit ? (
+              <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-amber-warn">
+                <AlertTriangle className="h-3 w-3" /> auditado · {audit.divergences} divergência(s) · {when}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                não auditado nesta sessão — use o botão "Disparar audit" no rodapé
+              </span>
+            )}
+            <Link
+              href="/pendencias"
+              className="font-mono text-[10px] uppercase tracking-[0.12em] text-engineering hover:underline"
+            >
+              7 pendências P-1…P-7 em aberto →
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

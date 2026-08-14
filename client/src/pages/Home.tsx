@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, CheckCircle2, Search, X } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
+import { SyncPanel } from "@/components/SyncPanel";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { PhaseStamp, TechRule } from "@/components/Primitives";
 import { ASSET_URLS, MANIFESTO_PRINCIPLES, PHASES, TEST_SUITES } from "@/lib/siteData";
@@ -339,6 +340,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* SYNC — painel de status de sincronização Vault ↔ site */}
+      <SyncPanel />
 
       {/* TOPOLOGY — header 2 colunas + grid assimétrico */}
       <section id="topologia" className="container py-16">
