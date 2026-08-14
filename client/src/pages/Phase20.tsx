@@ -113,33 +113,122 @@ const CODE_SLOTS_F20: CodeSlot[] = [
     slot: "Slot F20-A · Definition/Instance (04_SandboxCore)",
     title: "USBAttributePersistenceDefinition/Instance com opt-in e chave estável",
     exige:
-      "Definition (USDAAttributePersistenceDefinition) com nome de atributo estável (FName) + opt-in por chave de atributo (nunca índice de array); Instance com FSBAttributePersistenceRuntimeData transiente e upsert por chave estável na estrutura replicada. Somente 04_SandboxCore — sem acoplamento com 05/06/07/08.",
+            "Definition (USDAAttributePersistenceDefinition) com nome de atributo estável (FName) + opt-in por chave de atributo (nunca índice de array); Instance com FSBAttributePersistenceRuntimeData transiente e upsert por chave estável na estrutura replicada. Somente 04_SandboxCore — sem acoplamento com 05/06/07/08.",
     status: "Aguardando Código",
-    code: `// --- Slot F20-A · Plugins/04_SandboxCore/Source/Public/Attributes/SBAttributePersistence.h ---
-// CORPO DO BUILD — colar aqui a saída do arquivo após a F20-1 fechar no UE5.8.
+    hasReference: true,
+    code: `// --- F20-1 · Plugins/04_SandboxCore/Source/Public/Attributes/SBAttributePersistence.h ---
+// CORPO DE REFEREÊNCIA — Definition/Instance/RuntimeData da Fase 20.
+// NÃO é evidência: homologação real exige build UBT + suíte + isolamento Exit 0.
+// Contratos: DD-02 (chave estável, nunca índice), opt-in anti-spill,
+// Definition/Instance/RuntimeData, validar-antes-de-mutar (DD-03).
+// Isolamento: nenhum #include de 05/06/07/08/09 — só 02_SandboxInterfaces e 04_SandboxCore.
 #pragma once
+
 #include "CoreMinimal.h"
+#include "Engine/DataAsset.h"
 #include "SBAttributePersistence.generated.h"
 
-// Chave estável de atributo (FName) — upsert por chave, NUNCA por índice de array (DD-02).
-// Opt-in: só atributos listados na Definition são persistidos (anti-spill de save).
+/* ============================================================
+ * Definition (Data Asset estático) — o que o designer opta
+ * por persistir. Chave estável (FName), ordem do array não
+ * importa: persistência é upsert por chave, nunca por índice (DD-02).
+ * ============================================================ */
 UCLASS(BlueprintType)
 class SANDBOXCORE_API USBAttributePersistenceDefinition : public UDataAsset
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
+
 public:
-    // Atributos que entram na persistência — nome estável, ordem não importa.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<FName> PersistentAttributeKeys;
+	// Atributos que entram na persistência transacional — nome estável
+	// que identifica o atributo em toda a sua vida útil (F20-D).
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Persistence")
+	TArray<FName> PersistentAttributeKeys;
+
+	// Versão do esquema de persistência — bump quando um atributo mudar
+	// de semântica: migrar saves exige leitura consciente da versão antiga (F20-C).
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Persistence")
+	int32 PersistenceSchemaVersion = 1;
+
+	// Opt-in global desligável — não expor como propriedade de gameplay.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Persistence")
+	bool bPersistenceEnabled = true;
+
+public:
+	// Consulta explícita (nunca reflexão por string / FindPropertyByName):
+	// O(n) no opt-in — aceitável, o conjunto de chaves é pequeno e conhecido
+	// em design-time. Anti-spill: atributo fora do opt-in nunca entra no save.
+	UFUNCTION(BlueprintPure, Category = "Persistence")
+	bool IsAttributePersistent(FName AttributeKey) const
+	{
+		return bPersistenceEnabled && PersistentAttributeKeys.Contains(AttributeKey);
+	}
 };
 
-// Estado transiente da instância runtime (FSBAttributePersistenceRuntimeData).
+/* ============================================================
+ * RuntimeData transiente — estado de persistência de uma instância.
+ * Não é replicado: é recomputado a partir do estado confirmado.
+ * ============================================================ */
 struct FSBAttributePersistenceRuntimeData
 {
-    // Última mutação confirmada pelo servidor, por chave estável — base do rollback.
-    TMap<FName, float> LastConfirmedValues;
-    // Transações abertas por PredictionId — F20-B.
-    TMap<int32, TMap<FName, float>> OpenTransactions;
+	// Última mutação CONFIRMADA pelo servidor, por chave estável —
+	// base para detectar divergência entre predição client-side e
+	// autoridade server-side, e base do restore autoritativo (F20-C).
+	TMap<FName, float> LastConfirmedValues;
+
+	// Transações abertas por PredictionId — F20-B (TransactionLog).
+	TMap<int32, TMap<FName, float>> OpenTransactions;
+
+	void Reset()
+	{
+		LastConfirmedValues.Empty();
+		OpenTransactions.Empty();
+	}
+
+	// Upsert por chave estável (nunca índice de array).
+	void UpsertConfirmed(FName AttributeKey, float Value)
+	{
+		LastConfirmedValues.FindOrAdd(AttributeKey) = Value;
+	}
+};
+
+/* ============================================================
+ * Instance — ponte entre a Definition estática e o RuntimeData
+ * de uma entidade. Expõe consulta e gravação com validação.
+ * ============================================================ */
+UCLASS(BlueprintType)
+class SANDBOXCORE_API USBAttributePersistenceInstance : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	void Initialize(USBAttributePersistenceDefinition* InDefinition)
+	{
+		Definition = InDefinition;
+		RuntimeData.Reset();
+	}
+
+	const USBAttributePersistenceDefinition* GetDefinition() const { return Definition; }
+	FSBAttributePersistenceRuntimeData& GetRuntimeData() { return RuntimeData; }
+	const FSBAttributePersistenceRuntimeData& GetRuntimeData() const { return RuntimeData; }
+
+	// Aplica valor confirmado do servidor: valida a chave contra a Definition
+	// ANTES de tocar no RuntimeData (validar-antes-de-mutar, DD-03) —
+	// chave fora do opt-in é rejeitada sem mutar estado (simetria Entry/Exit).
+	bool ApplyConfirmedValue(FName AttributeKey, float Value)
+	{
+		if (!Definition || !Definition->IsAttributePersistent(AttributeKey))
+		{
+			return false;
+		}
+		RuntimeData.UpsertConfirmed(AttributeKey, Value);
+		return true;
+	}
+
+private:
+	UPROPERTY()
+	USBAttributePersistenceDefinition* Definition = nullptr;
+
+	FSBAttributePersistenceRuntimeData RuntimeData;
 };`,
   },
   {
@@ -275,15 +364,18 @@ IMPLEMENT_SBUI_TEST(F2_PersistenceConcurrentUpsert_SameStableKey)
 /* Chave compartilhada do localStorage dos slots F20 (mesmo padrão da F19). */
 const F20_SLOT_STORAGE_KEY = "sbf-slot-submissions-20";
 
-/* Resolve o estado final de um slot F20: "Aguardando Código" ou "Código recebido".
-   O corpo exibido vem do slot de contrato (placeholder do plano homologado) —
-   substituído pelo build real quando a sprint entregar os arquivos compilados. */
+/* Resolve o estado final de um slot F20: "Aguardando Código", "Corpo de
+   referência" (plano homologado embutido) ou "Código recebido" (submissão real).
+   A barra conta tanto submissão quanto referência — o corpo de referência expõe
+   o contrato do plano homologado, mas não homologa: a sprint ainda precisa do
+   build UBT + suíte 100% + isolamento Exit 0 (disclaimer exibido no card). */
 function resolveF20Slot(
   slot: (typeof CODE_SLOTS_F20)[number],
   submissions: Record<string, string>,
-): { status: string; code: string } {
-  if (submissions[slot.slot]) return { status: "Código recebido", code: submissions[slot.slot] };
-  return { status: "Aguardando Código", code: slot.code ?? "" };
+): { status: string; code: string; reference: boolean } {
+  if (submissions[slot.slot]) return { status: "Código recebido", code: submissions[slot.slot], reference: false };
+  if (slot.hasReference) return { status: "Corpo de referência", code: slot.code ?? "", reference: true };
+  return { status: "Aguardando Código", code: "", reference: false };
 }
 
 /* Formata a data/hora exata de uma alteração de slot (locale pt-BR, segundos incluídos). */
@@ -307,7 +399,7 @@ function SlotsSection({
 }) {
   const { submissions, clearAll, submitAll } = useSlotSubmissions(F20_SLOT_STORAGE_KEY);
   const { history, recordChange } = useSlotHistory(F20_SLOT_STORAGE_KEY);
-  const submittedCount = CODE_SLOTS_F20.filter((s) => submissions[s.slot]).length;
+  const submittedCount = CODE_SLOTS_F20.filter((s) => submissions[s.slot] || s.hasReference).length;
   const undoSnapshotRef = useRef<Record<string, string> | null>(null);
 
   const registerSubmit = (slot: string, code: string) => {
@@ -490,6 +582,7 @@ function SlotsSection({
 
 const SLOT_STATUS_STYLES: Record<string, string> = {
   "Aguardando Código": "border-amber-warn/60 text-amber-warn",
+  "Corpo de referência": "border-muted-foreground/50 text-muted-foreground",
   "Código recebido": "border-engineering/60 text-engineering",
 };
 
@@ -499,7 +592,7 @@ function F20SlotCard({
   slot, resolved, submitted, submissions, onSubmit, lastChanged,
 }: {
   slot: (typeof CODE_SLOTS_F20)[number];
-  resolved: { status: string; code: string };
+  resolved: { status: string; code: string; reference: boolean };
   submitted: boolean;
   submissions: Record<string, string>;
   onSubmit: (code: string) => void;
@@ -525,16 +618,18 @@ function F20SlotCard({
       className={`border ${
         submitted
           ? "border border-engineering/60 bg-engineering/[0.04]"
-          : "border-dashed border-amber-warn/60 bg-amber-warn/[0.05]"
+          : resolved.reference
+            ? "border border-muted-foreground/40 bg-secondary/40"
+            : "border-dashed border-amber-warn/60 bg-amber-warn/[0.05]"
       }`}
     >
       <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
         <span className="flex items-center gap-2 font-mono text-[11px]">
-          <span
-            className={`inline-block h-1.5 w-1.5 rounded-full ${submitted ? "bg-engineering" : "bg-amber-warn waiting-dot"}`}
-            aria-hidden="true"
-          />
-          <span className={submitted ? "text-engineering" : "text-amber-warn"}>{slot.slot}</span>
+        <span
+          className={`inline-block h-1.5 w-1.5 rounded-full ${submitted ? "bg-engineering" : resolved.reference ? "bg-muted-foreground" : "bg-amber-warn waiting-dot"}`}
+          aria-hidden="true"
+        />
+        <span className={submitted ? "text-engineering" : resolved.reference ? "text-muted-foreground" : "text-amber-warn"}>{slot.slot}</span>
         </span>
         <span
           className={`font-mono text-[10px] uppercase tracking-[0.14em] border px-2 py-0.5 whitespace-nowrap ${SLOT_STATUS_STYLES[resolved.status] ?? SLOT_STATUS_STYLES["Aguardando Código"]}`}
@@ -548,6 +643,12 @@ function F20SlotCard({
         {lastChanged && (
           <p className="mt-1.5 font-mono text-[10px] tracking-[0.05em] text-muted-foreground">
             Última alteração: {formatSlotTimestamp(lastChanged.at)} · {lastChanged.via}
+          </p>
+        )}
+        {resolved.reference && !submitted && (
+          <p className="mt-1.5 font-mono text-[10px] tracking-[0.05em] text-muted-foreground">
+            Selo: corpo de referência — o contrato do plano homologado, exposto como contrato auditável.
+            Não é evidência: o build real (UBT + suíte 100% + isolamento Exit 0) segue obrigatório.
           </p>
         )}
       </div>
@@ -710,8 +811,6 @@ function importF20Submissions(
       /* Importação .txt — blocos com cabeçalho '=== Slot F20-X · Título ==='. */
     const text = await file.text();
     const blocks = text.split(/=== /).filter((b) => b.trim());
-    const problems: { slot: string; issue: string }[] = [];
-    const seen = new Set<string>();
     for (const block of blocks) {
       const headerMatch = block.match(/^=== (Slot F20-[A-D][^=·]+)\s*·/);
       if (!headerMatch) {
@@ -757,16 +856,29 @@ function importF20Submissions(
     }
     if (seen.size === 0) {
       toast.error("Nenhum slot restaurado", {
-        description: "O arquivo não contém blocos legíveis de slots auditáveis da F20.",
+        description: `O arquivo${isJson ? " JSON" : ""} não contém blocos legíveis de slots auditáveis da F20 — os problemas detectados estão listados acima ou o formato do topo do JSON não segue { submissions: { "Slot F20-X · …": … } }.`,
+        duration: 8000,
       });
       return;
     }
     submitAll(restored);
     for (const s of CODE_SLOTS_F20) if (restored[s.slot]) recordChange(s.slot, "importação");
-    toast.success(`${seen.size} ${seen.size === 1 ? "slot restaurado" : "slots restaurados"}`, {
-      description: "Submissões importadas do backup .txt — verificação do build segue necessária.",
-      duration: 5000,
-    });
+    toast.success(
+      `${seen.size} ${seen.size === 1 ? "slot restaurado" : "slots restaurados"}${isJson ? " (JSON)" : " (.txt)"}`,
+      {
+        description: (
+          <ul className="mt-1 space-y-0.5 text-xs">
+            {CODE_SLOTS_F20.filter((s) => restored[s.slot]).map((s) => (
+              <li key={s.slot} className="text-muted-foreground">
+                <span className="text-engineering">✓</span> {s.slot.replace(" · ", " — ")}
+              </li>
+            ))}
+            <li className="text-muted-foreground mt-1">Verificação do build segue necessária — submissão local não homologa.</li>
+          </ul>
+        ),
+        duration: 6000,
+      },
+    );
   };
   input.click();
 }

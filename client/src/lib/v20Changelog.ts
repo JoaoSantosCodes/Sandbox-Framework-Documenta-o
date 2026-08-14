@@ -25,6 +25,12 @@ const CHANGELOG_FILTER_META: Record<ChangelogFilterKey, { label: string }> = {
 /* Alterações da pré-versão v2.0.0-prep — registro documental; nenhum item homologa a fase. */
 export const V20_CHANGELOG: ChangelogEntryCategory[] = [
   {
+    tag: "F20 · F20-1",
+    category: "Novidade",
+    title: "Slot F20-A preenchido: corpo de referência do F20-1 (USBAttributePersistenceDefinition)",
+    body: "A porta de homologação recebeu o corpo de referência do F20-1 — USBAttributePersistenceDefinition (Data Asset com opt-in, PersistenceSchemaVersion e IsAttributePersistent explícito), FSBAttributePersistenceRuntimeData (LastConfirmedValues + OpenTransactions por PredictionId, UpsertConfirmed FindOrAdd por chave estável) e USBAttributePersistenceInstance (ApplyConfirmedValue com validar-antes-de-mutar). O card exibe o selo 'Corpo de referência', a barra avança para 1/4 e o disclaimer permanece: não homologa sem build UBT + suíte 100% + isolamento Exit 0.",
+  },
+  {
     tag: "Home · Changelog",
     category: "Novidade",
     title: "Changelog consolidado da v2.0.0-prep na página inicial",
@@ -39,8 +45,14 @@ export const V20_CHANGELOG: ChangelogEntryCategory[] = [
   {
     tag: "F20 · JSON",
     category: "Novidade",
-    title: "Exportação estruturada dos slots F20 em JSON",
-    body: "Além do backup .txt, a barra de progresso dos slots F20-A…F20-D oferece 'Exportar (.json)': payload estruturado com metadados (data, versão do site, fase, aviso de homologação) e submissões chaveadas pelo slot. A importação agora aceita ambos os formatos (.txt e .json), validando cada bloco e reportando vazios ou corrompidos.",
+    title: "Feedback visual de sucesso/erro na importação JSON dos slots F20",
+    body: "A importação agora diferencia visualmente os dois caminhos: sucesso exibe toast verde com a lista dos slots restaurados (✓ por slot) e o sufixo (JSON) ou (.txt); erro mostra toast vermelho com a descrição do formato esperado ('{ submissions: { \"Slot F20-X · …\": … } }') para o JSON — além da validação já existente de blocos vazios, corrompidos, duplicados e ilegíveis.",
+  },
+  {
+    tag: "Home · Busca",
+    category: "Novidade",
+    title: "Busca em tempo real no changelog da Home",
+    body: "A seção de changelog da Home ganhou campo de busca por palavra-chave (tag + título + corpo, caso-insensível) com ícone, botão de limpar, contagem de resultados e destaque dos termos em fundo âmbar. O filtro de categoria e a busca se combinam; sem resultados, um estado vazio oferece 'Limpar busca'.",
   },
   {
     tag: "Carimbo",

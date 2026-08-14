@@ -1,12 +1,12 @@
-/*
-  DESIGN: "Blueprint Técnico" + referência fuch.ai — Home.
+/* DESIGN: "Blueprint Técnico" + referência fuch.ai — Home.
   Hero assimétrico: wordmark gigante em serif como fundo (padrão fuch.ai), com blocos
   funcionais nos cantos (label mono sup.-esq., terminal mono inf.-esq., card de status
   inf.-dir., chips sticker). Faixa de métricas mono com separadores "·". Seções com
   header em duas colunas (label mono + intro bold) e cards numerados com chips de tags.
 */
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Search, X } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
 import { PhaseStamp, TechRule, useF19SubmittedCount } from "@/components/Primitives";
@@ -18,15 +18,58 @@ import {
   useChangelogFilter,
 } from "@/lib/v20Changelog";
 
+/* Escapa regex para highlight seguro de termo digitado. */
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/* Destaca cada ocorrência do termo dentro de um texto (caso-insensível).
+   Retorna JSX com os trechos combinados envoltos em <mark>. */
+function highlightText(text: string, term: string): React.ReactNode {
+  if (!term) return text;
+  const escaped = escapeRegex(term);
+  const re = new RegExp(`(${escaped})`, "gi");
+  const parts = text.split(re);
+  const nodes: React.ReactNode[] = [];
+  for (let i = 0; i < parts.length; i += 1) {
+    const p = parts[i];
+    if (i % 2 === 1) {
+      nodes.push(
+        <mark key={i} className="bg-amber-400/60 text-foreground rounded-sm px-0.5">
+          {p}
+        </mark>,
+      );
+    } else if (p.length > 0) {
+      nodes.push(p);
+    }
+  }
+  return nodes;
+}
+
 /* Changelog consolidado da v2.0.0-prep na Home (visão de entrada rápida):
    chips de categoria compartilhados com a /fase-20 (mesma chave
    sbf-changelog-filter — o filtro reflete entre as páginas) e link para o
-   changelog completo na página da fase. Some com o carimbo v2.0.0. */
+   changelog completo na página da fase. Some com o carimbo v2.0.0.
+   Busca em tempo real por palavra-chave (tag + título + corpo), com destaque
+   do termo e contagem de resultados — só filtro local, nada persistido. */
 function HomeChangelog() {
   const { filter, setFilter } = useChangelogFilter();
-  const filtered = V20_CHANGELOG.filter((e) =>
-    filter === "all" ? true : e.category === filter,
-  );
+  const [term, setTerm] = useState("");
+  const normalizedTerm = term.trim();
+  const filtered = useMemo(() => {
+    let list = V20_CHANGELOG.filter((e) => (filter === "all" ? true : e.category === filter));
+    if (normalizedTerm) {
+      const needle = normalizedTerm.toLowerCase();
+      list = list.filter(
+        (e) =>
+          e.tag.toLowerCase().includes(needle) ||
+          e.title.toLowerCase().includes(needle) ||
+          e.body.toLowerCase().includes(needle),
+      );
+    }
+    return list;
+  }, [filter, normalizedTerm]);
+  const searching = normalizedTerm.length > 0;
   return (
     <section id="changelog-v2" className="border-y border-border">
       <div className="container py-14">
@@ -49,6 +92,27 @@ function HomeChangelog() {
         </div>
         <TechRule />
         <div className="mt-5 flex flex-wrap items-center gap-2">
+          <div className="relative w-full sm:w-auto sm:flex-1 min-w-[180px] max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              type="search"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Buscar por palavra-chave…"
+              aria-label="Buscar atualizações por palavra-chave"
+              className="w-full border border-border bg-background pl-8 pr-8 py-1.5 font-mono text-[12px] text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-engineering/60 focus:ring-1 focus:ring-engineering/40 transition-colors"
+            />
+            {searching && (
+              <button
+                type="button"
+                aria-label="Limpar busca"
+                onClick={() => setTerm("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-border/60 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
           {(Object.keys(CHANGELOG_FILTER_META()) as ChangelogFilterKey[]).map((key) => {
             const n = V20_CHANGELOG.filter((e) => (key === "all" ? true : e.category === key)).length;
             const active = filter === key;
@@ -70,18 +134,35 @@ function HomeChangelog() {
             );
           })}
         </div>
-        <div className="mt-5 border border-border divide-y divide-border/60 bg-card">
+        <div className="mt-5 flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          <span>{searching ? `${filtered.length} resultado(s) para "${normalizedTerm}"` : `${filtered.length} registro(s)`}</span>
+        </div>
+        <div className="mt-2 border border-border divide-y divide-border/60 bg-card">
           {filtered.map((entry) => (
             <div key={entry.tag} className="grid grid-cols-[7.5rem_1fr] sm:grid-cols-[9rem_1fr] gap-4 px-4 py-3">
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering pt-0.5 shrink-0">
-                {entry.tag}
+                {highlightText(entry.tag, normalizedTerm)}
               </span>
               <div>
-                <div className="text-sm font-semibold">{entry.title}</div>
-                <div className="mt-1 text-[13px] text-muted-foreground leading-relaxed">{entry.body}</div>
+                <div className="text-sm font-semibold">{highlightText(entry.title, normalizedTerm)}</div>
+                <div className="mt-1 text-[13px] text-muted-foreground leading-relaxed">{highlightText(entry.body, normalizedTerm)}</div>
               </div>
             </div>
           ))}
+          {filtered.length === 0 && (
+            <div className="px-4 py-8 text-center">
+              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground mb-1">
+                Nenhum registro combina com "{normalizedTerm}"
+              </div>
+              <button
+                type="button"
+                onClick={() => setTerm("")}
+                className="text-[13px] font-semibold text-engineering hover:underline"
+              >
+                Limpar busca
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>
