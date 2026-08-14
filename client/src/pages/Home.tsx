@@ -161,7 +161,7 @@ export default function Home() {
                   &gt; quais os 10 princípios?
                 </Link>
                 <Link href="/decisoes" className="text-muted-foreground hover:text-engineering transition-colors">
-                  &gt; ver as 18 decisões DD?
+                  &gt; ver as 19 decisões DD?
                 </Link>
                 <Link href="/roadmap" className="text-muted-foreground hover:text-engineering transition-colors">
                   &gt; linha do tempo &amp; roadmap?

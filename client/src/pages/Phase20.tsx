@@ -149,6 +149,36 @@ const CHECKLIST_META = {
   items: CHECKLIST_ITEMS,
 };
 
+/* Animação suave do traço de progresso (padrão Blueprint: ease-out custom, sem keyframes).
+   A animação cobre apenas transform/width via transition, <300 ms, respeita prefers-reduced-motion. */
+const F20_BAR_EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
+
+/* Contador animado: anima o número de itens concluídos entre ticks do checklist. */
+function useAnimatedCount(target: number): number {
+  const [display, setDisplay] = useState(target);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setDisplay(target);
+      return;
+    }
+    const from = display;
+    if (from === target) return;
+    const dur = Math.min(420, Math.max(180, Math.abs(target - from) * 120));
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 4);
+      setDisplay(Math.round(from + (target - from) * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target]);
+  return display;
+}
+
 /* Barra de progresso visual da Fase 20 — lê o checklist persistido em localStorage
    (mesma chave do PhaseChecklist) e reage a alterações de outras abas via storage event. */
 function F20ProgressBanner() {
@@ -169,6 +199,8 @@ function F20ProgressBanner() {
   const { done: doneNow, pending: pendingNow } = decodeChecklistProgress(CHECKLIST_META);
   const total = CHECKLIST_ITEMS.length;
   const pct = Math.round((doneNow.length / total) * 100);
+  const doneAnimated = useAnimatedCount(doneNow.length);
+  const doneAll = doneNow.length === total;
 
   return (
     <div className="mt-4 border border-border bg-card">
@@ -177,18 +209,26 @@ function F20ProgressBanner() {
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             Progresso da Fase 20
           </span>
-          <span className="font-mono text-[11px] text-engineering font-semibold">
-            {doneNow.length}/{total} itens concluídos ({pct}%)
+          <span
+            className="font-mono text-[11px] text-engineering font-semibold tabular-nums"
+            style={{
+              transition: `transform 200ms ${F20_BAR_EASE}, color 200ms ${F20_BAR_EASE}`,
+            }}
+          >
+            {doneAnimated}/{total} itens concluídos ({pct}%)
           </span>
         </div>
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           {pendingNow.length} pendente{pendingNow.length === 1 ? "" : "s"}
         </span>
       </div>
-      <div className="h-2 w-full bg-secondary">
+      <div className="h-2 w-full bg-secondary overflow-hidden">
         <div
-          className="h-2 bg-engineering transition-[width] duration-200"
-          style={{ width: `${pct}%` }}
+          className="h-2 bg-engineering"
+          style={{
+            width: `${pct}%`,
+            transition: `width 380ms ${F20_BAR_EASE}`,
+          }}
         />
       </div>
       <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 py-3 font-mono text-[10px] uppercase tracking-wider">
@@ -197,11 +237,18 @@ function F20ProgressBanner() {
         <span className="text-border">■ pendente</span>
         <span className="text-muted-foreground">{pendingNow.length} de {total}</span>
       </div>
-      {doneNow.length === total && (
+      <div
+        className="overflow-hidden"
+        style={{
+          maxHeight: doneAll ? "3.5rem" : "0rem",
+          opacity: doneAll ? 1 : 0,
+          transition: `max-height 320ms ${F20_BAR_EASE}, opacity 240ms ${F20_BAR_EASE}`,
+        }}
+      >
         <div className="px-4 py-3 border-t border-engineering/50 bg-engineering/5 font-mono text-[11px] uppercase tracking-wider text-engineering">
           Plano de implantação concluído — pronto para homologação da v2.0.0
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -410,16 +457,22 @@ export default function Phase20() {
           >
             <ArrowLeft className="h-4 w-4" /> Linha do Tempo & Roadmap
           </Link>
-          <Link
-            href="/decisoes"
+                    <Link
+            href="/decisoes#dd-19"
             className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm hover:border-engineering/60 hover:text-engineering transition-colors"
           >
-            <FileText className="h-4 w-4" /> Registro de Decisões
+            <FileText className="h-4 w-4" /> DD-19 · Persistência transacional
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/fase-19"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm hover:border-engineering/60 hover:text-engineering transition-colors"
+          >
+            <FileText className="h-4 w-4" /> Fase 19 · Porta de homologação v1.9.0
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
-
       {/* Índice lateral (mesmo padrão numerado das páginas longas do Manual/SFPS) */}
       <div className="container py-10 max-w-6xl -mt-6">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_18rem] gap-10">

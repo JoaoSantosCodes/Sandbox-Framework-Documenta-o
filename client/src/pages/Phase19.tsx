@@ -1154,7 +1154,25 @@ export default function Phase19() {
             <FileText className="h-4 w-4" /> Tabela canônica de eventos
             <ArrowRight className="h-4 w-4" />
           </Link>
+          <Link
+            href="/fase-20"
+            className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 text-sm hover:border-engineering/60 hover:text-engineering transition-colors"
+          >
+            <span>Próxima fase: Fase 20 · Persistência Transacional</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
+        <div className="mt-4 border border-dotted border-engineering/50 bg-engineering/[0.04] px-4 py-3">
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            <strong className="text-engineering font-mono text-[10px] uppercase tracking-[0.16em] block mb-1">
+              Vinculação de fases · não-contaminação DD-16
+            </strong>
+            O playtest F20-9 (save/restore íntegro em Dedicated Server) <strong>valida a Fase 20, não os
+            slots A–D da Fase 19</strong> — cada porta de homologação permanece com seu próprio ponto de
+            auditoria: a v1.9.0 fecha com os corpos de build do indicador de dano + suíte 34/34, e a v2.0.0
+            segue o contrato da DD-19 (Registro de Decisões · /decisoes#dd-19).
+            </p>
+          </div>
       </div>
 
       {/* Índice lateral (mesmo padrão numerado das páginas longas do Manual/SFPS) */}

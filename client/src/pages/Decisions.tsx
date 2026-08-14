@@ -438,6 +438,23 @@ const DECISIONS: Decision[] = [
     status: "Homologada",
     homologatedAt: "2026-08-14",
   },
+  {
+    id: "DD-19",
+    version: "v2.0.0 · planejada",
+    title: "Persistência transacional de atributos ancorada no PredictionId com chave estável",
+    problem:
+      "O framework valida e confirma predições client-side (DD-10) e replica estruturas por chave estável (DD-02), mas não persiste o estado entre partidas: fechar a sessão perde progressão (atributos, inventário, checkpoints). Um save system ingênuo quebraria os invariantes já homologados — salvar por índice de array, gravar do cliente sem authority ou restaurar saves corrompidos são exatamente os bypasses que o Manifesto proíbe.",
+    decision:
+      "Registrar o plano da Fase 20 como contrato de homologação: (a) USBAttributePersistenceDefinition/Instance com opt-in por atributo e chave estável (upsert por chave, nunca índice); (b) TransactionLog por PredictionId — toda mutação predita entra no log e o rollback reverte simetricamente (Entry/Exit em todos os caminhos de falha); (c) checkpoint via USaveGame com HasAuthority() em toda gravação — o cliente prediz o save, a gravação é sempre server-side; (d) restore validado por autoridade com rejeição de saves corrompidos; (e) testes de concorrência (duas mutações predidas na mesma chave), anti-spill entre local players no mesmo save slot, isolamento simétrico (hide do plugin, Exit Code 0) e playtest em Dedicated Server com save/restore íntegro. O carimbo v2.0.0 exige os 11 itens do checklist da /fase-20.",
+    rejected:
+      "Persistir automaticamente todo atributo sem opt-in — transformaria cada atributo novo em superfície de save sem disciplina de granularidade; save client-side cacheado e reconciliado depois — inverte a direção de authority (o cliente nunca é fonte de verdade para o save); usar o TransactionLog existente de combate como base — acoplaria o plugin 06 à camada de persistência, quebrando a dependência unidirecional (persistência nasce em camada base, nunca conhece combate/inventário).",
+    consequence:
+      "A progressão do jogador sobrevive ao fechamento da partida sem abrir novo canal de bypass: toda gravação tem authority, toda mutação predita tem saída simétrica e toda restauração tem validação. O checklist da /fase-20 (11 itens, barra de progresso) é o ponto de auditoria único — nenhuma submissão de slot antecipa a evidência de build, e a homologação real exige o corpo compilado + suíte 100% + isolamento Exit 0.",
+    precedent:
+      "Extensão direta do DD-02 (chave estável + upsert), do DD-10 (PredictionId/rollback de predição) e da DD-16 (portas de homologação com ponto de auditoria explícito). A simetria Entry/Exit do DD-02 aplicada ao save: toda entrada no TransactionLog exige saída em todos os caminhos de falha — mesma disciplina das portas de homologação das fases anteriores.",
+    status: "Pendente",
+    homologatedAt: undefined,
+  },
 ];
 
 const STATUS_STYLES: Record<DecisionStatus, string> = {

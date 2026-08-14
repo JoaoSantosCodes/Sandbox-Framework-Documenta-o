@@ -121,13 +121,13 @@ const MILESTONES: Milestone[] = [
   },
   {
     id: "m-dds",
-    tag: "DD-01…DD-18",
+    tag: "DD-01…DD-19",
     date: "Contínuo",
     title: "Registro de Decisões de design",
     description:
-      "Decisões homologadas do manifesto ao redesign fuch.ai: simetria Exit, anti-reflexão por string, DD-11 AttackId, portas de homologação (DD-16), divergência de escopo auditável (DD-17) e o padrão da página de linha do tempo & roadmap (DD-18).",
+      "Decisões homologadas do manifesto ao redesign fuch.ai: simetria Exit, anti-reflexão por string, DD-11 AttackId, portas de homologação (DD-16), divergência de escopo auditável (DD-17), o padrão da página de linha do tempo & roadmap (DD-18) e o contrato da persistência transacional (DD-19).",
     status: "done",
-    metric: "18 decisões · 16 homologadas",
+    metric: "19 decisões · 16 homologadas",
   },
   {
     id: "m-site",
@@ -354,7 +354,7 @@ export default function Roadmap() {
           </h1>
           <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Consolidação auditável do caminho dos 11 plugins UE5.8 C++, das versões homologadas
-            (v1.7.0 · v1.8.0), das decisões de design (DD-01…DD-18) e do que se desbloqueia na v1.9.0.
+            (v1.7.0 · v1.8.0), das decisões de design (DD-01…DD-19) e do que se desbloqueia na v1.9.0.
           </p>
         </div>
       </section>

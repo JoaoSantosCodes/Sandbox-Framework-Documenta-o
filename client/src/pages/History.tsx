@@ -84,13 +84,16 @@ const DD_BY_VERSION: Record<string, DDMilestone[]> = {
     { id: "DD-17", version: "v1.9.0 · planejada", title: "Divergência de escopo plano UMG vs. DD-08 — Rota A prevalece", page: "/decisoes#dd-17" },
     { id: "DD-18", version: "v1.9.0 · planejada", title: "Linha do Tempo & Roadmap como página permanente do site", page: "/decisoes#dd-18" },
   ],
+  "v2.0.0 · planejada": [
+    { id: "DD-19", version: "v2.0.0 · planejada", title: "Plano homologado da Fase 20 — persistência transacional ancorada no PredictionId", page: "/decisoes#dd-19" },
+  ],
 };
 
 const METRICS = [
   { value: "11", label: "plugins implementados · 0 em backlog" },
   { value: "32/32", label: "SBUITests verdes (F18)" },
   { value: "31/31", label: "specs verdes (F17)" },
-  { value: "18", label: "decisões DD-* registradas" },
+  { value: "19", label: "decisões DD-* registradas" },
 ];
 
 /* Persistência dos filtros — a visualização escolhida sobrevive ao recarregamento.
@@ -406,7 +409,7 @@ export default function History() {
           02 · Decisões DD-* por versão
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
-          Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 18 decisões com
+          Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 19 decisões com
           as fases que as originaram. Decisões pendentes aparecem sempre no topo da listagem.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
