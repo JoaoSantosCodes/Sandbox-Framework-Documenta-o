@@ -13,7 +13,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { PLUGINS } from "@/lib/siteData";
-import { Clock, FileText, Layers, Milestone } from "lucide-react";
+import { ALL_SECTIONS } from "@/lib/sectionsIndex";
+import { Clock, FileText, Hash, Layers, Milestone } from "lucide-react";
 
 interface IndexEntry {
   id: string;
@@ -22,7 +23,7 @@ interface IndexEntry {
   page: string;
   hash?: string;
   keywords: string;
-  group: "paginas" | "plugins" | "eventos" | "classes" | "conceitos" | "decisoes";
+  group: "paginas" | "plugins" | "eventos" | "classes" | "conceitos" | "decisoes" | "secoes";
 }
 
 const DECISIONS: IndexEntry[] = [
@@ -33,7 +34,7 @@ const DECISIONS: IndexEntry[] = [
   { id: "DD-05", title: "DD-05 — Anti-spill obrigatório em todo widget", subtitle: "TargetPawn == owning pawn antes de renderizar · v1.8.0 · Homologada", page: "/decisoes", hash: "DD-05", keywords: "dd-05 anti spill targetpawn ownership", group: "decisoes" },
   { id: "DD-06", title: "DD-06 — Quatro eventos canônicos de inventário", subtitle: "ItemAdded/Removed/Equipped/Unequipped preservados · v1.8.0 · Homologada", page: "/decisoes", hash: "DD-06", keywords: "dd-06 inventário canônico compatibilidade", group: "decisoes" },
   { id: "DD-07", title: "DD-07 — Throttle de 60 Hz no progresso de interação", subtitle: "Proteção do Slate no TickComponent · v1.8.0 · Homologada", page: "/decisoes", hash: "DD-07", keywords: "dd-07 throttle 60 hz tick interação", group: "decisoes" },
-  { id: "DD-08", title: "DD-08 — Indicador de dano adiado para Fase 19", subtitle: "Pré-requisitos homologados (produção autoritativa do evento) · v1.8.0 · Homologada com nota", page: "/fase-19", hash: "DD-08", keywords: "dd-08 dano fase 19 indicador adiado", group: "decisoes" },
+  { id: "DD-08", title: "DD-08 — Indicador de dano adiado para Fase 19", subtitle: "Pré-requisitos homologados (produção autoritativa do evento) · v1.8.0 · Homologada com nota", page: "/decisoes#dd-08", hash: "DD-08", keywords: "dd-08 dano fase 19 indicador adiado", group: "decisoes" },
   { id: "DD-09", title: "DD-09 — Teste de isolamento por hide de módulos no UBT", subtitle: "Renome de pasta + .uplugin_disabled · v1.7.0 · Homologada", page: "/decisoes", hash: "DD-09", keywords: "dd-09 teste isolamento ubt compilação", group: "decisoes" },
   { id: "DD-10", title: "DD-10 — GDT expõe ISBDebugInterface, não estado interno", subtitle: "Auto-descrição via crosshair · v1.7.0 · Homologada", page: "/decisoes", hash: "DD-10", keywords: "dd-10 gdt debug interface telemetria", group: "decisoes" },
   { id: "DD-11", title: "DD-11 — Deduplicação do indicador de dano via AttackId", subtitle: "Client-side · mapa AttackIds com TTL + bSkipClientNotify · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-11", keywords: "dd-11 deduplicação attackid dano indicador fase 19", group: "decisoes" },
@@ -105,6 +106,15 @@ const ALL_INDEX: IndexEntry[] = [
   ...CLASSES,
   ...DECISIONS,
   ...CONCEPTS,
+  ...ALL_SECTIONS.map((s) => ({
+    id: s.id,
+    title: s.title,
+    subtitle: s.subtitle,
+    page: s.page,
+    hash: s.hash,
+    keywords: s.keywords,
+    group: "secoes" as const,
+  })),
 ];
 
 // Tags populares — navegação rápida por conceito sem digitar.
@@ -139,6 +149,7 @@ function saveHistory(history: string[]) {
 
 const GROUP_META: Record<IndexEntry["group"], { label: string; icon: React.ElementType }> = {
   paginas: { label: "Páginas", icon: FileText },
+  secoes: { label: "Seções internas", icon: Hash },
   plugins: { label: "Plugins", icon: Layers },
   eventos: { label: "Eventos Event.*", icon: Milestone },
   classes: { label: "Classes & Interfaces", icon: Milestone },

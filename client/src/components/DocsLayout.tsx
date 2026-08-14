@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sheet";
 
 // Data registrada da última sincronização integral Vault ↔ site.
-const LAST_VAULT_SYNC = "13/08/2026 23:50 GMT-3";
+const LAST_VAULT_SYNC = "14/08/2026 01:15 GMT-3";
 
 const PHASE_CHECKLIST_KEYS = ["sbf-phase17-checklist", "sbf-phase18-checklist", "sbf-phase19-checklist"];
 
@@ -112,6 +112,7 @@ const NAV_CHIPS = [
   { href: "/message-router", label: "Message Router", short: "08 · Router" },
   { href: "/decisoes", label: "Registro de Decisões", short: "09 · Decisões" },
   { href: "/manifesto", label: "Manifesto & Padrões", short: "10 · Manifesto" },
+  { href: "/historico", label: "Histórico Consolidado", short: "11 · Hist" },
 ];
 
 function ThemeToggle({ compact = false }: { compact?: boolean }) {
@@ -222,7 +223,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
                 className="px-2 py-1 rounded-full border border-dashed border-border text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground hover:text-engineering hover:border-engineering/60 transition-colors"
                 title="Buscar nas demais páginas (⌘K)"
               >
-                +4 · ⌘K
+                +5 · ⌘K
               </button>
             </nav>
             <SyncBadge details={pendingDetails} unsynced={unsynced} />
@@ -288,7 +289,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
               <span>·</span>
               <span>Fase 18 homologada 32/32</span>
               <span>·</span>
-              <span>Fase 19 em planejamento</span>
+              <span>Fase 19 em homologação (v1.9.0)</span>
               <span>·</span>
               <span>UE5.8 · C++</span>
             </div>

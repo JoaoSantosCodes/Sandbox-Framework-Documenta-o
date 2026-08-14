@@ -143,7 +143,7 @@ export default function MessageRouter() {
 
       <div className="container py-12 lg:py-16 max-w-5xl">
         <section className="mb-12">
-          <h2 className="font-serif text-2xl font-bold mb-1">Modos de publicação</h2>
+          <h2 className="font-serif text-2xl font-bold mb-1 scroll-mt-24" id="modos">Modos de publicação</h2>
           <p className="text-sm text-muted-foreground mb-5">Os dois primitivos do subsistema e quando usar cada um.</p>
           <div className="grid md:grid-cols-2 gap-5">
             {SEMANTICS.map((s) => (
@@ -163,7 +163,7 @@ export default function MessageRouter() {
         </section>
 
         <section className="mb-12">
-          <h2 className="font-serif text-2xl font-bold mb-1">Tabela canônica — eventos Event.*</h2>
+          <h2 className="font-serif text-2xl font-bold mb-1 scroll-mt-24" id="tabela">Tabela canônica — eventos Event.*</h2>
           <p className="text-sm text-muted-foreground mb-5">
             Evento, produtor autoritativo, payload em <code className="font-mono text-[13px]">SBEventPayloads.h</code> e regra de mecânica.
             Filtre por plugin produtor ou por tipo de payload — os chips são seletivos.
@@ -245,7 +245,7 @@ export default function MessageRouter() {
         </section>
 
         <section className="mb-12">
-          <h2 className="font-serif text-2xl font-bold mb-1">Prioridades de assinatura</h2>
+          <h2 className="font-serif text-2xl font-bold mb-1 scroll-mt-24" id="prioridades">Prioridades de assinatura</h2>
           <p className="text-sm text-muted-foreground mb-5">Gameplay nunca espera pela UI.</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {PRIORITIES.map((p) => (
@@ -264,7 +264,7 @@ export default function MessageRouter() {
         </section>
 
         <section className="mb-12">
-          <h2 className="font-serif text-2xl font-bold mb-1">Invariantes de consumo</h2>
+          <h2 className="font-serif text-2xl font-bold mb-1 scroll-mt-24" id="invariantes">Invariantes de consumo</h2>
           <p className="text-sm text-muted-foreground mb-5">
             As cinco regras que qualquer novo widget de gameplay deve satisfazer.
           </p>
@@ -283,7 +283,7 @@ export default function MessageRouter() {
         </section>
 
         <section className="mb-4">
-          <h2 className="font-serif text-2xl font-bold mb-1">Contrato da Fase 18</h2>
+          <h2 className="font-serif text-2xl font-bold mb-1 scroll-mt-24" id="fase-18">Contrato da Fase 18</h2>
           <p className="text-sm text-muted-foreground mb-5">
             Critérios de aceite da UI reativa — validação final antes de homologar <code className="font-mono text-[13px]">v1.8.0</code>.
           </p>

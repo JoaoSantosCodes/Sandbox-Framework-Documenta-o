@@ -178,7 +178,7 @@ export default function Spec() {
 
           {/* 01 Topologia */}
           <section id="sfps-01" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">01</span>
               Topologia Final de Plugins
             </h2>
@@ -201,7 +201,7 @@ export default function Spec() {
 
           {/* 02 Dependência unidirecional */}
           <section id="sfps-02" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">02</span>
               Regra de Dependência Unidirecional
             </h2>
@@ -237,7 +237,7 @@ export default function Spec() {
 
           {/* 03 Metadados */}
           <section id="sfps-03" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">03</span>
               Metadados de Compatibilidade (.uplugin)
             </h2>
@@ -256,7 +256,7 @@ export default function Spec() {
 
           {/* 04 Contexto unificado */}
           <section id="sfps-04" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">04</span>
               Estrutura de Contexto Unificada (FSBBehaviorContext)
             </h2>
@@ -276,7 +276,7 @@ export default function Spec() {
 
           {/* 05 Definition/Instance/RuntimeData */}
           <section id="sfps-05" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">05</span>
               Divisão de Estados de Behaviors
             </h2>
@@ -309,7 +309,7 @@ export default function Spec() {
 
           {/* 06 Modificadores */}
           <section id="sfps-06" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">06</span>
               Priorização e Políticas do Modificador
             </h2>
@@ -328,7 +328,7 @@ export default function Spec() {
 
           {/* 07 Message Router */}
           <section id="sfps-07" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">07</span>
               Gameplay Message Router (USBEventSubsystem)
             </h2>
@@ -386,7 +386,7 @@ export default function Spec() {
 
           {/* 08 Matriz de interfaces */}
           <section id="sfps-08" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">08</span>
               Matriz de Interfaces de Fundação (02_SandboxInterfaces)
             </h2>

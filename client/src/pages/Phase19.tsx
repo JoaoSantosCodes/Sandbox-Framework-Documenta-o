@@ -16,6 +16,7 @@ const TOC = [
   { id: "DD-08", label: "Por que adiar (DD-08)" },
   { id: "pre-requisitos", label: "Pré-requisitos homologados" },
   { id: "escopo", label: "Escopo proposto" },
+  { id: "corpo-codigo", label: "Corpo do código (homologação)" },
   { id: "aceite", label: "Critérios de aceite" },
 ];
 
@@ -112,9 +113,10 @@ const CHECKLIST_ITEMS = [
   { key: "dedupe", label: "Deduplicação client-side via AttackId (TTL ou bSkipClientNotify)" },
   { key: "cenario7", label: "SBUITests Cenário 7: indicador no ângulo esperado" },
   { key: "cenario8", label: "SBUITests Cenário 8: TargetPawn mismatch não renderiza" },
+  { key: "suíte", label: "SBUITests completa 34/34 (6 existentes + 2 novos de dano)" },
   { key: "isolamento", label: "Teste de isolamento simétrico (hide 06 + hide 09, Exit Code 0)" },
   { key: "playtest", label: "Playtest Dedicated Server: indicador só no pawn afetado" },
-  { key: "dd11", label: "DD-11 registrado e homologado: deduplicação client-side via AttackId (Ver DD-11)" },
+  { key: "dd11", label: "DD-11 homologada: deduplicação client-side via AttackId (Ver DD-11)" },
   { key: "vault", label: "Vault + site carimbados v1.9.0 (Dashboard, task.md, siteData)" },
 ];
 
@@ -132,10 +134,10 @@ export default function Phase19() {
         <div className="container relative py-12 lg:py-16">
           <div className="fade-up">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              doc. 19 · planning draft
+              doc. 19 · v1.9.0 · homologation gate
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <PhaseStamp phase="19" version="v1.9.0 · em planejamento" warn />
+              <PhaseStamp phase="19" version="v1.9.0 · em homologação" warn />
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 rascunho · aguardando homologação
               </span>
@@ -244,10 +246,69 @@ export default function Phase19() {
           </table>
         </div>
 
+        <TechRule label="Corpo do código — porta de homologação" />
+
+        <h2 id="corpo-codigo" className="mt-12 font-serif text-2xl font-bold">
+          Corpo do código (homologação)
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+          Quatro blocos de código fecham a homologação da Fase 19 — os locais exatos onde a revisão exigirá
+          o corpo real, não a descrição em prosa. Até o build ser submetido, cada bloco permanece como
+          slot auditável; a prosa não fecha homologação (padrão do projeto: nunca aceitar prosa como prova
+          de comportamento).
+        </p>
+        <div className="mt-6 space-y-4">
+          {[
+            {
+              slot: "Slot A · SBEventPayloads.h",
+              title: "USBDamageEventPayload em 04_SandboxCore",
+              exige:
+                "Classe UObject com AttackId (FString estável — chave de deduplicação), Direction (FVector), DamageAmount (float), bIsFatal (bool). Nunca dentro de 06 ou 09.",
+            },
+            {
+              slot: "Slot B · 06_SandboxCombat",
+              title: "Ponto autoritativo de publicação no Hitscan",
+              exige:
+                "BroadcastMessage<Event.Combat.DamageReceived> dentro do caminho existente protegido por HasAuthority() — sem duplicar escritas de atributos nem tocar replicação; ordem de validação antes de mutação preservada.",
+            },
+            {
+              slot: "Slot C · USBUIDamageIndicator (09_SandboxUI)",
+              title: "Widget com anti-spill, prioridade Low e deduplicação AttackId",
+              exige:
+                "SubscribeToEvent com prioridade 20, filtro TargetPawn == owning pawn, mapa local de AttackIds recentes com TTL (ou verificação bSkipClientNotify no caminho feliz). Simetria add/remove completa em NativeDestruct.",
+            },
+            {
+              slot: "Slot D · SBUITests",
+              title: "Cenários 7 e 8",
+              exige:
+                "Cenário 7: dano recebido exibe o indicador no ângulo esperado; Cenário 8: TargetPawn mismatch não renderiza nada no local player. Suíte completa 34/34 (6 existentes + 2 novos).",
+            },
+          ].map((s) => (
+            <div key={s.slot} className="border border-dashed border-amber-warn/50 bg-amber-warn/[0.04]">
+              <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+                <span className="font-mono text-[11px] text-amber-warn">{s.slot}</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  aguardando corpo do build
+                </span>
+              </div>
+              <div className="px-4 py-3">
+                <p className="font-medium text-sm">{s.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{s.exige}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <AuditNote tone="info">
+          A homologação acontece quando os quatro slots acima recebem os corpos reais de C++, os 34 cenários
+          ficarem verdes e o teste de isolamento simétrico passar. A partir daí, o carimbo desta página muda
+          de "em homologação" para v1.9.0 — assim como o registro DD-11 foi homologado com data e
+          consequências.
+        </AuditNote>
+
         <TechRule label="Checklist interativo da Fase 19" />
 
         <PhaseChecklist
-          phaseLabel="Fase 19 — Indicador Direcional de Dano (planejamento)"
+          phaseLabel="Fase 19 — Indicador Direcional de Dano (v1.9.0 · em homologação)"
           storageKey={CHECKLIST_KEY}
           items={CHECKLIST_ITEMS}
           completeMessage="Checklist completo — pronto para submeter o plano executado da Fase 19 à revisão."

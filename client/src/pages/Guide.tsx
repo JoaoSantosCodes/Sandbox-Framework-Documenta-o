@@ -358,7 +358,7 @@ export default function Guide() {
 
           {/* 01 Comportamento de movimento */}
           <section id="sfdg-01" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">01</span>
               Comportamento de Movimentação (05_SandboxCharacter)
             </h2>
@@ -375,7 +375,7 @@ export default function Guide() {
 
           {/* 02 Message Router */}
           <section id="sfdg-02" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">02</span>
               Utilizando o Message Router (USBEventSubsystem)
             </h2>
@@ -406,7 +406,7 @@ export default function Guide() {
 
           {/* 03 Ciclo de vida */}
           <section id="sfdg-03" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">03</span>
               Ciclo de Vida, Ticks e Ordem de Execução
             </h2>
@@ -425,7 +425,7 @@ export default function Guide() {
 
           {/* 04 ISBReplicable */}
           <section id="sfdg-04" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">04</span>
               Sincronização via ISBReplicable
             </h2>
@@ -449,7 +449,7 @@ export default function Guide() {
 
           {/* 05 Interação */}
           <section id="sfdg-05" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">05</span>
               Objetos Interativos Modulares (07_SandboxInteraction)
             </h2>
@@ -489,7 +489,7 @@ export default function Guide() {
 
           {/* 06 Habilidades */}
           <section id="sfdg-06" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">06</span>
               Habilidades no Behavior Stack (Fase 16)
             </h2>
@@ -512,7 +512,7 @@ export default function Guide() {
 
           {/* 07 Save */}
           <section id="sfdg-07" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">07</span>
               Integração ao Save Game System (Fase 15)
             </h2>
@@ -537,7 +537,7 @@ export default function Guide() {
 
           {/* 08 Precedentes homologados */}
           <section id="sfdg-08" className="mb-14">
-            <h2 className="font-serif text-2xl font-semibold mb-4 flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">08</span>
               Precedentes Homologados — DD-01 ··· DD-08 (v1.8.0)
             </h2>
