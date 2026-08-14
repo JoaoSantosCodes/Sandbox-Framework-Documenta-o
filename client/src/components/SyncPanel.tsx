@@ -4,12 +4,13 @@
   O painel declara o último registro local de auditoria e os commits de referência de cada lado.
 */
 import { Link } from "wouter";
-import { AlertTriangle, CheckCircle2, GitBranch, RefreshCcw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, GitBranch, Layers, RefreshCcw } from "lucide-react";
+import { PHASES } from "@/lib/siteData";
 
 const AUDIT_STORAGE_KEY = "sbf-audit-status";
 const LAST_VAULT_SYNC = "14/08/2026 01:15 GMT-3";
-const VAULT_COMMIT = "007cc07";
-const SITE_COMMIT = "77c1d98";
+const VAULT_COMMIT = "37b8eea";
+const SITE_COMMIT = "c06a466";
 
 interface AuditRecord {
   checkedAt: string;
@@ -176,6 +177,11 @@ export function SyncPanel() {
             </div>
           </div>
 
+          {/* Barra de progresso da régua de fases — concluídas vs. pendentes, espelhando o Vault.
+             Rascunhos (phase 99) não contam na régua oficial; a barra é reativa ao siteData e
+             usa o mesmo padrão de faixa da F20 (traço verde-engineering, 300ms ease-out). */}
+          <ProgressTrack />
+
           <div className="mt-3 border border-dashed border-border bg-background px-3 py-2 flex items-center justify-between flex-wrap gap-2">
             {synced ? (
               <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-engineering">
@@ -187,18 +193,57 @@ export function SyncPanel() {
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                não auditado nesta sessão — use o botão "Disparar audit" no rodapé
+                não auditado nesta sessão — use o botão "Ver audit" no rodapé
               </span>
             )}
             <Link
               href="/pendencias"
               className="font-mono text-[10px] uppercase tracking-[0.12em] text-engineering hover:underline"
             >
-              7 pendências P-1…P-7 em aberto →
+              pendências P-1…P-7 em aberto →
             </Link>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+/* Barra de progresso: fases concluídas ÷ total de fases da régua oficial (sem rascunhos).
+   F10…F19 são as fases da régua registrada no siteData — 10/10 concluídas (v1.9.0). */
+function ProgressTrack() {
+  const official = PHASES.filter((p) => !p.draft);
+  const done = official.filter((p) => p.status === "Concluída").length;
+  const total = official.length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const lastDone = [...official].reverse().find((p) => p.status === "Concluída");
+  return (
+    <div className="mt-4 border border-border bg-card">
+      <div className="px-3 py-1.5 border-b border-dashed border-border flex items-center justify-between flex-wrap gap-1">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          <Layers className="h-3 w-3" />
+          régua de fases · concluídas vs. pendentes
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+          {done}/{total} · {pct}%
+        </span>
+      </div>
+      <div className="px-3 py-2.5 space-y-2">
+        <div className="h-2 w-full bg-secondary overflow-hidden" title={`${pct}% da régua concluída`}>
+          <div
+            className="h-full bg-engineering transition-[width] duration-300 ease-out"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-engineering">
+            ✓ até {lastDone ? `${lastDone.title.split(" (")[0]} · ${lastDone.version}` : "—"}
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+            próxima frente: backlog oficial P-3 → P-4 → P-5 → P-6
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }

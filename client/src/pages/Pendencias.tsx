@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import {
   ArrowUpRight,
-  CalendarDays,
+  CheckSquare,
   ClipboardList,
   ExternalLink,
   FileText,
@@ -14,9 +14,18 @@ import {
   Layers,
   Printer,
   RefreshCcw,
+  Search,
   SortDesc,
+  X,
 } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   PHASE_PENDINGS,
   PENDING_ORDER_NOTE,
@@ -28,6 +37,29 @@ import { toast } from "sonner";
 import { sourceForRoute, extractSectionMarkdown } from "@/lib/sectionsMarkdown";
 
 const FILTER_STORAGE_KEY = "sbf-pendencias-filter";
+const SEARCH_STORAGE_KEY = "sbf-pendencias-search";
+
+/* Busca por palavras-chave (id, título, categoria, resumo e requisitos) com
+   destaque âmbar do termo — mesmo padrão do changelog da Home. */
+function highlightTerm(text: string, term: string): React.ReactNode {
+  if (!term.trim()) return text;
+  const parts = text.split(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
+  return parts.map((part, i) =>
+    part.toLowerCase() === term.toLowerCase() ? (
+      <mark key={i} className="bg-amber-warn/25 text-foreground rounded-sm px-0.5">
+        {part}
+      </mark>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  );
+}
+
+function pendingMatches(p: PhasePending, term: string): boolean {
+  if (!term.trim()) return true;
+  const hay = `${p.id} ${p.titulo} ${p.categoria} ${p.resumo} ${p.itens.map((i) => `${i.id} ${i.exige}`).join(" ")}`.toLowerCase();
+  return hay.includes(term.toLowerCase());
+}
 
 /* Exportação da lista filtrada: Markdown (.md) e PDF (print-to-PDF nativo).
    O formato de impressão (container oculto em tela, visível na impressão)
@@ -152,6 +184,14 @@ export default function Pendencias() {
     return "todas";
   });
   const [sort, setSort] = useState<SortKey>("ordem");
+  const [term, setTerm] = useState<string>(() => {
+    try {
+      return localStorage.getItem(SEARCH_STORAGE_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const [openPending, setOpenPending] = useState<PhasePending | null>(null);
   const copySection = useCopySection();
 
   useEffect(() => {
@@ -161,6 +201,14 @@ export default function Pendencias() {
       // ignore
     }
   }, [filter]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SEARCH_STORAGE_KEY, term);
+    } catch {
+      // ignore
+    }
+  }, [term]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -174,7 +222,10 @@ export default function Pendencias() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const sorted = useMemo(() => filterAndSortPendings(PHASE_PENDINGS, filter, sort), [filter, sort]);
+  const sorted = useMemo(
+    () => filterAndSortPendings(PHASE_PENDINGS, filter, sort).filter((p) => pendingMatches(p, term)),
+    [filter, sort, term],
+  );
   const totalPending = PHASE_PENDINGS.reduce((acc, p) => acc + pendingCount(p), 0);
 
   return (
@@ -250,6 +301,34 @@ export default function Pendencias() {
               </button>
             ))}
           </div>
+          {/* Busca em tempo real — combina com o filtro de categoria e a ordenação ativos */}
+          <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+              <input
+                type="text"
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                placeholder="Buscar pendência… (ID, título, requisito)"
+                className="w-full border border-border bg-card pl-8 pr-7 py-1 font-mono text-[11px] placeholder:text-muted-foreground/60 focus:outline-none focus:border-engineering/70 transition-colors"
+              />
+              {term && (
+                <button
+                  type="button"
+                  onClick={() => setTerm("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Limpar busca"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+            {term.trim() && (
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground shrink-0">
+                {sorted.length} resultado{sorted.length === 1 ? "" : "(s)"} para «{term.trim().slice(0, 20)}»
+              </span>
+            )}
+          </div>
           <div className="h-5 w-px bg-border hidden md:block" />
           {/* Exportação da lista filtrada — respeita o filtro de categoria e a ordenação ativos */}
           <div className="flex items-center gap-1.5">
@@ -317,16 +396,35 @@ export default function Pendencias() {
         {/* Cards de pendências */}
         <section className="space-y-5">
           {sorted.map((p) => (
-            <PendingCard key={p.id} pending={p} copySection={copySection} />
+            <PendingCard
+              key={p.id}
+              pending={p}
+              term={term}
+              copySection={copySection}
+              onOpen={(pd) => setOpenPending(pd)}
+            />
           ))}
           {sorted.length === 0 && (
-            <div className="border border-dashed border-border px-6 py-10 text-center">
+            <div className="border border-dashed border-border px-6 py-10 text-center space-y-3">
               <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                Nenhuma pendência nesta categoria
+                {term.trim()
+                  ? `Nenhum resultado para «${term.trim().slice(0, 20)}»`
+                  : "Nenhuma pendência nesta categoria"}
               </p>
+              {term.trim() && (
+                <button
+                  onClick={() => setTerm("")}
+                  className="inline-flex items-center gap-1.5 border border-engineering/60 bg-engineering/5 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-engineering hover:bg-engineering/10 transition-colors"
+                >
+                  <X className="h-3 w-3" /> Limpar busca
+                </button>
+              )}
             </div>
           )}
         </section>
+
+        {/* Modal de detalhes da pendência — aberto ao clicar no card */}
+        <PendingDetailModal pending={openPending} onClose={() => setOpenPending(null)} copySection={copySection} />
 
         {/* Formato de impressão (PDF) — oculto em tela, espelha a lista filtrada */}
         <div className="print-only hidden print:block space-y-4">
@@ -362,10 +460,14 @@ export default function Pendencias() {
 
 function PendingCard({
   pending,
+  term,
   copySection,
+  onOpen,
 }: {
   pending: PhasePending;
+  term: string;
   copySection: (id: string) => void;
+  onOpen: (p: PhasePending) => void;
 }) {
   const pendingItems = pending.itens.filter((i) => i.estado === "Pendente").length;
   const isDraft = pending.categoria === "Proposta fora da régua";
@@ -374,10 +476,18 @@ function PendingCard({
       className="border border-border bg-card"
       id={`pendencias-${pending.id.toLowerCase()}`}
     >
-      <div className="px-4 py-3 border-b border-border flex items-start justify-between gap-3 flex-wrap">
+      {/* Clique no header abre o modal de detalhes da pendência */}
+      <button
+        type="button"
+        onClick={() => onOpen(pending)}
+        className="w-full text-left px-4 py-3 border-b border-border flex items-start justify-between gap-3 flex-wrap group"
+        aria-label={`Abrir detalhes de ${pending.id} · ${pending.titulo}`}
+      >
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-engineering">{pending.id}</span>
-          <h2 className="font-display text-xl font-bold">{pending.titulo}</h2>
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-engineering">
+            {highlightTerm(pending.id, term)}
+          </span>
+          <h2 className="font-display text-xl font-bold">{highlightTerm(pending.titulo, term)}</h2>
           <span
             className={`font-mono text-[10px] uppercase tracking-[0.12em] px-2 py-0.5 border ${
               pending.categoria === "Backlog oficial do Vault"
@@ -400,16 +510,23 @@ function PendingCard({
             <ClipboardList className="h-3 w-3" />
             {pendingItems}/{pending.itens.length} pendentes
           </span>
+          <span className="text-engineering/70 hidden sm:inline-flex items-center gap-1">
+            <CheckSquare className="h-3 w-3" /> ver detalhes
+          </span>
           <button
-            onClick={() => copySection(`pendencias-${pending.id.toLowerCase()}`)}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              copySection(`pendencias-${pending.id.toLowerCase()}`);
+            }}
             className="hover:text-engineering inline-flex items-center gap-1 hover:underline underline-offset-4"
           >
             <RefreshCcw className="h-3 w-3" /> copiar seção
           </button>
         </div>
-      </div>
+      </button>
       <div className="p-4 space-y-4">
-        <p className="text-sm leading-relaxed text-muted-foreground">{pending.resumo}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{highlightTerm(pending.resumo, term)}</p>
         {pending.paginaRelacionada && (
           <Link
             href={pending.paginaRelacionada}
@@ -427,7 +544,7 @@ function PendingCard({
             {pending.itens.map((item) => (
               <li key={item.id} className="flex items-start gap-3 px-3 py-2">
                 <span className="font-mono text-[10px] text-muted-foreground pt-0.5 w-12 shrink-0">{item.id}</span>
-                <p className="text-sm leading-relaxed flex-1">{item.exige}</p>
+                <p className="text-sm leading-relaxed flex-1">{highlightTerm(item.exige, term)}</p>
                 <span
                   className={`font-mono text-[10px] uppercase tracking-[0.1em] px-1.5 py-0.5 border shrink-0 ${
                     item.estado === "Pendente"
@@ -443,5 +560,108 @@ function PendingCard({
         </div>
       </div>
     </article>
+  );
+}
+
+/* Modal de detalhes da pendência — abre ao clicar no header do card.
+   Espelha o conteúdo integral do Vault: resumo completo, checklist de
+   requisitos com estado e documento relacionado, sem inventar notas. */
+function PendingDetailModal({
+  pending,
+  onClose,
+  copySection,
+}: {
+  pending: PhasePending | null;
+  onClose: () => void;
+  copySection: (id: string) => void;
+}) {
+  const completedItems = pending?.itens.filter((i) => i.estado !== "Pendente").length ?? 0;
+  return (
+    <Dialog open={pending !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering border border-engineering/60 px-1.5 py-0.5">
+              {pending?.id}
+            </span>
+            {pending?.categoria && (
+              <span
+                className={`font-mono text-[10px] uppercase tracking-[0.12em] px-1.5 py-0.5 border ${
+                  pending.categoria === "Backlog oficial do Vault"
+                    ? "border-engineering/60 text-engineering"
+                    : pending.categoria === "Proposta fora da régua"
+                      ? "border-dashed border-muted-foreground/60 text-muted-foreground"
+                      : "border-border/70 text-muted-foreground"
+                }`}
+              >
+                {pending.categoria}
+              </span>
+            )}
+          </div>
+          <DialogTitle className="font-display text-xl font-bold">
+            {pending?.titulo}
+          </DialogTitle>
+          <DialogDescription className="text-sm leading-relaxed">
+            {pending?.resumo}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <span>
+              {completedItems}/{pending?.itens.length ?? 0} requisitos concluídos
+            </span>
+            <span>
+              {pending?.itens.length} para sair da lista
+            </span>
+          </div>
+          <ul className="divide-y divide-border/60 border border-border bg-secondary/40">
+            {pending?.itens.map((item) => (
+              <li key={item.id} className="flex items-start gap-3 px-3 py-2">
+                <span
+                  className={`font-mono text-[10px] pt-0.5 w-12 shrink-0 ${
+                    item.estado === "Pendente" ? "text-muted-foreground" : "text-engineering"
+                  }`}
+                >
+                  [{item.estado === "Pendente" ? " " : "x"}] {item.id}
+                </span>
+                <p className="text-sm leading-relaxed flex-1">{item.exige}</p>
+                <span
+                  className={`font-mono text-[10px] uppercase tracking-[0.1em] px-1.5 py-0.5 border shrink-0 ${
+                    item.estado === "Pendente"
+                      ? "border-amber-warn/60 text-amber-warn"
+                      : item.estado === "Parcial"
+                        ? "border-foreground/40 text-foreground"
+                        : "border-engineering/60 text-engineering"
+                  }`}
+                >
+                  {item.estado}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {pending?.paginaRelacionada && (
+            <Link
+              href={pending.paginaRelacionada}
+              className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.12em] text-engineering hover:underline underline-offset-4"
+            >
+              <ArrowUpRight className="h-3 w-3" /> ver documento no site
+            </Link>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
+          <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+            fonte: pendencias_de_fases.md · Vault
+          </p>
+          {pending && (
+            <button
+              onClick={() => copySection(`pendencias-${pending.id.toLowerCase()}`)}
+              className="inline-flex items-center gap-1 border border-engineering/60 bg-engineering/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-engineering hover:bg-engineering/10 transition-colors"
+            >
+              <RefreshCcw className="h-3 w-3" /> copiar seção
+            </button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
