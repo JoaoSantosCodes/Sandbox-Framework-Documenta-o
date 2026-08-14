@@ -130,6 +130,12 @@ function runLocalAudit(): AuditRecord {
   const driftItems: string[] = [];
   const title = typeof document !== "undefined" ? document.title : "";
   if (!/v1\.9\.0/.test(title) && !/v2\.0\.0-prep/.test(title)) driftItems.push("carimbo do <title>");
+  /* VALIDAÇÃO 15/08 — divergência interna do Vault: o 00_Sandbox_Framework_Dashboard.md
+     do cofre ainda carimba "Fase 18 Concluída · v1.8.1", enquanto status_atual_do_projeto.md,
+     task.md, walkthrough.md e linha_do_tempo_e_roadmap.md atestam a Fase 19 (Portabilidade
+     e Replicação no GameAnimationSample) como concluída. O site segue o estado oficial
+     (F19 · v1.9.0); a correção pertence ao Vault (atualizar o Dashboard), não ao site. */
+  driftItems.push("Dashboard do Vault: carimbo F18 · v1.8.1 (correção pendente no cofre)");
   const record: AuditRecord & { drift?: string[] } = {
     checkedAt: new Date().toISOString(),
     divergences: driftItems.length,
@@ -595,6 +601,11 @@ function AuditModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
                 <span className={synced ? "text-engineering" : "text-amber-warn"}>
                   {synced ? "0 divergência(s) · Vault e site alinhados" : `${audit.divergences} divergência(s) detectada(s)`}
                 </span>
+                {(audit as AuditRecord & { drift?: string[] }).drift?.map((d, i) => (
+                  <span key={i} className="block text-muted-foreground mt-1">
+                    · {d}
+                  </span>
+                ))}
                 <span className="block text-muted-foreground mt-1">verificação local · {when}</span>
               </div>
             </div>
