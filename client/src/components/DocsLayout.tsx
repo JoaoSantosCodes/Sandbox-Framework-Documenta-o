@@ -654,9 +654,14 @@ function AuditModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
             )}
           </button>
           <div className="border border-dashed border-border px-3 py-2 text-[12px] leading-relaxed text-muted-foreground">
-            O audit completo exige o secret <code className="font-mono text-[10px]">VAULT_MIRROR_REPO</code> ={" "}
-            <code className="font-mono text-[10px]">JoaoSantosCodes/Sandbox-Framework-Vault</code> em Settings →
-            Secrets → Actions do repositório. Sem ele o CI usa o espelho embutido (snapshot).
+            O audit completo exige o secret{" "}
+            <code className="font-mono text-[10px]">VAULT_MIRROR_REPO</code> ={" "}
+            <code className="font-mono text-[10px]">JoaoSantosCodes/Sandbox-Framework-Vault</code>. Secret de
+            repositório só é gravável pelo dono da conta (nem CI nem integração autorizada escreve em
+            Settings) — configurar em: <span className="font-mono text-[10px]">Settings → Secrets and
+            variables → Actions → New repository secret</span> do repositório. Enquanto não existir, o
+            workflow roda no espelho embutido (<code className="font-mono text-[10px]">scripts/vault-mirror/</code>
+            ), que reflete o snapshot, não o estado atual da máquina.
           </div>
           <a
             href="https://github.com/JoaoSantosCodes/Sandbox-Framework-Documenta-o/actions/workflows/sync-audit.yml"

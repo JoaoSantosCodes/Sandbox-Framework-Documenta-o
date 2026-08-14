@@ -7,6 +7,7 @@ import { Copy } from "lucide-react";
 import { Link } from "wouter";
 import {
   ArrowUpRight,
+  Check,
   CheckSquare,
   ClipboardList,
   ExternalLink,
@@ -662,14 +663,18 @@ function PendingDetailModal({
             </button>
           )}
           {/* Botão "Copiar texto" — resumo compacto da pendência (badge · título · resumo · checklist)
-             gerado diretamente do PhasePending aberto, sem depender do DOM e sem inventar notas. */}
+             gerado diretamente do PhasePending aberto, sem depender do DOM e sem inventar notas.
+             FEEDBACK VISUAL (15/08): estado "copiado" por 1500ms — troca o ícone Copy → Check
+             (com animação scale/opacity), inverte para verde-engineering sólido
+             (bg-engineering text-background border-engineering) e o texto vira "copiado",
+             mesmo padrão do CopyButton das portas de homologação (Primitives.tsx). */}
           {pending && (
-            <button
-              onClick={() => copyPendingSummary(pending)}
-              className="inline-flex items-center gap-1 border border-border/70 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground hover:border-engineering/60 transition-colors"
-            >
-              <Copy className="h-3 w-3" /> copiar texto
-            </button>
+            <CopySummaryButton
+              pending={pending}
+              onCopied={() => toast.success(`Texto copiado — ${pending.id}: ${pending.titulo}`, {
+                description: "Compartilhável em texto plano; a homologação oficial segue no Vault.",
+              })}
+            />
           )}
         </div>
       </DialogContent>
@@ -677,11 +682,11 @@ function PendingDetailModal({
   );
 }
 
-/* Copia um resumo compacto da pendência em texto plano — compartilhável em chat
-   ou anotação: badge + título + categoria + resumo + checklist de requisitos.
+/* Resumido compacto da pendência em texto plano — compartilhável em chat ou anotação:
+   badge + título + categoria + resumo + checklist de requisitos.
    O conteúdo vem integralmente do PhasePending (fonte única phasePendings.ts,
    espelho do Vault) — nenhum campo é inventado. */
-function copyPendingSummary(p: PhasePending) {
+export function buildPendingSummaryText(p: PhasePending): string {
   const lines: string[] = [
     `${p.id} · ${p.titulo} · ${p.categoria}`,
     "",
@@ -692,10 +697,47 @@ function copyPendingSummary(p: PhasePending) {
     "",
     `fonte: pendencias_de_fases.md · Vault · https://sandboxdocs-c9yezybu.manus.space/pendencias`,
   ];
-  navigator.clipboard.writeText(lines.join("\n")).then(
-    () => toast.success(`Texto copiado — ${p.id}: ${p.titulo}`, {
-      description: "Compartilhável em texto plano; a homologação oficial segue no Vault.",
-    }),
-    () => toast.error("Falha ao copiar"),
+  return lines.join("\n");
+}
+
+/* Botão "Copiar texto" com FEEDBACK VISUAL EVIDENTE (15/08):
+   no clique o ícone troca Copy → Check com animação scale/opacity (160ms ease-out,
+   padrão do CopyButton de Primitives), o botão inverte para verde-engineering sólido
+   (bg-engineering text-background border-engineering) e o rótulo vira "copiado" por
+   1500ms antes de reverter. O estado é isolado por pendência aberta (um botão por modal). */
+function CopySummaryButton({
+  pending,
+  onCopied,
+}: {
+  pending: PhasePending;
+  onCopied?: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label={copied ? "Copiado" : "Copiar texto"}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(buildPendingSummaryText(pending));
+        } catch {
+          toast.error("Falha ao copiar");
+          return;
+        }
+        setCopied(true);
+        onCopied?.();
+        window.setTimeout(() => setCopied(false), 1500);
+      }}
+      className={`inline-flex items-center gap-1 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] border transition-all duration-150 active:scale-[0.97] ${
+        copied
+          ? "border-engineering bg-engineering text-background"
+          : "border-border/70 text-muted-foreground hover:text-foreground hover:border-engineering/60"
+      }`}
+    >
+      <span className={copied ? "copied-check" : undefined}>
+        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      </span>
+      {copied ? "copiado" : "copiar texto"}
+    </button>
   );
 }
