@@ -6,12 +6,27 @@
   Papel quente, tinta grafite, acento verde-engineering. Carimbo "planejada".
 */
 import { Link } from "wouter";
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Eraser, FileText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Download, Eraser, FileText, Trash2, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import hljs from "highlight.js";
+import "highlight.js/styles/atom-one-dark.css";
+import type { ReactNode } from "react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist, decodeChecklistProgress } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
-import { AuditNote, CodeBlock, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning, HomologationRulesModal } from "@/components/Primitives";
+import {
+  AuditNote,
+  CodeBlock,
+  CopyButton,
+  PhaseStamp,
+  TechRule,
+  useSlotHistory,
+  useSlotSubmissions,
+  VaultCopyButton,
+  VaultCopyWarning,
+  HomologationRulesModal,
+} from "@/components/Primitives";
+import { toast } from "sonner";
 
 interface ChangelogEntry {
   tag: string;
@@ -19,44 +34,820 @@ interface ChangelogEntry {
   body: string;
 }
 
+interface ChangelogEntryCategory extends ChangelogEntry {
+  category: "Novidade" | "Correção" | "Auditoria";
+}
+
+/* Filtros do changelog (padrão da linha do tempo/Roadmap): categoria com
+   contagem, persistência em localStorage (sbf-changelog-filter) e sync entre
+   abas via storage event + focus. */
+type ChangelogFilterKey = "all" | "Novidade" | "Correção" | "Auditoria";
+
+const CHANGELOG_FILTER_META: Record<ChangelogFilterKey, { label: string }> = {
+  all: { label: "Todas" },
+  Novidade: { label: "Novidades" },
+  Correção: { label: "Correções" },
+  Auditoria: { label: "Auditoria" },
+};
+
+function ChangelogFilter() {
+  const [filter, setFilter] = useState<ChangelogFilterKey>(() => {
+    try {
+      const saved = localStorage.getItem("sbf-changelog-filter") as ChangelogFilterKey | null;
+      if (saved && CHANGELOG_FILTER_META[saved]) return saved;
+    } catch {
+      /* ignorado */
+    }
+    return "all";
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("sbf-changelog-filter", filter);
+    } catch {
+      /* ignorado */
+    }
+  }, [filter]);
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "sbf-changelog-filter") {
+        const saved = e.newValue as ChangelogFilterKey | null;
+        if (saved && CHANGELOG_FILTER_META[saved]) setFilter(saved);
+      }
+    };
+    const onFocus = () => {
+      try {
+        const saved = localStorage.getItem("sbf-changelog-filter") as ChangelogFilterKey | null;
+        if (saved && CHANGELOG_FILTER_META[saved]) setFilter(saved);
+      } catch {
+        /* ignorado */
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+  const filtered = V20_CHANGELOG.filter((e) =>
+    filter === "all" ? true : e.category === filter,
+  );
+  return (
+    <div>
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        {(Object.keys(CHANGELOG_FILTER_META) as ChangelogFilterKey[]).map((key) => {
+          const n = V20_CHANGELOG.filter((e) => (key === "all" ? true : e.category === key)).length;
+          const active = filter === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              aria-pressed={active}
+              className={`inline-flex items-center gap-2 border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] transition-colors active:scale-[0.97] ${
+                active
+                  ? "border-engineering text-engineering bg-engineering/[0.06]"
+                  : "border-border text-muted-foreground hover:border-engineering/50 hover:text-foreground"
+              }`}
+            >
+              {CHANGELOG_FILTER_META[key].label}
+              <span className={active ? "text-engineering" : "text-border"}>{n}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-5 border border-border divide-y divide-border/60">
+        {filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-4 py-4">
+            Nenhuma entrada na categoria “{CHANGELOG_FILTER_META[filter].label.toLowerCase()}” — ajuste
+            o filtro acima.
+          </p>
+        ) : (
+          filtered.map((entry) => (
+            <div key={entry.tag} className="grid grid-cols-[7.5rem_1fr] sm:grid-cols-[9rem_1fr] gap-4 px-4 py-3">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering pt-0.5 shrink-0">
+                {entry.tag}
+              </span>
+              <div>
+                <div className="text-sm font-semibold">{entry.title}</div>
+                <div className="mt-1 text-[13px] text-muted-foreground leading-relaxed">{entry.body}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* Alterações da pré-versão v2.0.0-prep — registro documental; nenhum item homologa a fase. */
-const V20_CHANGELOG: ChangelogEntry[] = [
+const V20_CHANGELOG: ChangelogEntryCategory[] = [
   {
     tag: "Carimbo",
+    category: "Correção",
     title: "Título do site v2.0.0-prep",
     body: "O <title> de client/index.html passou de v1.9.0-prep para v2.0.0-prep, abrindo oficialmente a janela da Fase 20. O audit compara o título com os carimbos das páginas — divergência aqui quebra a verificação de sincronização.",
   },
   {
     tag: "Rodapé",
+    category: "Novidade",
     title: "Indicador de status da última auditoria de sincronização",
     body: "O rodapé de todas as páginas agora expõe o status da última verificação de sincronização: verde (\"Auditada · N divergência(s) · última verificação HH:MM (sessão)\") ou âmbar pulsante (\"Não auditada nesta sessão\"), com a linha \"CI GitHub Actions · push na main + seg/qui 09:00 UTC\". O registro local (sbf-audit-status) declara \"última verificação\" — o CI real continua sendo a fonte oficial.",
   },
   {
     tag: "DD-19",
+    category: "Novidade",
     title: "Registro de Decisões: DD-19 (Persistência Transacional de Atributos)",
     body: "Card 19 no /decisoes com o plano homologado da Fase 20: 6 decisões D1–D6, 3 alternativas rejeitadas e status Pendente até a homologação real. Botões de exportação Markdown/PDF por card.",
   },
   {
     tag: "F20 · Playtest",
+    category: "Novidade",
     title: "Painel interativo de status do playtest F20-9",
     body: "7 etapas sequenciais (conexão → mutação predita → TransactionLog → confirmação server → checkpoint authoritativo → saída limpa → restore validado), com persistência em localStorage sincronizada entre abas, falha travando o roteiro e faixa de conclusão animada. Roteiro de auditoria — não substitui o playtest real.",
   },
   {
     tag: "F20 · Vault",
+    category: "Novidade",
     title: "Trechos do Vault da Fase 20 (copiáveis, com avisos de homologação)",
-    body: "Blocos exatos para o 00_Sandbox_Framework_Dashboard.md e o task.md (itens 11.1–11.9), no mesmo padrão das F17/F18/F19: bloco âmbar \"Regra de homologação\", modal das 5 regras nos botões de copiar e nota de bloqueio (a F20 ainda não tem slots de homologação F20-A…F20-D).",
+    body: "Blocos exatos para o 00_Sandbox_Framework_Dashboard.md e o task.md (itens 11.1–11.9), no mesmo padrão das F17/F18/F19: bloco âmbar 'Regra de homologação' e modal das 5 regras nos botões de copiar.",
+  },
+  {
+    tag: "F20 · Slots",
+    category: "Novidade",
+    title: "Porta de homologação da F20: slots F20-A…F20-D (padrão DD-16)",
+        body: "Seção 'Corpo do código' criada na /fase-20 com os 4 slots de contrato (Definition/Instance em 04, TransactionLog/rollback em 04, SaveGame/restore autoritativo em 04/05 e SBAttributePersistenceTests com isolamento). Mesmos componentes da F19: formulário com mínimo 40 caracteres, barra 0/4, exportar/importar .txt, 'Limpar todas' com Desfazer (5s), histórico de alterações por slot e avisos de simulação em todos os pontos de contato. A nota de bloqueio antiga foi substituída pela porta aberta.",
   },
   {
     tag: "CI",
+    category: "Auditoria",
     title: "Mitigador C2 fechado: workflow sync-audit ativado",
     body: ".github/workflows/sync-audit.yml criado e pushado (f743006) após a aprovação da permissão Workflows do GitHub App: roda no push da main, workflow_dispatch e cron seg/qui 09:00 UTC, auditando o espelho privado JoaoSantosCodes/Sandbox-Framework-Vault (secret VAULT_MIRROR_REPO) com fallback no espelho embutido scripts/vault-mirror/. Audit validado com 0 divergências nos dois caminhos.",
   },
   {
     tag: "Processo",
+    category: "Auditoria",
     title: "Push automático para o GitHub ao final de cada rodada",
     body: "Regra de processo registrada (scripts/README-push-github.md): após checkpoint + tsc limpo + screenshot, o estado do site é espelhado no GitHub (remote github) e o commit reportado. Repo em f743006, 100% sincronizado com o site publicado.",
   },
 ];
+
+/* ------------------------------------------------------------------
+   PORTA DE HOMOLOGAÇÃO DA F20 — slots F20-A…F20-D (padrão DD-16).
+   Cada slot: texto de exigência + contrato de interface em C++ +
+   formulário de submissão (localStorage — simulação de fluxo, nunca
+   evidência de homologação; a v2.0.0 só fecha com build + suíte 100%
+   + isolamento Exit 0, declarado em todos os pontos de contato).
+   ------------------------------------------------------------------ */
+interface CodeSlot {
+  slot: string;
+  title: string;
+  exige: string;
+  status: "Aguardando Código";
+  hasReference?: boolean;
+  code?: string;
+}
+
+const CODE_SLOTS_F20: CodeSlot[] = [
+  {
+    slot: "Slot F20-A · Definition/Instance (04_SandboxCore)",
+    title: "USBAttributePersistenceDefinition/Instance com opt-in e chave estável",
+    exige:
+      "Definition (USDAAttributePersistenceDefinition) com nome de atributo estável (FName) + opt-in por chave de atributo (nunca índice de array); Instance com FSBAttributePersistenceRuntimeData transiente e upsert por chave estável na estrutura replicada. Somente 04_SandboxCore — sem acoplamento com 05/06/07/08.",
+    status: "Aguardando Código",
+    code: `// --- Slot F20-A · Plugins/04_SandboxCore/Source/Public/Attributes/SBAttributePersistence.h ---
+// CORPO DO BUILD — colar aqui a saída do arquivo após a F20-1 fechar no UE5.8.
+#pragma once
+#include "CoreMinimal.h"
+#include "SBAttributePersistence.generated.h"
+
+// Chave estável de atributo (FName) — upsert por chave, NUNCA por índice de array (DD-02).
+// Opt-in: só atributos listados na Definition são persistidos (anti-spill de save).
+UCLASS(BlueprintType)
+class SANDBOXCORE_API USBAttributePersistenceDefinition : public UDataAsset
+{
+    GENERATED_BODY()
+public:
+    // Atributos que entram na persistência — nome estável, ordem não importa.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FName> PersistentAttributeKeys;
+};
+
+// Estado transiente da instância runtime (FSBAttributePersistenceRuntimeData).
+struct FSBAttributePersistenceRuntimeData
+{
+    // Última mutação confirmada pelo servidor, por chave estável — base do rollback.
+    TMap<FName, float> LastConfirmedValues;
+    // Transações abertas por PredictionId — F20-B.
+    TMap<int32, TMap<FName, float>> OpenTransactions;
+};`,
+  },
+  {
+    slot: "Slot F20-B · TransactionLog (04_SandboxCore)",
+    title: "TransactionLog por PredictionId com rollback simétrico Entry/Exit",
+    exige:
+      "TryConsumeAttribute registra cada mutação no TransactionLog com PredictionId + chave estável (upsert); rollback completo em qualquer falha (toda entrada tem saída simétrica); concorrência de duas mutações sobre a mesma chave resolvida pela ordem de confirmação do servidor — cliente reverte a predição que divergir.",
+    status: "Aguardando Código",
+    code: `// --- Slot F20-B · Plugins/04_SandboxCore/Source/Private/Attributes/SBAttributePersistenceComponent.cpp ---
+// CORPO DO BUILD — colar aqui a saída do arquivo após a F20-2 fechar no UE5.8.
+// Todo caminho protegido por HasAuthority() quando a mutação é efeito persistente.
+// Ordem: validar → registrar transação → aplicar predição → confirmar/reverter.
+#include "Attributes/SBAttributePersistenceComponent.h"
+#include "SBAttributePersistence.h"
+
+bool USBAttributePersistenceComponent::TryConsumeAttribute(
+    int32 PredictionId, FName AttributeKey, float Amount)
+{
+    // Validação antes de qualquer mutação (DD-03 · validação-antes-de-mutação).
+    if (!IsValidPrediction(PredictionId)) { return false; }
+    float Current = GetAttributeValue(AttributeKey); // upsert por chave estável
+    if (Amount > Current) { return false; }
+
+    // Registro ANTES da aplicação — o rollback precisa da entrada simétrica.
+    FAttributeTransactionEntry Entry{ PredictionId, AttributeKey, Amount, Current };
+    TransactionLog.Enqueue(Entry);
+    ApplyAttributeValue(AttributeKey, Current - Amount); // predição client-side
+    return true;
+}
+
+void USBAttributePersistenceComponent::OnServerConfirmed(int32 PredictionId, bool Accepted)
+{
+    // Rollback simétrico: toda entrada tem saída — Entry/Exit em todos os caminhos.
+    if (!Accepted)
+    {
+        for (const auto& Entry : TransactionLog.FindEntries(PredictionId))
+            ApplyAttributeValue(Entry.Key, Entry.PreviousValue); // reverte a predição
+    }
+    TransactionLog.RemoveEntries(PredictionId);
+}`,
+  },
+  {
+    slot: "Slot F20-C · Checkpoint/Restore (04/05)",
+    title: "USaveGame autoritativo com HasAuthority() e rejeição de saves corrompidos",
+    exige:
+      "Serialização do estado confirmado (LastConfirmedValues) via USaveGame; HasAuthority() explícito em TODO caminho de gravação — nenhum write client-side; restore com validação de autoridade, checksum e rejeição segura de saves corrompidos (fallback para estado íntegro, nunca crash).",
+    status: "Aguardando Código",
+    code: `// --- Slot F20-C · Plugins/05_SandboxCharacter/Source/Private/Save/SBSaveManager.cpp ---
+// CORPO DO BUILD — colar aqui a saída do arquivo após a F20-3 fechar no UE5.8.
+// Authority primeiro: cliente nunca grava nem sobrescreve o save.
+#include "Save/SBSaveManager.h"
+#include "SBAttributePersistence.h"
+#include "Misc/Crc.h"
+
+void USBSaveManager::SaveCheckpoint()
+{
+    // Guard de authority — toda lógica de efeito persistente exige HasAuthority().
+    if (!GetWorld()->GetAuthGameMode() || !HasAuthority()) { return; }
+    USBSaveGame* Save = CreateSaveGame();
+    for (const auto& Kv : Persistence->GetConfirmedValues()) // só o estado confirmado
+    {
+        Save->AttributeValues.Add(Kv.Key, Kv.Value); // upsert por FName
+    }
+    Save->Checksum = FCrc::MemCrc32(&Save->AttributeValues);
+    SaveCurrentSaveGame(Save);
+}
+
+bool USBSaveManager::RestoreCheckpoint(USBSaveGame* InSave)
+{
+    if (!InSave) { return false; }
+    // Rejeição segura de saves corrompidos — fallback, nunca exceção.
+    if (FCrc::MemCrc32(&InSave->AttributeValues) != InSave->Checksum)
+    {
+        UE_LOG(LogSave, Warning, TEXT("Save corrompido rejeitado — fallback íntegro"));
+        return false;
+    }
+    for (const auto& Kv : InSave->AttributeValues)
+        Persistence->ApplyConfirmedValue(Kv.Key, Kv.Value); // simetria Entry/Exit
+    return true;
+}`,
+  },
+  {
+    slot: "Slot F20-D · SBUITests", // SBUITests da F20 (persistência)
+    title: "SBAttributePersistenceTests: rollback, concorrência e anti-spill",
+    exige:
+      "Rollback simétrico (toda entrada tem saída), duas mutações sobre a mesma chave estável, anti-spill entre local players no mesmo saveslot, e isolamento simétrico com hide do plugin de persistência (Exit Code 0). Suíte completa 100% — sem GIsAutomationTesting nem mocks em produção.",
+    status: "Aguardando Código",
+    code: `// --- Slot F20-D · Plugins/04_SandboxCore/Source/Private/Tests/SBAttributePersistenceTests.cpp ---
+// CORPO DO BUILD — colar aqui a saída do arquivo após a F20-4 fechar no UE5.8.
+// Suíte dedicada de persistência: simetria, concorrência e anti-spill (DD-02 · DD-10).
+// Teste de isolamento: hide do plugin de persistência compila e roda, Exit Code 0 (F20-5).
+#include "SBAttributePersistence.h"
+#include "Misc/AutomationTest.h"
+
+IMPLEMENT_SBUI_TEST(F1_PersistenceRollback_IsSymmetric)
+{
+    GIVEN("consumo predito que o servidor rejeita")
+    {
+        USBSBAttributePersistenceComponent* Comp = CreateTestComponent(100.f);
+        int32 Pid = Comp->BeginPrediction();
+        TestTrue("TryConsumeAttribute succeeds locally", Comp->TryConsumeAttribute(Pid, "Health", 25.f));
+
+        THEN("on server rejection, the symmetric rollback restores the exact previous value")
+        {
+            Comp->OnServerConfirmed(Pid, false);
+            TestEqual("Value restored", Comp->GetAttributeValue("Health"), 100.f);
+            TestTrue("Transaction removed after rollback", Comp->LogSize() == 0);
+        }
+    }
+}
+
+IMPLEMENT_SBUI_TEST(F2_PersistenceConcurrentUpsert_SameStableKey)
+{
+    GIVEN("duas mutações preditas sobre a mesma chave estável")
+    {
+        USBSBAttributePersistenceComponent* Comp = CreateTestComponent(100.f);
+        int32 A = Comp->BeginPrediction();
+        int32 B = Comp->BeginPrediction();
+        Comp->TryConsumeAttribute(A, "Health", 60.f);
+        Comp->TryConsumeAttribute(B, "Health", 50.f);
+
+        THEN("server confirmação A mantém o valor; B rejeitada reverter exatamente")
+        {
+            Comp->OnServerConfirmed(A, true);
+            Comp->OnServerConfirmed(B, false);
+            TestEqual("Final value follows accepted order", Comp->GetAttributeValue("Health"), 40.f);
+        }
+    }
+}`,
+  },
+];
+
+/* Chave compartilhada do localStorage dos slots F20 (mesmo padrão da F19). */
+const F20_SLOT_STORAGE_KEY = "sbf-slot-submissions-20";
+
+/* Resolve o estado final de um slot F20: "Aguardando Código" ou "Código recebido".
+   O corpo exibido vem do slot de contrato (placeholder do plano homologado) —
+   substituído pelo build real quando a sprint entregar os arquivos compilados. */
+function resolveF20Slot(
+  slot: (typeof CODE_SLOTS_F20)[number],
+  submissions: Record<string, string>,
+): { status: string; code: string } {
+  if (submissions[slot.slot]) return { status: "Código recebido", code: submissions[slot.slot] };
+  return { status: "Aguardando Código", code: slot.code ?? "" };
+}
+
+/* Formata a data/hora exata de uma alteração de slot (locale pt-BR, segundos incluídos). */
+function formatSlotTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("pt-BR", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+}
+
+/* Seção da porta de homologação da F20 — barra 0/4, exportar/importar .txt,
+   Limpar todas com Desfazer (5s), "Copiar tudo" e os 4 SlotCards auditáveis. */
+function SlotsSection({
+  rulesOpen,
+  setRulesOpen,
+}: {
+  rulesOpen: boolean;
+  setRulesOpen: (open: boolean) => void;
+}) {
+  const { submissions, clearAll, submitAll } = useSlotSubmissions(F20_SLOT_STORAGE_KEY);
+  const { history, recordChange } = useSlotHistory(F20_SLOT_STORAGE_KEY);
+  const submittedCount = CODE_SLOTS_F20.filter((s) => submissions[s.slot]).length;
+  const undoSnapshotRef = useRef<Record<string, string> | null>(null);
+
+  const registerSubmit = (slot: string, code: string) => {
+    const next = { ...submissions };
+    if (code) next[slot] = code;
+    else delete next[slot];
+    submitAll(next);
+    recordChange(slot, "submissão");
+  };
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === F20_SLOT_STORAGE_KEY || e.key === `${F20_SLOT_STORAGE_KEY}-history`) {
+        // Força re-render sincronizado com outras abas (chave local atualizada via storage event).
+        window.dispatchEvent(new CustomEvent("f20-slots-change", { detail: e.newValue }));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  return (
+    <div className="mt-6 space-y-4">
+      {/* Barra de progresso das submissões — quantos dos 4 slots já receberam código */}
+      <div className="border border-border bg-card px-4 py-3">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            Progresso das submissões · Slots F20-A–D
+          </span>
+          <span className="font-mono text-[12px] font-semibold text-engineering">
+            {submittedCount} / {CODE_SLOTS_F20.length} slots
+          </span>
+        </div>
+        <div
+          className="h-2 w-full bg-secondary overflow-hidden"
+          role="progressbar"
+          aria-valuenow={submittedCount}
+          aria-valuemin={0}
+          aria-valuemax={CODE_SLOTS_F20.length}
+        >
+          <div
+            className="h-full bg-engineering transition-all duration-300 ease-out"
+            style={{ width: `${(submittedCount / CODE_SLOTS_F20.length) * 100}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 mt-2 flex-wrap">
+          <p className="text-[12px] text-muted-foreground">
+            {submittedCount === CODE_SLOTS_F20.length
+              ? "Todos os slots receberam corpo submetido — a revisão segue exigindo o build compilado."
+              : submittedCount > 0
+                ? `${submittedCount} de 4 slots com código submetido neste navegador.`
+                : "Nenhum slot com código submetido ainda — os 4 aguardam (Aguardando Código)."}
+          </p>
+          <button
+            type="button"
+            onClick={() => exportF20Submissions(submissions)}
+            disabled={submittedCount === 0}
+            className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Exportar (.txt)
+          </button>
+          <button
+            type="button"
+            onClick={() => importF20Submissions(submissions, submitAll, recordChange)}
+            className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering transition-colors"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Importar (.txt)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (submittedCount === 0) {
+                toast("Nada a limpar", { description: "Nenhum slot tem submissão neste navegador." });
+                return;
+              }
+              const snapshot = clearAll();
+              undoSnapshotRef.current = snapshot;
+              const undone = toast(
+                (
+                  <div className="flex items-center justify-between gap-3">
+                    <p>
+                      <span className="font-medium">Todas as submissões removidas</span>
+                      <span className="text-xs text-muted-foreground block mt-0.5">
+                        Barra de progresso em 0/4 e slots em “Aguardando Código”.
+                      </span>
+                    </p>
+                    <button
+                      type="button"
+                      className="border border-border bg-background px-2.5 py-1 text-xs font-mono uppercase hover:border-engineering/60 hover:text-engineering transition-colors"
+                      onClick={() => {
+                        toast.dismiss(undone);
+                        undoSnapshotRef.current = null;
+                        submitAll(snapshot);
+                        for (const s of CODE_SLOTS_F20) if (snapshot[s.slot]) recordChange(s.slot, "importação");
+                        toast.success("Desfeito", {
+                          description: "Submissões restauradas do snapshot anterior à limpeza.",
+                          duration: 5000,
+                        });
+                      }}
+                    >
+                      Desfazer
+                    </button>
+                  </div>
+                ),
+                { duration: 5000, onAutoClose: () => (undoSnapshotRef.current = null) },
+              );
+            }}
+            className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-destructive/60 hover:text-destructive transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Limpar todas
+          </button>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          4 slots auditáveis — concatene o contrato completo para a sprint
+        </span>
+        <CopyButton
+          label="Copiar tudo"
+          value={CODE_SLOTS_F20.map((s) => `=== ${s.slot} ===\n${s.title}\n\n${s.code ?? ""}`).join("\n\n")}
+          onCopy={() =>
+            toast("Contrato completo copiado", {
+              description: "Os 4 slots de homologação concatenados, prontos para a sprint no Vault.",
+            })
+          }
+        />
+      </div>
+      <div className="border border-border bg-secondary/40 px-4 py-3">
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
+          <strong className="text-foreground">Envio antecipado para auditoria:</strong> submeta o corpo
+          do C++ de cada slot pelo formulário abaixo — o indicador muda para verde e o bloco de código
+          fica legível na página, marcando o slot como <em>“Código recebido”</em>. Isso organiza a
+          revisão, mas não homologa: a v2.0.0 só fecha com build UBT + suíte 100% + isolamento
+          simétrico Exit 0. (Simulação de fluxo em localStorage — os dados nunca saem do navegador.){" "}
+          <button
+            type="button"
+            onClick={() => setRulesOpen(true)}
+            className="underline underline-offset-2 hover:text-engineering transition-colors cursor-pointer"
+          >
+            Ver regras de homologação
+          </button>
+        </p>
+      </div>
+      {CODE_SLOTS_F20.map((s) => {
+        const resolved = resolveF20Slot(s, submissions);
+        const submitted = resolved.status === "Código recebido";
+        return (
+          <F20SlotCard
+            key={s.slot}
+            slot={s}
+            resolved={resolved}
+            submitted={submitted}
+            submissions={submissions}
+            onSubmit={(code) => registerSubmit(s.slot, code)}
+            lastChanged={history[s.slot]}
+          />
+        );
+      })}
+      <AuditNote tone="info">
+        A homologação acontece quando os quatro slots acima receberem os corpos reais de C++, a suíte
+        SBAttributePersistenceTests ficar 100% verde e o teste de isolamento simétrico (hide do plugin de
+        persistência) passar com Exit Code 0. A partir daí, o carimbo desta página muda de “planejada”
+        para v2.0.0 — assim como os slots da F19 homologaram a v1.9.0.
+      </AuditNote>
+    </div>
+  );
+}
+
+const SLOT_STATUS_STYLES: Record<string, string> = {
+  "Aguardando Código": "border-amber-warn/60 text-amber-warn",
+  "Código recebido": "border-engineering/60 text-engineering",
+};
+
+/* Slot card da F20 — replicando o padrão DD-16 da F19 (componente local,
+   mesmo visual e mesmas regras de simulação explícita em todos os pontos). */
+function F20SlotCard({
+  slot, resolved, submitted, submissions, onSubmit, lastChanged,
+}: {
+  slot: (typeof CODE_SLOTS_F20)[number];
+  resolved: { status: string; code: string };
+  submitted: boolean;
+  submissions: Record<string, string>;
+  onSubmit: (code: string) => void;
+  lastChanged?: { at: string; via: string };
+}) {
+  const [draft, setDraft] = useState(submissions[slot.slot] ?? "");
+  const [openForm, setOpenForm] = useState(false);
+  const highlightRef = useRef<HTMLPreElement>(null);
+  useEffect(() => {
+    const el = highlightRef.current;
+    if (!el) return;
+    if (draft.trim().length === 0) {
+      el.textContent = "";
+      el.classList.remove("hljs");
+      return;
+    }
+    const result = hljs.highlight(draft, { language: "cpp" });
+    el.innerHTML = result.value;
+    el.classList.add("hljs");
+  }, [draft]);
+  return (
+    <div
+      className={`border ${
+        submitted
+          ? "border border-engineering/60 bg-engineering/[0.04]"
+          : "border-dashed border-amber-warn/60 bg-amber-warn/[0.05]"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+        <span className="flex items-center gap-2 font-mono text-[11px]">
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${submitted ? "bg-engineering" : "bg-amber-warn waiting-dot"}`}
+            aria-hidden="true"
+          />
+          <span className={submitted ? "text-engineering" : "text-amber-warn"}>{slot.slot}</span>
+        </span>
+        <span
+          className={`font-mono text-[10px] uppercase tracking-[0.14em] border px-2 py-0.5 whitespace-nowrap ${SLOT_STATUS_STYLES[resolved.status] ?? SLOT_STATUS_STYLES["Aguardando Código"]}`}
+        >
+          {resolved.status}
+        </span>
+      </div>
+      <div className="px-4 py-3">
+        <p className="font-medium text-sm">{slot.title}</p>
+        <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{slot.exige}</p>
+        {lastChanged && (
+          <p className="mt-1.5 font-mono text-[10px] tracking-[0.05em] text-muted-foreground">
+            Última alteração: {formatSlotTimestamp(lastChanged.at)} · {lastChanged.via}
+          </p>
+        )}
+      </div>
+      {resolved.code && (
+        <div className="px-4 pb-4">
+          <CodeBlock path={slot.slot.replace(" · ", " — ")} language="cpp">
+            {resolved.code}
+          </CodeBlock>
+        </div>
+      )}
+      <div className="px-4 pb-4">
+        {submitted ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-engineering">
+              Corpo registrado neste navegador — a revisão segue exigindo o build compilado.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onSubmit("");
+                setDraft("");
+                setOpenForm(true);
+                toast("Submissão removida", {
+                  description: `O slot ${slot.slot} voltou para "Aguardando Código".`,
+                });
+              }}
+              className="border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-amber-warn/60 hover:text-amber-warn transition-colors"
+            >
+              Retirar submissão
+            </button>
+          </div>
+        ) : (
+          openForm ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const trimmed = draft.trim();
+                if (trimmed.length < 40) {
+                  toast.error("Código insuficiente", {
+                    description: "Cole o corpo real de C++ do slot — prosa não fecha homologação.",
+                  });
+                  return;
+                }
+                onSubmit(trimmed);
+                setOpenForm(false);
+                toast.success(`Submissão registrada — ${slot.slot}` as ReactNode as string, {
+                  description:
+                    "Indicador verde e bloco habilitado. ATENÇÃO: simulação de fluxo — a homologação real só fecha com build + suíte 100% + isolamento Exit 0.",
+                  duration: 5000,
+                });
+              }}
+              className="space-y-2"
+            >
+              <label className="block">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  Corpo do código ({slot.slot} — mínimo 40 caracteres)
+                </span>
+                <div className="relative mt-1 w-full border border-border bg-background font-mono text-[12px] leading-relaxed">
+                  <pre
+                    ref={highlightRef}
+                    aria-hidden="true"
+                    className="absolute inset-0 m-0 overflow-auto whitespace-pre-wrap break-words px-3 py-2 pointer-events-none text-transparent selection:bg-transparent"
+                  />
+                  <textarea
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    rows={8}
+                    spellCheck={false}
+                    className="relative w-full bg-transparent resize-y px-3 py-2 text-transparent caret-foreground focus:outline-none"
+                    placeholder={`Cole aqui o corpo real de ${slot.slot}… // SBAttributePersistence.h, TransactionLog, SBSaveManager ou SBUITests`}
+                  />
+                </div>
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  className="bg-engineering text-background px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:opacity-90 active:scale-[0.97] transition-all"
+                >
+                  Enviar submissão
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpenForm(false)}
+                  className="border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-amber-warn/60 hover:text-amber-warn transition-colors"
+                >
+                  Cancelar
+                </button>
+                <span className="text-[11px] text-muted-foreground">
+                  localStorage — apenas este navegador
+                </span>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setOpenForm(true)}
+              className="border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering transition-colors"
+            >
+              Submeter corpo do código
+            </button>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Importa o backup .txt dos slots F20 — valida cada bloco individualmente;
+   blocos vazios (< 40 caracteres) ou com cabeçalho ilegível entram no
+   relatório de problemas (toast.warning detalhado, nunca restaurados). */
+function importF20Submissions(
+  submissions: Record<string, string>,
+  submitAll: (next: Record<string, string>) => void,
+  recordChange: (slot: string, via: "submissão" | "importação") => void,
+): void {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".txt,text/plain";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const restored: Record<string, string> = { ...submissions };
+    const blocks = text.split(/=== /).filter((b) => b.trim());
+    const problems: { slot: string; issue: string }[] = [];
+    const seen = new Set<string>();
+    for (const block of blocks) {
+      const headerMatch = block.match(/^=== (Slot F20-[A-D][^=·]+)\s*·/);
+      if (!headerMatch) {
+        problems.push({ slot: "(bloco não identificado)", issue: "cabeçalho ilegível — não segue o formato '=== Slot F20-X · Título ==='" });
+        continue;
+      }
+      const header = headerMatch[1].trim();
+      const slot = CODE_SLOTS_F20.find((s) => header.startsWith(s.slot));
+      if (!slot) {
+        problems.push({ slot: header, issue: "cabeçalho não corresponde a nenhum slot F20 conhecido (F20-A…F20-D)" });
+        continue;
+      }
+      if (seen.has(slot.slot)) {
+        problems.push({ slot: slot.slot, issue: "duplicado no arquivo — mantém-se a primeira ocorrência" });
+        continue;
+      }
+      seen.add(slot.slot);
+      const code = block.slice(headerMatch[0].length).replace(/^Exige:.*?\n\n/, "").trim();
+      if (code.length < 40) {
+        problems.push({
+          slot: slot.slot,
+          issue: code.length === 0 ? "bloco vazio — sem código após o cabeçalho" : `corrompido/insuficiente — ${code.length} caracteres (mínimo exigido: 40)`,
+        });
+        continue;
+      }
+      restored[slot.slot] = code;
+    }
+    if (problems.length > 0) {
+      toast.warning(`${problems.length} ${problems.length === 1 ? "problema detectado no arquivo" : "problemas detectados no arquivo"}`, {
+        description: (
+          <ul className="mt-1 space-y-0.5 text-xs">
+            {problems.map((p, i) => (
+              <li key={i} className="text-muted-foreground">
+                <strong className="text-foreground">{p.slot}:</strong> {p.issue}
+              </li>
+            ))}
+            <li className="text-muted-foreground">Os blocos problemáticos foram ignorados — nenhum slot foi restaurado a partir deles.</li>
+          </ul>
+        ),
+        duration: 12000,
+      });
+    }
+    if (seen.size === 0) {
+      toast.error("Nenhum slot restaurado", {
+        description: "O arquivo não contém blocos legíveis de slots auditáveis da F20.",
+      });
+      return;
+    }
+    submitAll(restored);
+    for (const s of CODE_SLOTS_F20) if (restored[s.slot]) recordChange(s.slot, "importação");
+    toast.success(`${seen.size} ${seen.size === 1 ? "slot restaurado" : "slots restaurados"}`, {
+      description: "Submissões importadas do backup .txt — verificação do build segue necessária.",
+      duration: 5000,
+    });
+  };
+  input.click();
+}
+
+/* Exporta os códigos submetidos dos slots F20 como .txt — apenas os slots
+   com código, para backup entre navegadores (localStorage é local ao browser). */
+function exportF20Submissions(submissions: Record<string, string>) {
+  const entries = CODE_SLOTS_F20.filter((s) => submissions[s.slot]);
+  if (entries.length === 0) return;
+  const body = entries
+    .map((s) => `=== ${s.slot} · ${s.title} ===\nExige: ${s.exige}\n\n${submissions[s.slot]}`)
+    .join("\n\n");
+  const header =
+    `SANDBOX FRAMEWORK — Submissões dos slots auditáveis (Fase 20 · v2.0.0-prep)\n` +
+    `Gerado em: ${new Date().toLocaleString("pt-BR")}\n` +
+    `AVISO: simulação de fluxo — os códigos abaixo NÃO substituem o build compilado;\n` +
+    `a homologação real exige SBAttributePersistenceTests 100% + isolamento simétrico Exit Code 0.\n\n`;
+  const blob = new Blob([header + body], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sandbox-framework-f20-slots-submetidos-${new Date().toISOString().slice(0, 10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success(`${entries.length} ${entries.length === 1 ? "slot exportado" : "slots exportados"}`, {
+    description: "Backup .txt salvo — apenas os slots com código submetido neste navegador.",
+    duration: 4000,
+  });
+}
 
 const CHECKLIST_KEY = "sbf-phase20-checklist";
 
@@ -66,6 +857,7 @@ const TOC = [
   { id: "escopo", label: "Escopo proposto (contrato de homologação)" },
   { id: "playtest-painel", label: "Playtest F20-9 — painel de status" },
   { id: "aceite", label: "Critérios de aceite preliminares" },
+  { id: "slots-homologacao", label: "Porta de homologação (F20-A…F20-D)" },
   { id: "checklist", label: "Checklist interativo" },
   { id: "trechos-vault", label: "Trechos do Vault" },
   { id: "changelog", label: "Changelog · v2.0.0-prep" },
@@ -789,11 +1581,23 @@ export default function Phase20() {
           </div>
         </div>
         <HomologationRulesModal open={rulesOpen} onOpenChange={setRulesOpen} />
-        <AuditNote tone="warn">
-          A Fase 20 ainda não tem porta de homologação aberta (os slots A–D da F19 não se transferem de fase):
-          antes de colar qualquer trecho acima, a página da Fase 20 deve receber os slots de contrato (F20-A…F20-D,
-          padrão DD-16) com o corpo real do build — a colagem antecipada quebra a auditoria Vault ↔ site.
-        </AuditNote>
+
+        {/* ----------------------------------------------------------------
+           PORTA DE HOMOLOGAÇÃO DA F20 — slots F20-A…F20-D (padrão DD-16).
+           Mesmos componentes da F19 (useSlotSubmissions/useSlotHistory,
+           barra 0/4, exportar/importar .txt, Limpar + Desfazer 5s).
+           ---------------------------------------------------------------- */}
+        <TechRule label="Corpo do código — porta de homologação" />
+        <h2 id="slots-homologacao" className="font-display text-2xl font-bold scroll-mt-24 mt-10">
+          Porta de homologação (F20-A…F20-D)
+        </h2>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+          Quatro blocos de código fecham a homologação da Fase 20 — os locais exatos onde a revisão exigirá
+          o corpo real, não a descrição em prosa (padrão DD-16 da F19). Os slots A–D da Fase 19 não se
+          transferem de fase: cada fase abre sua própria porta de contrato. Até o build ser submetido, cada
+          bloco permanece como slot auditável; a prosa não fecha homologação.
+        </p>
+        <SlotsSection rulesOpen={rulesOpen} setRulesOpen={setRulesOpen} />
 
         <TechRule label="Changelog · v2.0.0-prep" />
         <h2 id="changelog" className="font-display text-2xl font-bold scroll-mt-24 mt-10">
@@ -805,19 +1609,7 @@ export default function Phase20() {
           versão v2.0.0 só é carimbada como homologada quando a Fase 20 fechar com build UBT + suíte
           100% + isolamento simétrico Exit 0.
         </p>
-        <div className="mt-5 border border-border divide-y divide-border/60">
-          {V20_CHANGELOG.map((entry) => (
-            <div key={entry.tag} className="grid grid-cols-[7.5rem_1fr] sm:grid-cols-[9rem_1fr] gap-4 px-4 py-3">
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering pt-0.5 shrink-0">
-                {entry.tag}
-              </span>
-              <div>
-                <div className="text-sm font-semibold">{entry.title}</div>
-                <div className="mt-1 text-[13px] text-muted-foreground leading-relaxed">{entry.body}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <ChangelogFilter />
 
         <TechRule label="Navegação" />
         <div className="mt-10 flex items-center gap-3">

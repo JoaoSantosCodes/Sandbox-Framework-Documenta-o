@@ -6,7 +6,7 @@
 */
 import { Link, useLocation } from "wouter";
 import { ReactNode, useEffect, useState } from "react";
-import { AlertTriangle, Check, Moon, Search, Sun, X, Menu } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink, Moon, PlayCircle, Search, Sun, X, Menu } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { ASSET_URLS } from "@/lib/siteData";
@@ -494,8 +494,27 @@ function AuditStatusRow() {
           Não auditada nesta sessão
         </span>
       )}
-      <span className="font-mono text-[10px] text-muted-foreground">
+      <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
         CI GitHub Actions · push na main + seg/qui 09:00 UTC
+        {/* Disparo manual do workflow sync-audit via workflow_dispatch. */}
+        <a
+          href="https://github.com/JoaoSantosCodes/Sandbox-Framework-Documenta-o/actions/workflows/sync-audit.yml"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() =>
+            toast("Abrindo o workflow sync-audit", {
+              description:
+                "No GitHub, clique em \"Run workflow\" → \"Run workflow\" — o resultado aparece nos detalhes do job.",
+              duration: 8000,
+            })
+          }
+          className="inline-flex items-center gap-1 border border-border bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:border-engineering/60 hover:text-engineering transition-colors"
+          title="Disparar manualmente a auditoria Vault ↔ site (workflow sync-audit)"
+        >
+          <PlayCircle className="h-3 w-3" />
+          Disparar audit
+          <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+        </a>
       </span>
     </div>
   );
