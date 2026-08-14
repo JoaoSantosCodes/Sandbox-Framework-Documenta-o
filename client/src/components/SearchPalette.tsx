@@ -36,7 +36,9 @@ const DECISIONS: IndexEntry[] = [
   { id: "DD-08", title: "DD-08 — Indicador de dano adiado para Fase 19", subtitle: "Pré-requisitos homologados (produção autoritativa do evento) · v1.8.0 · Homologada com nota", page: "/fase-19", hash: "DD-08", keywords: "dd-08 dano fase 19 indicador adiado", group: "decisoes" },
   { id: "DD-09", title: "DD-09 — Teste de isolamento por hide de módulos no UBT", subtitle: "Renome de pasta + .uplugin_disabled · v1.7.0 · Homologada", page: "/decisoes", hash: "DD-09", keywords: "dd-09 teste isolamento ubt compilação", group: "decisoes" },
   { id: "DD-10", title: "DD-10 — GDT expõe ISBDebugInterface, não estado interno", subtitle: "Auto-descrição via crosshair · v1.7.0 · Homologada", page: "/decisoes", hash: "DD-10", keywords: "dd-10 gdt debug interface telemetria", group: "decisoes" },
-  { id: "DD-11", title: "DD-11 — Deduplicação do indicador de dano via AttackId", subtitle: "Client-side · TTL ou bSkipClientNotify · Fase 19 · Pendente de homologação", page: "/decisoes", hash: "DD-11", keywords: "dd-11 deduplicação attackid dano indicador fase 19", group: "decisoes" },
+  { id: "DD-11", title: "DD-11 — Deduplicação do indicador de dano via AttackId", subtitle: "Client-side · mapa AttackIds com TTL + bSkipClientNotify · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-11", keywords: "dd-11 deduplicação attackid dano indicador fase 19", group: "decisoes" },
+  { id: "DD-12", title: "DD-12 — Header compacto com rótulos curtos de navegação", subtitle: "Labels curtos + tooltip completo · sem overflow horizontal · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-12", keywords: "dd-12 header navegação responsivo compacto", group: "decisoes" },
+  { id: "DD-13", title: "DD-13 — Banner persistente de acesso por link direto", subtitle: "Âncora /decisoes#dd-XX com banner âmbar + scroll suave · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-13", keywords: "dd-13 link direto banner âncora scroll", group: "decisoes" },
 ];
 
 const PAGES: IndexEntry[] = [

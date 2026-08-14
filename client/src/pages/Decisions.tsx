@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 import { useEffect, useState } from "react";
-import { Download, Link2, Search, Star, X } from "lucide-react";
+import { Download, Eraser, Link2, Search, Star, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 // Favoritos do Registro de Decisões — persistidos em localStorage por dd-id.
@@ -34,6 +34,7 @@ function useFavoriteDecisions() {
 
   return {
     favorites,
+    setFavorites,
     toggleFavorite: (id: string) =>
       setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id])),
     isFavorite: (id: string) => favorites.includes(id),
@@ -63,6 +64,38 @@ function exportFavoritesJSON(favorites: string[]) {
   a.click();
   URL.revokeObjectURL(url);
   toast.success(`${exported.length} decisão(ões) favorita(s) exportada(s) em JSON`);
+}
+
+// Importação de favoritos via JSON — restauração de backup entre navegadores.
+// O arquivo é o mesmo formato gerado por exportFavoritesJSON: { decisions: [{ id, ... }] }.
+function importFavoritesJSON(
+  file: File,
+  onImported: (ids: string[]) => void,
+) {
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const parsed = JSON.parse(String(event.target?.result ?? "{}"));
+      const decisions: unknown[] = parsed?.decisions ?? parsed;
+      const arr = Array.isArray(decisions) ? decisions : [];
+      const validIds = arr
+        .map((d) => (d as { id?: string } | null)?.id)
+        .filter((id): id is string => typeof id === "string" && DECISIONS.some((dd) => dd.id === id));
+      const unique = Array.from(new Set(validIds));
+      if (unique.length === 0) {
+        toast.error(
+          "Arquivo JSON inválido: nenhum identificador de decisão reconhecido (formato esperado: decisão-favoritas-*.json)",
+        );
+        return;
+      }
+      onImported(unique);
+      toast.success(`${unique.length} decisão(ões) favorita(s) importada(s) do backup`);
+    } catch {
+      toast.error("Falha ao ler o arquivo JSON — verifique se o backup está íntegro.");
+    }
+  };
+  reader.onerror = () => toast.error("Falha ao ler o arquivo de backup.");
+  reader.readAsText(file);
 }
 
 async function copyDecisionLink(id: string) {
@@ -283,7 +316,42 @@ const DECISIONS: Decision[] = [
       "O HUD exibe exatamente um indicador por hit confirmado, sem re-spawn duplicado; a regra fica no ponto de consumo local (USBUIDamageIndicator), preservando o produtor autoritativo puro.",
     precedent:
       "Mesma mecânica transacional do PredictionId (validar-antes-de-mutar): o cliente consome localmente, o servidor confirma; FSBStackMutationGuard provou o valor de guards locais contra reentrância.",
-    status: "Pendente",
+    status: "Homologada",
+    homologatedAt: "2026-08-14",
+  },
+  {
+    id: "DD-12",
+    version: "v1.8.0",
+    title: "Header compacto com rótulos curtos de navegação",
+    problem:
+      "O header com rótulos completos de navegação (01 · Início, 02 · F17, 03 · SFPS…) overflowava horizontalmente em larguras de desktop intermediárias (1280–1536px), quebrando o layout.",
+    decision:
+      "Nav com rótulos curtos ('01 · Início', '02 · F17', '03 · SFPS', '04 · Plugins', '05 · Histórico', '06 · Manual', '07 · Guia C++', '08 · Router', '09 · Decisões', '09 · F19', '10 · Manifesto') + tooltip com o nome completo; carimbo de fase só em telas 2xl; toggle de tema único no header.",
+    rejected:
+      "Menu hambúrguer permanente em desktop — sacrifica acesso direto a páginas-chave de documentação; ou scrollbar horizontal no header — sinaliza fragilidade estrutural em vez de resolvê-la.",
+    consequence:
+      "Header comporta 11 entradas + busca + tema sem overflow em qualquer largura ≥375px; labels longos permanecem acessíveis via tooltip, preservando a legibilidade auditável.",
+    precedent:
+      "Compactar é resposta de layout, não de conteúdo — o nome completo nunca é removido da interface, apenas oculto até a inspeção; espelho da regra do Manifesto de não esconder informação atrás de UX.",
+    status: "Homologada",
+    homologatedAt: "2026-08-14",
+  },
+  {
+    id: "DD-13",
+    version: "v1.8.0",
+    title: "Banner persistente de acesso por link direto",
+    problem:
+      "Ao abrir /decisoes#dd-XX vindo de link externo, o usuário não tinha feedback de que a visualização foi direcionada por âncora — nem botão para desfazer o direcionamento.",
+    decision:
+      "Banner âmbar no topo da página citando o registro alvo, persistente durante a sessão (não some ao remover o hash do URL), com botão de fechar; scroll suave até o card permanece.",
+    rejected:
+      "Highlight apenas no card alvo sem banner — o usuário não entende por que aquele registro está destacado; ou remover o banner ao limpar o hash — perde o contexto quando o usuário navega dentro da página.",
+    consequence:
+      "Link compartilhado de decisão agora carrega contexto explícito ('você está visualizando DD-11 via link direto'), sem interferir no filtro ativo nem no scroll.",
+    precedent:
+      "Mesmo padrão de observabilidade do 10_SandboxDebug: nunca deixar estado implícito invisível — o que direcionou a navegação deve ser exibido, assim como o GDT exibe duração/lock/ativações.",
+    status: "Homologada",
+    homologatedAt: "2026-08-14",
   },
 ];
 
@@ -390,7 +458,14 @@ export default function Decisions() {
     const hash = window.location.hash.replace("#", "").toLowerCase();
     return hash.startsWith("dd-") ? hash : null;
   });
-  const { favorites, toggleFavorite, isFavorite } = useFavoriteDecisions();
+  const { favorites, setFavorites, toggleFavorite, isFavorite } = useFavoriteDecisions();
+
+  function importFavoritesFromFile(file: File) {
+    importFavoritesJSON(file, (ids) => {
+      const merged = Array.from(new Set([...favorites, ...ids]));
+      setFavorites(merged);
+    });
+  }
 
   const filtered = DECISIONS.filter((d) => {
     if (favoritesOnly && !isFavorite(d.id)) return false;
@@ -493,15 +568,16 @@ export default function Decisions() {
               {filtered.length}/{DECISIONS.length} registro(s)
             </span>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+            <div className="relative flex-1 min-w-56">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ex.: DD-03, uilocalplayersubsystem, deduplicação..."
-                className="w-full border border-border bg-background px-3 pl-9 py-2 text-sm font-mono placeholder:text-muted-foreground/60 focus:outline-none focus:border-engineering/60 transition-colors"
+                aria-label="Buscar por identificador, título ou conteúdo"
+                className="h-9 w-full border border-border bg-background py-2 pl-9 pr-3 text-sm font-mono placeholder:text-muted-foreground/60 focus:border-engineering/60 focus:outline-none transition-colors"
               />
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -531,6 +607,24 @@ export default function Decisions() {
                 <Download className="h-3.5 w-3.5" />
                 Exportar JSON
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = "application/json,.json";
+                  input.onchange = () => {
+                    const file = input.files?.[0];
+                    if (file) importFavoritesFromFile(file);
+                  };
+                  input.click();
+                }}
+                title="Restaurar favoritos a partir de um backup JSON exportado anteriormente"
+                className="border border-border bg-card px-3 py-2 text-xs font-mono uppercase tracking-wider inline-flex items-center gap-1.5 text-muted-foreground transition-colors duration-150 hover:border-engineering/60 hover:text-engineering"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Importar JSON
+              </button>
               {STATUS_FILTERS.map((s) => (
                 <button
                   key={s}
@@ -545,6 +639,19 @@ export default function Decisions() {
                   {s}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setStatusFilter("Todas");
+                  setFavoritesOnly(false);
+                }}
+                title="Redefinir busca e filtros para a visualização completa"
+                className="border px-3 py-2 text-xs font-mono uppercase tracking-wider inline-flex items-center gap-1.5 transition-colors duration-150 border-border bg-card text-muted-foreground hover:border-amber-warn/60 hover:text-amber-warn"
+              >
+                <Eraser className="h-3.5 w-3.5" />
+                Limpar filtros
+              </button>
             </div>
           </div>
         </div>
