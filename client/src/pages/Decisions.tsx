@@ -404,6 +404,23 @@ const DECISIONS: Decision[] = [
     status: "Homologada",
     homologatedAt: "2026-08-14",
   },
+  {
+    id: "DD-17",
+    version: "v1.9.0 · planejada",
+    title: "Divergência de escopo entre plano enviado e DD vigente — Rota A prevalece",
+    problem:
+      "Durante a preparação da v1.9.0, o plano de implantação enviado (implementation_plan.md) descreveu a montagem de widgets UMG (WBP_StatusHUD, WBP_InteractionPrompt, WBP_AbilityBar, WBP_InventoryGrid) — enquanto o site, seguindo a DD-08, especifica a Fase 19 como Indicador Direcional de Dano (USBUIDamageIndicator, slots A–D). Um plano enviado que diverge do escopo de uma DD vigente precisa ser resolvido de forma auditável: ou o site realinha, ou a DD é revista — nunca os dois convivem sem registro.",
+    decision:
+      "A DD-08 segue vigente e a Fase 19 mantém o escopo de dano (Rota A). O plano de widgets UMG é tratado como execução paralela no editor (user review required para binários .uasset) — fora do escopo da F19. Se a fase mudar de rumo de fato, a revogação/alteração de uma DD vigente exige nova decisão de design registrando a mudança, a DD afetada e o destino do escopo anterior (movido, adiado ou descartado). O site expõe a divergência via banner de alerta na página da fase + status \"Aguardando Código\" nos slots auditáveis, oculto automaticamente quando a versão for homologada.",
+    rejected:
+      "Revogar a DD-08 sem registro formal — perde o histórico da decisão e cria divergência silenciosa entre Vault e site; aceitar o plano UMG como escopo da F19 — conflita com os slots A–D já definidos e com a suíte SBUITests (Cenários 7/8) que pressupõe o pipeline de dano; tratar a divergência apenas como nota de chat sem decisão — a divergência reapareceria em toda sessão futura.",
+    consequence:
+      "Toda divergência de escopo futura é resolvida por rotas explícitas: A (DD vigente prevalece, plano paralelo documentado como nota) ou B (escopo da fase muda, DD anterior revogada/revisada com nova DD registrando a mudança). A página da fase comunica o estado com banner e badges de slot — quem abre a página entende de imediato que a homologação está pendente e que houve divergência resolvida.",
+    precedent:
+      "A simetria Entry/Exit do DD-02 aplicada a decisões: toda abertura de divergência exige fechamento registrado. Mesma disciplina da DD-12 (mudança de header documentada como DD) e DD-13 (banner de link direto) — decisões de design que afetam o site são sempre registradas no Registro de Decisões.",
+    status: "Homologada",
+    homologatedAt: "2026-08-14",
+  },
 ];
 
 const STATUS_STYLES: Record<DecisionStatus, string> = {

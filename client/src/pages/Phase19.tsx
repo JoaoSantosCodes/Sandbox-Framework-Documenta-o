@@ -6,7 +6,7 @@
   Papel quente, tinta grafite, acento verde-engineering. Carimbo "em planejamento".
 */
 import { Link } from "wouter";
-import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, FileText } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
@@ -28,7 +28,15 @@ interface CodeSlot {
   title: string;
   exige: string;
   code: string;
+  status: "Aguardando Código" | "Código recebido";
 }
+
+/* Badges de status por slot — âmbar enquanto o corpo real não chega,
+   verde quando o plano executado for submetido (homologação v1.9.0 fecha). */
+const SLOT_STATUS_STYLES: Record<CodeSlot["status"], string> = {
+  "Aguardando Código": "border-amber-warn/60 text-amber-warn bg-amber-warn/[0.06]",
+  "Código recebido": "border-engineering/60 text-engineering bg-engineering/[0.06]",
+};
 
 const CODE_SLOTS: CodeSlot[] = [
   {
@@ -36,6 +44,7 @@ const CODE_SLOTS: CodeSlot[] = [
     title: "USBDamageEventPayload em 04_SandboxCore",
     exige:
       "Classe UObject com AttackId (FString estável — chave de deduplicação), Direction (FVector), DamageAmount (float), bIsFatal (bool). Nunca dentro de 06 ou 09.",
+    status: "Aguardando Código",
     code: `// --- Slot A · Plugins/04_SandboxCore/Source/Public/SBEventPayloads.h ---
 // Aguardando o corpo do build da Fase 19.
 // Contrato: classe UObject (DD-04) + ataque id estável para deduplicação (DD-11). Nunca dentro de 06 ou 09.
@@ -55,6 +64,7 @@ public:
     title: "Ponto autoritativo de publicação no Hitscan",
     exige:
       "BroadcastMessage<Event.Combat.DamageReceived> dentro do caminho existente protegido por HasAuthority() — sem duplicar escritas de atributos nem tocar replicação; ordem de validação antes de mutação preservada.",
+    status: "Aguardando Código",
     code: `// --- Slot B · Plugins/06_SandboxCombat/Source/Private/Components/SBHitscanComponent.cpp ---
 // Aguardando o corpo do build da Fase 19.
 // Contrato: broadcast DEPOIS da validação autoritativa (HasAuthority), ANTES de qualquer escrita de atributo.
@@ -77,6 +87,7 @@ void USBHitscanComponent::ApplyDamage(...)
     title: "Widget com anti-spill, prioridade Low e deduplicação AttackId",
     exige:
       "SubscribeToEvent com prioridade 20, filtro TargetPawn == owning pawn, mapa local de AttackIds recentes com TTL (ou verificação bSkipClientNotify no caminho feliz). Simetria add/remove completa em NativeDestruct.",
+    status: "Aguardando Código",
     code: `// --- Slot C · Plugins/09_SandboxUI/Source/Private/Widgets/SBUIDamageIndicator.cpp ---
 // Aguardando o corpo do build da Fase 19.
 // Contrato: anti-spill (DD-05), prioridade Low = 20, dedupe via AttackId (DD-11),
@@ -104,6 +115,7 @@ void USBUIDamageIndicator::NativeDestruct()
     title: "Cenários 7 e 8",
     exige:
       "Cenário 7: dano recebido exibe o indicador no ângulo esperado; Cenário 8: TargetPawn mismatch não renderiza nada no local player. Suíte completa 34/34 (6 existentes + 2 novos).",
+    status: "Aguardando Código",
     code: `// --- Slot D · Plugins/09_SandboxUI/Source/Private/Tests/SBUITests.cpp ---
 // Aguardando o corpo do build da Fase 19.
 // Contrato: Cenários 7 e 8 complementam os 6 existentes; suíte final 34/34 (32 F18 + 2).
@@ -225,6 +237,28 @@ export default function Phase19() {
   const active = useActiveSection(TOC.map((t) => t.id));
   return (
     <DocsLayout>
+      {/* BANNER — divergência de escopo resolvida (DD-17) + homologação pendente da v1.9.0.
+          Oculto automaticamente quando a v1.9.0 for homologada (padrão DD-17). */}
+      <div className="border-b border-amber-warn/40 bg-amber-warn/[0.05]">
+        <div className="container py-3">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-warn" aria-hidden />
+            <div className="text-sm leading-relaxed">
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-warn">
+                v1.9.0 · homologação pendente
+              </span>
+              <p className="mt-1 text-muted-foreground max-w-3xl">
+                Houve divergência de escopo entre o plano de implantação enviado (widgets UMG) e a DD-08
+                vigente (indicador direcional de dano) — resolvida pela <strong className="text-foreground">Rota A: a DD-08 prevalece</strong> e
+                a Fase 19 mantém o escopo de dano (registro DD-17). O plano de widgets UMG é execução paralela no
+                editor, fora do escopo da F19. Os quatro slots abaixo aguardam os corpos reais de código para fechar
+                a versão.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
       <section className="paper-grain border-b border-border relative overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
@@ -377,8 +411,10 @@ export default function Phase19() {
             <div key={s.slot} className="border border-dashed border-amber-warn/50 bg-amber-warn/[0.04]">
               <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
                 <span className="font-mono text-[11px] text-amber-warn">{s.slot}</span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                  aguardando corpo do build
+                <span
+                  className={`font-mono text-[10px] uppercase tracking-[0.14em] border px-2 py-0.5 ${SLOT_STATUS_STYLES[s.status]}`}
+                >
+                  {s.status}
                 </span>
               </div>
               <div className="px-4 py-3">

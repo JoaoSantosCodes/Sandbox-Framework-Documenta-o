@@ -81,6 +81,7 @@ const DD_BY_VERSION: Record<string, DDMilestone[]> = {
   "v1.9.0 · planejada": [
     { id: "DD-11", version: "v1.9.0 · planejada", title: "Deduplicação client-side do indicador de dano via AttackId", page: "/decisoes#dd-11" },
     { id: "DD-16", version: "v1.9.0 · planejada", title: "Portas de homologação com slots auditáveis (padrão reutilizável)", page: "/decisoes#dd-16" },
+    { id: "DD-17", version: "v1.9.0 · planejada", title: "Divergência de escopo plano UMG vs. DD-08 — Rota A prevalece", page: "/decisoes#dd-17" },
   ],
 };
 
@@ -376,7 +377,7 @@ export default function History() {
           02 · Decisões DD-* por versão
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
-          Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 16 decisões com
+          Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 17 decisões com
           as fases que as originaram. Decisões pendentes aparecem sempre no topo da listagem.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">

@@ -100,7 +100,7 @@ export default function Home() {
                   &gt; quais os 10 princípios?
                 </Link>
                 <Link href="/decisoes" className="text-muted-foreground hover:text-engineering transition-colors">
-                  &gt; ver as 15 decisões DD?
+                  &gt; ver as 16 decisões DD?
                 </Link>
               </div>
               <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
