@@ -7,7 +7,7 @@
 */
 import { Link } from "wouter";
 import { useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Download, FileText } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
@@ -348,7 +348,7 @@ function SlotCard({
                   toast.success(`Submissão registrada — ${slot.slot}`, {
                     description:
                       "Indicador verde e bloco habilitado. ATENÇÃO: simulação de fluxo — a homologação real só fecha com build + suíte 34/34 + isolamento Exit 0.",
-                    duration: 8000,
+                    duration: 5000,
                   });
                 }}
                 className="space-y-2"
@@ -415,10 +415,39 @@ const CHECKLIST_ITEMS = [
   { key: "vault", label: "Vault + site carimbados v1.9.0 (Dashboard, task.md, siteData)" },
 ];
 
+/* Exporta os códigos submetidos como arquivo .txt — apenas os slots com código,
+   um por bloco, para backup entre navegadores (localStorage é local ao browser). */
+function exportSubmissions(submissions: Record<string, string>) {
+  const entries = CODE_SLOTS.filter((s) => submissions[s.slot]);
+  if (entries.length === 0) return;
+  const body = entries
+    .map(
+      (s) =>
+        `=== ${s.slot} · ${s.title} ===\nExige: ${s.exige}\n\n${submissions[s.slot]}`
+    )
+    .join("\n\n");
+  const header = `SANDBOX FRAMEWORK — Submissões dos slots auditáveis (Fase 19 · v1.9.0-prep)\n` +
+    `Gerado em: ${new Date().toLocaleString("pt-BR")}\n` +
+    `AVISO: simulação de fluxo — os códigos abaixo NÃO substituem o build compilado;\n` +
+    `a homologação real exige SBUITests 34/34 + isolamento simétrico Exit Code 0.\n\n`;
+  const blob = new Blob([header + body], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sandbox-framework-f19-slots-submetidos-${new Date().toISOString().slice(0, 10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success(`${entries.length} ${entries.length === 1 ? "slot exportado" : "slots exportados"}`, {
+    description: "Backup .txt salvo — apenas os slots com código submetido neste navegador.",
+    duration: 4000,
+  });
+}
+
 export default function Phase19() {
   const active = useActiveSection(TOC.map((t) => t.id));
   const [rulesOpen, setRulesOpen] = useState(false);
   const { submissions, submitSlot } = useSlotSubmissions("sbf-slot-submissions-19");
+  const submittedCount = CODE_SLOTS.filter((s) => submissions[s.slot]).length;
   const resolveSlot = (s: (typeof CODE_SLOTS)[number]): { status: SlotStatus; code: string } =>
     submissions[s.slot] ? { status: "Código recebido" as const, code: submissions[s.slot] } : s;
   return (
@@ -579,6 +608,41 @@ export default function Phase19() {
           de comportamento).
         </p>
           <div className="mt-6 space-y-4">
+          {/* Barra de progresso das submissões — quantos dos 4 slots já receberam código */}
+          <div className="border border-border bg-card px-4 py-3">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Progresso das submissões · Slots A–D
+              </span>
+              <span className="font-mono text-[12px] font-semibold text-engineering">
+                {submittedCount} / {CODE_SLOTS.length} slots
+              </span>
+            </div>
+            <div className="h-2 w-full bg-secondary overflow-hidden" role="progressbar" aria-valuenow={submittedCount} aria-valuemin={0} aria-valuemax={CODE_SLOTS.length}>
+              <div
+                className="h-full bg-engineering transition-all duration-300 ease-out"
+                style={{ width: `${(submittedCount / CODE_SLOTS.length) * 100}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-3 mt-2 flex-wrap">
+              <p className="text-[12px] text-muted-foreground">
+                {submittedCount === CODE_SLOTS.length
+                  ? "Todos os slots receberam corpo submetido — a revisão segue exigindo o build compilado."
+                  : submittedCount > 0
+                    ? `${submittedCount} de 4 slots com código submetido neste navegador.`
+                    : "Nenhum slot com código submetido ainda — os 4 aguardam (Aguardando Código)."}
+              </p>
+              <button
+                type="button"
+                onClick={() => exportSubmissions(submissions)}
+                disabled={submittedCount === 0}
+                className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Exportar submetidos (.txt)
+              </button>
+            </div>
+          </div>
           <div className="flex items-center justify-between gap-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               4 slots auditáveis — concatene o contrato completo para a sprint
