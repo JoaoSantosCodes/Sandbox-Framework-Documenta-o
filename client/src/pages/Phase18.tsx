@@ -286,6 +286,7 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
             ser exportado como texto para o relatório do Vault pelo botão <code className="font-mono text-xs">Copiar status</code>.
           </p>
           <PhaseChecklist
+            phaseLabel="Fase 18 — Interface Dinâmica e HUD Reativo (v1.8.0)"
             storageKey={PHASE18_CHECKLIST_KEY}
             items={PHASE18_CHECKLIST_ITEMS}
             completeMessage="Checklist completo — Fase 18 pronta para homologação final (9/9 itens, v1.8.0)."

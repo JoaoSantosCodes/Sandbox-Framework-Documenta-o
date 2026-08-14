@@ -4,6 +4,7 @@
   contexto, alternativa rejeitada, consequência e precedente citável.
   Papel quente, tinta grafite, acento verde-engineering.
 */
+import { AnimatePresence, motion } from "framer-motion";
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 import { useState } from "react";
@@ -21,6 +22,8 @@ interface Decision {
   consequence: string;
   precedent: string;
   status: DecisionStatus;
+  /** Data ISO da homologação — pendentes não possuem data. */
+  homologatedAt?: string;
 }
 
 const DECISIONS: Decision[] = [
@@ -39,6 +42,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Consequência direta da Regra 4 do Manifesto (injeção dinâmica de componentes) — deixar a engine manter o estado que já é dela.",
     status: "Homologada",
+    homologatedAt: "2026-08-13",
   },
   {
     id: "DD-02",
@@ -55,6 +59,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Mesma disciplina de simetria do FSBStackMutationGuard (Enter/Exit) — toda entrada precisa de saída em TODOS os caminhos, não só no caminho feliz.",
     status: "Homologada",
+    homologatedAt: "2026-08-13",
   },
   {
     id: "DD-03",
@@ -71,6 +76,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Extensão da Regra 5 do Manifesto (desacoplamento por interfaces): o Message Router é a única superfície de comunicação entre camadas.",
     status: "Homologada",
+    homologatedAt: "2026-08-13",
   },
   {
     id: "DD-04",
@@ -87,6 +93,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Decisão registrada no plano Fase 18 homologado — design decision explícita, não escondida em Open Questions.",
     status: "Homologada com nota",
+    homologatedAt: "2026-08-13",
   },
   {
     id: "DD-05",
@@ -103,6 +110,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Extensão do princípio HasAuthority(): assim como lógica persistente exige authority, renderização de gameplay exige ownership.",
     status: "Homologada",
+    homologatedAt: "2026-08-13",
   },
   {
     id: "DD-06",
@@ -119,6 +127,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Regra 3 do manifesto (reaproveitar, não reinventar): o contrato já existia; a UI se adaptou a ele, não o contrário.",
     status: "Homologada",
+    homologatedAt: "2026-08-13",
   },
   {
     id: "DD-07",
@@ -135,6 +144,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Consistência com a disciplina de eventos do Gameplay Debugger (Fase 17): dados de observação nunca geram escritas de estado.",
     status: "Homologada",
+    homologatedAt: "2026-08-13",
   },
   {
     id: "DD-08",
@@ -151,6 +161,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Disciplina de scope (Fase 17 → 18): entregar escopo pequeno e verificável é melhor que escopo grande com lacunas.",
     status: "Homologada com nota",
+    homologatedAt: "2026-08-13",
   },
   {
     id: "DD-09",
@@ -167,6 +178,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Fase 17 (hide 08_SandboxInventory) → Fase 18 (hide 05+06+07+08 + hide inverso de 09_SandboxUI): o método evolui, mas nunca relaxa.",
     status: "Homologada",
+    homologatedAt: "2026-08-12",
   },
   {
     id: "DD-10",
@@ -183,6 +195,7 @@ const DECISIONS: Decision[] = [
     precedent:
       "Mesma disciplina das interfaces em 02_SandboxInterfaces: nunca reflexão por string, sempre contrato leve e explícito.",
     status: "Homologada",
+    homologatedAt: "2026-08-11",
   },
   {
     id: "DD-11",
@@ -208,7 +221,7 @@ const STATUS_STYLES: Record<DecisionStatus, string> = {
   Pendente: "border-muted-foreground/60 text-muted-foreground",
 };
 
-function DecisionRecord({ d, index }: { d: Decision; index: number }) {
+function DecisionRecord({ d, index, formatDate }: { d: Decision; index: number; formatDate: (iso?: string) => string | undefined }) {
   return (
     <article className="border border-border bg-card relative overflow-hidden" id={d.id.toLowerCase()}>
       <div className="h-1 bg-[repeating-linear-gradient(-45deg,var(--engineering),var(--engineering) 3px,transparent 3px 9px)] opacity-30" />
@@ -223,6 +236,11 @@ function DecisionRecord({ d, index }: { d: Decision; index: number }) {
           <span className={`font-mono text-[10px] uppercase tracking-wider px-2 py-1 border whitespace-nowrap ${STATUS_STYLES[d.status]}`}>
             {d.status}
           </span>
+          {d.homologatedAt && formatDate && (
+            <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+              Homologada em {formatDate(d.homologatedAt)}
+            </span>
+          )}
           <span className="phase-stamp">{d.version}</span>
         </div>
       </header>
@@ -269,7 +287,20 @@ export default function Decisions() {
       d.decision.toLowerCase().includes(q) ||
       d.precedent.toLowerCase().includes(q)
     );
-  });
+  })
+    // Ordenação: pendentes primeiro; homologadas por data de homologação descendente
+    // (mais recentes no topo); empates resolvidos pelo identificador DD-*.
+    .sort((a, b) => {
+      if (a.status === "Pendente" && b.status !== "Pendente") return -1;
+      if (a.status !== "Pendente" && b.status === "Pendente") return 1;
+      const dateA = a.homologatedAt ?? "";
+      const dateB = b.homologatedAt ?? "";
+      if (dateA !== dateB) return dateB.localeCompare(dateA);
+      return b.id.localeCompare(a.id);
+    });
+
+  const formatDate = (iso?: string) =>
+    iso ? new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR") : undefined;
 
   return (
     <DocsLayout>
@@ -341,14 +372,36 @@ export default function Decisions() {
         </div>
 
         <div className="space-y-8">
-          {filtered.length > 0 ? (
-            filtered.map((d, i) => <DecisionRecord key={d.id} d={d} index={i} />)
-          ) : (
-            <div className="border border-dashed border-border px-6 py-10 text-center font-mono text-sm text-muted-foreground">
-              Nenhum registro corresponde à busca "{query}" {statusFilter !== "Todas" && `com status "${statusFilter}"`}.
-              Tente outro identificador (DD-01…DD-11) ou amplie o filtro de status.
-            </div>
-          )}
+          <AnimatePresence mode="popLayout" initial={false}>
+            {filtered.length > 0 ? (
+              filtered.map((d, i) => (
+                <motion.article
+                  key={d.id}
+                  layout
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 28, opacity: { duration: 0.18 } }}
+                  style={{ border: "1px solid var(--border)", background: "var(--card)", position: "relative", overflow: "hidden" }}
+                  id={d.id.toLowerCase()}
+                >
+                  <DecisionRecord d={d} index={i} formatDate={formatDate} />
+                </motion.article>
+              ))
+            ) : (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="border border-dashed border-border px-6 py-10 text-center font-mono text-sm text-muted-foreground"
+              >
+                Nenhum registro corresponde à busca "{query}" {statusFilter !== "Todas" && `com status "${statusFilter}"`}.
+                Tente outro identificador (DD-01…DD-11) ou amplie o filtro de status.
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <AuditNote tone="warn">

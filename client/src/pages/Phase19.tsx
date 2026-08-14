@@ -220,6 +220,7 @@ export default function Phase19() {
         <TechRule label="Checklist interativo da Fase 19" />
 
         <PhaseChecklist
+          phaseLabel="Fase 19 — Indicador Direcional de Dano (planejamento)"
           storageKey={CHECKLIST_KEY}
           items={CHECKLIST_ITEMS}
           completeMessage="Checklist completo — pronto para submeter o plano executado da Fase 19 à revisão."
