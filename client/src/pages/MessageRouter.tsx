@@ -8,7 +8,6 @@ import { DocsLayout } from "@/components/DocsLayout";
 import {
   AuditNote,
   CodeBlock,
-  PhaseStamp,
   TechRule,
 } from "@/components/Primitives";
 import { useMemo, useState } from "react";
@@ -111,25 +110,38 @@ export default function MessageRouter() {
 
   return (
     <DocsLayout>
-      <div className="container py-10 max-w-5xl">
-        <header className="border-b-2 border-foreground pb-6 mb-10">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <PhaseStamp phase="RF" version="v1.0.0" />
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              Documento de referência · Fonte: sfps_specification.md § Gameplay Message Router + plano Fase 18 homologado
-            </span>
+      {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando as demais páginas) */}
+      <section className="paper-grain border-b border-border relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
+          <span className="font-display font-black leading-[0.85] text-center text-engineering/[0.09] dark:text-engineering/[0.14] whitespace-nowrap" style={{ fontSize: "clamp(4rem, 13vw, 14rem)" }}>
+            MRT
+          </span>
+        </div>
+        <div className="container relative py-12 lg:py-16 max-w-5xl">
+          <div className="fade-up">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              doc. mrt · message router reference
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="phase-stamp">RF · v1.0.0</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                documento de referência · sfps_specification.md § gameplay message router + fase 18 homologada
+              </span>
+            </div>
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold leading-tight">
+          <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
             Message Router
-            <span className="text-engineering"> — Referência de Eventos</span>
+            <em className="not-italic text-engineering"> — Referência de Eventos</em>
           </h1>
-          <p className="mt-4 text-muted-foreground max-w-2xl">
-            Contrato vivo entre produtores (extensões de gameplay) e consumidores (UI e debug).
+          <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Contrato vivo entre produtores (extensões de gameplay) e consumidores (UI e debug):
             <code className="font-mono text-[13px]">USBEventSubsystem</code> em 04_SandboxCore;
             dois modos de publicação, quatro prioridades e oito eventos canônicos.
           </p>
-        </header>
+        </div>
+      </section>
 
+      <div className="container py-12 lg:py-16 max-w-5xl">
         <section className="mb-12">
           <h2 className="font-serif text-2xl font-bold mb-1">Modos de publicação</h2>
           <p className="text-sm text-muted-foreground mb-5">Os dois primitivos do subsistema e quando usar cada um.</p>

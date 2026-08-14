@@ -6,6 +6,7 @@
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, CodeBlock, PhaseStamp, TechRule } from "@/components/Primitives";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
+import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 
 const TOC = [
   { id: "plugin", label: "O plugin 10_SandboxDebug" },
@@ -34,6 +35,7 @@ const PHASE17_CHECKLIST_ITEMS = [
 ];
 
 export default function Phase17() {
+  const active = useActiveSection(TOC.map((item) => item.id));
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
@@ -277,7 +279,11 @@ public:
                 <li key={item.id}>
                   <a
                     href={`#${item.id}`}
-                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-engineering hover:bg-secondary/40 transition-colors"
+                    className={`block px-4 py-2 text-sm transition-colors ${
+                      active === item.id
+                        ? "text-engineering font-semibold bg-secondary/40"
+                        : "text-muted-foreground hover:text-engineering hover:bg-secondary/40"
+                    }`}
                   >
                     {item.label}
                   </a>
@@ -287,6 +293,7 @@ public:
           </nav>
         </aside>
       </div>
+      <BackToTop />
     </DocsLayout>
   );
 }

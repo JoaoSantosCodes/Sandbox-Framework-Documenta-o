@@ -3,8 +3,9 @@
   Página: Especificação Estrutural (SFPS v1.0.0) — fonte de verdade SFPS.
   Linguagem: trilho lateral de seções, carimbos mono, code blocks escuros, notas de auditoria.
 */
-import { PhaseStamp, CodeBlock, AuditNote, TechRule } from "@/components/Primitives";
+import { CodeBlock, AuditNote, TechRule } from "@/components/Primitives";
 import { DocsLayout } from "@/components/DocsLayout";
+import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 
 const STRUCTS = `USTRUCT(BlueprintType)
 struct FSBGameplayContext
@@ -115,6 +116,7 @@ function scrollToSection(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
 }
 
 export default function Spec() {
+  const active = useActiveSection(SPEC_INDEX.map((s) => s.id));
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
@@ -130,7 +132,7 @@ export default function Spec() {
               doc. sfps · fonte de verdade
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <PhaseStamp phase="SPEC" version="v1.0.0" />
+              <span className="phase-stamp">SFPS · v1.0.0</span>
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 sandbox framework plugin specification · 11 plugins
               </span>
@@ -157,9 +159,13 @@ export default function Spec() {
                 <a
                   href={`#${s.id}`}
                   onClick={(e) => scrollToSection(e, s.id)}
-                  className="group flex items-baseline gap-3 text-muted-foreground hover:text-foreground transition-colors"
+                  className={`group flex items-baseline gap-3 transition-colors ${
+                    active === s.id
+                      ? "text-engineering font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
-                  <span className="font-mono text-[10px] text-engineering group-hover:text-engineering">{s.n} ·</span>
+                  <span className="font-mono text-[10px] text-engineering">{s.n} ·</span>
                   <span>{s.label}</span>
                 </a>
               </li>
@@ -408,6 +414,7 @@ export default function Spec() {
           </section>
         </article>
       </div>
+      <BackToTop />
     </DocsLayout>
   );
 }

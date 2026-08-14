@@ -15,3 +15,11 @@ Análise da referência fuch.ai concluída (notes-fuch-ai.md); ideas.md atualiza
 - [ ] tsc --noEmit limpo
 - [ ] Checkpoint e publicação (auto-publish)
 - [ ] Entregar ao usuário
+
+
+## Rodada: heros restantes + seção ativa + Voltar ao topo
+- [ ] Hero wordmark: MessageRouter.tsx (MRT), Manifesto.tsx (MAN), GuideCpp.tsx (SFDG)
+- [ ] IntersectionObserver: destaque da seção ativa nos índices laterais (Manual, SFPS, F17/F18/F19)
+- [ ] Botão flutuante "Voltar ao topo" nas páginas longas (Manual, SFPS)
+- [ ] tsc + screenshots + checkpoint + entrega
+- [ ] Atualizar skill sandbox-framework-review e sincronizar sfr_skill.md

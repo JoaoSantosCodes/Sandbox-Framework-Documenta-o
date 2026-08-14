@@ -5,8 +5,9 @@
 */
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
-import { PhaseStamp, CodeBlock, AuditNote, TechRule } from "@/components/Primitives";
+import { CodeBlock, AuditNote, TechRule } from "@/components/Primitives";
 import { DocsLayout } from "@/components/DocsLayout";
+import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 
 const DD = [
   { id: "DD-01", title: "USBUIManager herda de ULocalPlayerSubsystem", rule: "Não escreva isolamento manual de UI por jogador — a engine instancia uma cópia por ULocalPlayer (split-screen e Listen Server inclusos)." },
@@ -262,9 +263,51 @@ const UI_SUBSCRIBE = `void USBUIPromptWidget::OnInteractionAvailable(
     }
 }`;
 
+const SFDG_INDEX = [
+  { n: "01", label: "Comportamento de Movimento" },
+  { n: "02", label: "Message Router" },
+  { n: "03", label: "Ciclo de Vida & Ticks" },
+  { n: "04", label: "Sincronização ISBReplicable" },
+  { n: "05", label: "Interação Modular" },
+  { n: "06", label: "Habilidades (Fase 16)" },
+  { n: "07", label: "Save Game (Fase 15)" },
+];
+
 export default function Guide() {
+  const active = useActiveSection(SFDG_INDEX.map((s) => `sfdg-${s.n}`));
   return (
     <DocsLayout>
+      {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando as demais páginas) */}
+      <section className="paper-grain border-b border-border relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
+          <span className="font-display font-black leading-[0.85] text-center text-engineering/[0.09] dark:text-engineering/[0.14] whitespace-nowrap" style={{ fontSize: "clamp(4rem, 13vw, 14rem)" }}>
+            SFDG
+          </span>
+        </div>
+        <div className="container relative py-12 lg:py-16">
+          <div className="fade-up">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              doc. sfdg · sandbox framework development guide
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="phase-stamp">SFDG · v1.0.0</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                guia de desenvolvimento · procedimento operacional em c++
+              </span>
+            </div>
+          </div>
+          <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
+            Guia de
+            <em className="not-italic text-engineering"> Desenvolvimento</em>
+          </h1>
+          <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Procedimentos operacionais em C++ para criar comportamentos, registrar tags e usar os
+            subsistemas do framework. Cada seção é um procedimento verificável: copie o padrão,
+            respeite o contrato e prove por compilação e teste.
+          </p>
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 xl:grid-cols-[200px_1fr] gap-10">
         <nav className="hidden xl:block sticky top-28 self-start border-l border-border pl-5">
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground mb-4">Índice SFDG</p>
@@ -279,8 +322,15 @@ export default function Guide() {
               { n: "07", label: "Save Game (Fase 15)" },
             ].map((s) => (
               <li key={s.n}>
-                <a href={`#sfdg-${s.n}`} className="group flex items-baseline gap-3 text-muted-foreground hover:text-foreground transition-colors">
-                  <span className="font-mono text-[10px] text-engineering/70 group-hover:text-engineering">{s.n}</span>
+                <a
+                  href={`#sfdg-${s.n}`}
+                  className={`group flex items-baseline gap-3 transition-colors ${
+                    active === `sfdg-${s.n}`
+                      ? "text-engineering font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span className="font-mono text-[10px] text-engineering/70">{s.n}</span>
                   <span>{s.label}</span>
                 </a>
               </li>
@@ -298,26 +348,12 @@ export default function Guide() {
 
         <article className="min-w-0">
           <header className="mb-10">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-engineering mb-3">
-              SFDG v1.0.0 · Sandbox Framework Development Guide
-            </p>
-            <h1 className="font-serif text-4xl md:text-5xl font-semibold leading-tight mb-4">
-              Guia de Desenvolvimento
-            </h1>
-            <p className="text-muted-foreground max-w-3xl leading-relaxed">
-              Procedimentos operacionais em C++ para criar comportamentos, registrar tags e usar os
-              subsistemas do framework. Cada seção é um procedimento verificável: copie o padrão,
-              respeite o contrato e prove por compilação e teste.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <PhaseStamp phase="SFDG" version="v1.0.0" />
-              <Link
-                href="/fase-18"
-                className="inline-flex items-center gap-2 border border-border px-3 py-1 text-xs font-semibold text-engineering hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                Contrato de UI: Fase 18 executada <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+            <Link
+              href="/fase-18"
+              className="inline-flex items-center gap-2 border border-border px-3 py-1 text-xs font-semibold text-engineering hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              Contrato de UI: Fase 18 executada <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </header>
 
           {/* 01 Comportamento de movimento */}
@@ -541,6 +577,7 @@ export default function Guide() {
           </section>
         </article>
       </div>
+      <BackToTop />
     </DocsLayout>
   );
 }

@@ -9,7 +9,15 @@ import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
+import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
+
+const TOC = [
+  { id: "DD-08", label: "Por que adiar (DD-08)" },
+  { id: "pre-requisitos", label: "Pré-requisitos homologados" },
+  { id: "escopo", label: "Escopo proposto" },
+  { id: "aceite", label: "Critérios de aceite" },
+];
 
 interface Prerequisite {
   id: string;
@@ -111,6 +119,7 @@ const CHECKLIST_ITEMS = [
 ];
 
 export default function Phase19() {
+  const active = useActiveSection(TOC.map((t) => t.id));
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
@@ -280,6 +289,39 @@ export default function Phase19() {
           </Link>
         </div>
       </div>
+
+      {/* Índice lateral (mesmo padrão numerado das páginas longas do Manual/SFPS) */}
+      <div className="container py-10 max-w-6xl -mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_18rem] gap-10">
+          <aside className="hidden lg:block">
+            <nav className="sticky top-24 border border-border bg-card p-5">
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                Índice · Plano F19
+              </div>
+              <ul className="mt-3 space-y-2">
+                {TOC.map((t, i) => (
+                  <li key={t.id}>
+                    <a
+                      href={`#${t.id}`}
+                      className={`text-sm transition-colors ${
+                        active === t.id
+                          ? "text-engineering font-semibold"
+                          : "text-muted-foreground hover:text-engineering"
+                      }`}
+                    >
+                      <span className="font-mono text-[10px] mr-2 text-muted-foreground">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      {t.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </aside>
+        </div>
+      </div>
+      <BackToTop />
     </DocsLayout>
   );
 }

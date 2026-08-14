@@ -8,6 +8,7 @@ import { AuditNote, CodeBlock, PhaseStamp, TechRule } from "@/components/Primiti
 import { CheckCircle2, Circle, X } from "lucide-react";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { PHASE18_ACCEPTANCE_V2, PHASE18_EVENTS, PHASE18_WIDGETS } from "@/lib/siteData";
+import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 
 const TOC = [
   { id: "regra", label: "Regra de ouro" },
@@ -37,6 +38,7 @@ const PHASE18_CHECKLIST_ITEMS = [
 ];
 
 export default function Phase18() {
+  const active = useActiveSection(TOC.map((t) => t.id));
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
@@ -322,7 +324,14 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
             <ul className="mt-3 space-y-2">
               {TOC.map((t) => (
                 <li key={t.id}>
-                  <a href={`#${t.id}`} className="text-sm text-muted-foreground hover:text-engineering transition-colors">
+                  <a
+                    href={`#${t.id}`}
+                    className={`text-sm transition-colors ${
+                      active === t.id
+                        ? "text-engineering font-semibold"
+                        : "text-muted-foreground hover:text-engineering"
+                    }`}
+                  >
                     {t.label}
                   </a>
                 </li>
@@ -331,6 +340,7 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
           </nav>
         </aside>
       </div>
+      <BackToTop />
     </DocsLayout>
   );
 }

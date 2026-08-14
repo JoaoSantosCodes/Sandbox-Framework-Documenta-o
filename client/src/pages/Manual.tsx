@@ -5,6 +5,7 @@
 */
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, TechRule } from "@/components/Primitives";
+import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { CheckCircle2, Circle } from "lucide-react";
 
 const TOC = [
@@ -28,6 +29,7 @@ function scrollToSection(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
 }
 
 export default function Manual() {
+  const active = useActiveSection(TOC.map((t) => t.id));
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
@@ -542,7 +544,11 @@ export default function Manual() {
                   <a
                     href={`#${t.id}`}
                     onClick={(e) => scrollToSection(e, t.id)}
-                    className="text-sm text-muted-foreground hover:text-engineering transition-colors"
+                    className={`text-sm transition-colors ${
+                      active === t.id
+                        ? "text-engineering font-semibold"
+                        : "text-muted-foreground hover:text-engineering"
+                    }`}
                   >
                     <span className="font-mono text-[10px] text-engineering mr-2">{String(i + 1).padStart(2, "0")} ·</span>
                     {t.label}
@@ -553,6 +559,7 @@ export default function Manual() {
           </nav>
         </aside>
       </div>
+      <BackToTop />
     </DocsLayout>
   );
 }

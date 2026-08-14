@@ -4,6 +4,7 @@
 */
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, TechRule } from "@/components/Primitives";
+import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { MANIFESTO_PRINCIPLES } from "@/lib/siteData";
 
 const PRECEDENTS = [
@@ -44,8 +45,39 @@ const STANDARDS = [
 ];
 
 export default function Manifesto() {
+  const active = useActiveSection(MANIFESTO_PRINCIPLES.map((p) => `p${p.n}`));
   return (
     <DocsLayout>
+      {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando as demais páginas) */}
+      <section className="paper-grain border-b border-border relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center select-none overflow-hidden">
+          <span className="font-display font-black leading-[0.85] text-center text-engineering/[0.09] dark:text-engineering/[0.14] whitespace-nowrap" style={{ fontSize: "clamp(4rem, 13vw, 14rem)" }}>
+            MAN
+          </span>
+        </div>
+        <div className="container relative py-12 lg:py-16">
+          <div className="fade-up">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+              doc. 05 · manifesto &amp; coding standards
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="phase-stamp">norma v1.0.0 · imutável</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                norma · dez princípios core + padrões de engenharia
+              </span>
+            </div>
+          </div>
+          <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
+            Manifesto e
+            <em className="not-italic text-engineering"> padrões de código</em>
+          </h1>
+          <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Os dez princípios core que governam todas as fases, seguidos dos padrões de engenharia que
+            transformam princípio em prática. Nenhuma decisão de fase pode violá-los sem auditoria.
+          </p>
+        </div>
+      </section>
+
       <div className="container py-12 lg:py-16 grid lg:grid-cols-[200px_1fr] gap-10">
         <aside className="hidden lg:block">
           <nav className="sticky top-24 border border-border bg-card p-5">
@@ -55,7 +87,14 @@ export default function Manifesto() {
             <ul className="mt-3 space-y-2">
               {MANIFESTO_PRINCIPLES.map((p) => (
                 <li key={p.n}>
-                  <a href={`#p${p.n}`} className="text-sm font-mono text-muted-foreground hover:text-engineering transition-colors">
+                  <a
+                    href={`#p${p.n}`}
+                    className={`text-sm font-mono transition-colors ${
+                      active === `p${p.n}`
+                        ? "text-engineering font-semibold"
+                        : "text-muted-foreground hover:text-engineering"
+                    }`}
+                  >
                     {String(p.n).padStart(2, "0")} · {p.title}
                   </a>
                 </li>
@@ -64,19 +103,6 @@ export default function Manifesto() {
           </nav>
         </aside>
         <div className="min-w-0">
-        <div className="flex items-baseline justify-between flex-wrap gap-3">
-          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-            Doc. 05 · Norma
-          </span>
-          <span className="phase-stamp">norma v1.0.0 · imutável</span>
-        </div>
-        <h1 className="font-display text-4xl font-bold leading-tight mt-2">
-          Manifesto e padrões de código
-        </h1>
-        <p className="mt-3 text-muted-foreground text-lg max-w-3xl">
-          Os dez princípios core que governam todas as fases, seguidos dos padrões de engenharia que
-          transformam princípio em prática. Nenhuma decisão de fase pode violá-los sem auditoria.
-        </p>
         <TechRule />
 
         <div className="space-y-3">
@@ -161,6 +187,7 @@ export default function Manifesto() {
         </AuditNote>
         </div>
       </div>
+      <BackToTop />
     </DocsLayout>
   );
 }
