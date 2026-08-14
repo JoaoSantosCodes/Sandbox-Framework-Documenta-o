@@ -196,6 +196,20 @@
     background-image: radial-gradient(oklch(0.93 0.008 90 / 0.05) 1px, transparent 1px);
     background-size: 22px 22px;
   }
+  /* Marca de favorito — borda discreta à esquerda do card (amber-engenharia) */
+  .favorite-glow {
+    position: relative;
+  }
+  .favorite-glow::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--amber-warn);
+    z-index: 10;
+  }
   /* Carimbo de fase — signature element */
   .phase-stamp {
     font-family: var(--font-mono);

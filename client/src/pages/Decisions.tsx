@@ -374,9 +374,13 @@ export default function Decisions() {
       d.precedent.toLowerCase().includes(q)
     );
   })
-    // Ordenação: pendentes primeiro; homologadas por data de homologação descendente
-    // (mais recentes no topo); empates resolvidos pelo identificador DD-*.
+    // Ordenação: favoritos no topo quando o status está em "Todas";
+    // pendentes primeiro entre não-favoritos; homologadas por data de homologação
+    // descendente (mais recentes no topo); empates resolvidos pelo identificador DD-*.
     .sort((a, b) => {
+      const favA = isFavorite(a.id);
+      const favB = isFavorite(b.id);
+      if (statusFilter === "Todas" && !favoritesOnly && favA !== favB) return favA ? -1 : 1;
       if (a.status === "Pendente" && b.status !== "Pendente") return -1;
       if (a.status !== "Pendente" && b.status === "Pendente") return 1;
       const dateA = a.homologatedAt ?? "";
@@ -384,6 +388,18 @@ export default function Decisions() {
       if (dateA !== dateB) return dateB.localeCompare(dateA);
       return b.id.localeCompare(a.id);
     });
+
+  // Scroll suave para a âncora de link direto: /decisoes#dd-XX rola até o card alvo.
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return;
+    const target = document.getElementById(hash);
+    if (target) {
+      setTimeout(() => {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 120);
+    }
+  }, []);
 
   const formatDate = (iso?: string) =>
     iso ? new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR") : undefined;
@@ -483,13 +499,15 @@ export default function Decisions() {
                   style={{ border: "1px solid var(--border)", background: "var(--card)", position: "relative", overflow: "hidden" }}
                   id={d.id.toLowerCase()}
                 >
-                  <DecisionRecord
-                    d={d}
-                    index={i}
-                    formatDate={formatDate}
-                    favorite={isFavorite(d.id)}
-                    onToggleFavorite={toggleFavorite}
-                  />
+                  <div className={isFavorite(d.id) ? "favorite-glow" : ""}>
+                    <DecisionRecord
+                      d={d}
+                      index={i}
+                      formatDate={formatDate}
+                      favorite={isFavorite(d.id)}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  </div>
                 </motion.article>
               ))
             ) : (
