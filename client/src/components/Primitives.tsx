@@ -1,14 +1,42 @@
 /*
-  DESIGN: "Blueprint Técnico" — primitivas: carimbo de fase, bloco de código com barra verde,
-  bloco de auditoria (nota de revisor), régua técnica.
+  DESIGN: "Blueprint Técnico" — primitivas: carimbo de fase, bloco de código com barra verde
+  e botão de copiar, bloco de auditoria (nota de revisor), régua técnica.
 */
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
+import { Check, Copy } from "lucide-react";
 
 export function PhaseStamp({ phase, version, warn }: { phase: string; version: string; warn?: boolean }) {
   return (
     <span className={`phase-stamp ${warn ? "warn" : ""}`}>
       F{phase} · {version}
     </span>
+  );
+}
+
+export function CopyButton({ value, label = "Copiar" }: { value: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label={copied ? "Copiado" : label}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(value);
+        } catch {
+          return;
+        }
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      }}
+      className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] px-2 py-1 border transition-colors active:scale-[0.97] ${
+        copied
+          ? "border-engineering/60 text-engineering"
+          : "border-border text-muted-foreground hover:border-engineering/50 hover:text-engineering"
+      }`}
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      {copied ? "copiado" : label}
+    </button>
   );
 }
 
@@ -28,7 +56,10 @@ export function CodeBlock({
           <span className="inline-block w-1 h-4 bg-engineering" />
           <span className="font-mono text-xs text-[oklch(0.75_0.02_90)]">{path}</span>
         </span>
-        {language && <span className="font-mono text-[10px] uppercase tracking-wider opacity-50">{language}</span>}
+        <span className="flex items-center gap-2">
+          {language && <span className="font-mono text-[10px] uppercase tracking-wider opacity-50">{language}</span>}
+          <CopyButton value={children} />
+        </span>
       </figcaption>
       <pre className="px-4 py-4 overflow-x-auto text-[13px] leading-relaxed">
         <code>{children}</code>

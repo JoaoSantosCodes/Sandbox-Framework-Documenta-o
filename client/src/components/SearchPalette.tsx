@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/command";
 import { PLUGINS } from "@/lib/siteData";
 import { ALL_SECTIONS } from "@/lib/sectionsIndex";
-import { Clock, FileText, Hash, Layers, Milestone } from "lucide-react";
+import { Clock, Code2, Compass, FileText, Gavel, Hash, Layers, Zap } from "lucide-react";
 
 interface IndexEntry {
   id: string;
@@ -151,10 +151,10 @@ const GROUP_META: Record<IndexEntry["group"], { label: string; icon: React.Eleme
   paginas: { label: "Páginas", icon: FileText },
   secoes: { label: "Seções internas", icon: Hash },
   plugins: { label: "Plugins", icon: Layers },
-  eventos: { label: "Eventos Event.*", icon: Milestone },
-  classes: { label: "Classes & Interfaces", icon: Milestone },
-  decisoes: { label: "Decisões DD-*", icon: Milestone },
-  conceitos: { label: "Padrões & Conceitos", icon: Milestone },
+  eventos: { label: "Eventos Event.*", icon: Zap },
+  classes: { label: "Classes & Interfaces", icon: Code2 },
+  decisoes: { label: "Decisões DD-*", icon: Gavel },
+  conceitos: { label: "Padrões & Conceitos", icon: Compass },
 };
 
 function matches(entry: IndexEntry, q: string): boolean {
@@ -255,7 +255,16 @@ export function SearchPalette() {
           if (!entries.length) return null;
           const { label, icon: Icon } = GROUP_META[group];
           return (
-            <CommandGroup key={group} heading={label}>
+            <CommandGroup
+              key={group}
+              heading={
+                <span className="flex items-center gap-1.5">
+                  <Icon className="h-3 w-3 text-engineering" />
+                  {label}
+                  <span className="ml-auto font-mono text-[9px] text-muted-foreground">{entries.length}</span>
+                </span>
+              }
+            >
               {entries
                 .filter((e) => e.group === group)
                 .map((e) => (
@@ -268,7 +277,7 @@ export function SearchPalette() {
                     }}
                     className="gap-3 focus:bg-accent focus:text-accent-foreground outline-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
                   >
-                    <Icon className="h-3.5 w-3.5 opacity-50" />
+                    <Icon className={`h-3.5 w-3.5 shrink-0 ${group === "secoes" ? "text-muted-foreground/70" : "text-engineering/70"}`} />
                     <span className="flex flex-col min-w-0">
                       <span className="font-mono text-[11px] text-foreground truncate">{e.title}</span>
                       <span className="text-[11px] text-muted-foreground truncate">{e.subtitle}</span>

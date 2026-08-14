@@ -4,13 +4,36 @@
   decisões (DD-*) cruzadas às versões à direita, contadores mono na faixa de métricas.
   Papel quente, tinta grafite, acento verde-engineering, carimbos de versão.
 */
+import { useState } from "react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, CheckCircle2, Clock } from "lucide-react";
 import { PHASES } from "@/lib/siteData";
+
+/* Camada estrutural de cada fase homologada — espelha a topologia de plugins do framework:
+   foundation (F1–F9), gameplay-base (F10–11: predição + suíte), gameplay-ext (F12–16: interação,
+   inventário, stack, save, habilidades), presentation (F17: debugger), tools (F19: planejamento). */
+type Layer = "todas" | "foundation" | "gameplay-base" | "gameplay-ext" | "presentation" | "tools";
+
+const LAYERS: { id: Layer; label: string }[] = [
+  { id: "todas", label: "Todas" },
+  { id: "foundation", label: "Foundation (F1–F9)" },
+  { id: "gameplay-base", label: "Gameplay Base (F10–11)" },
+  { id: "gameplay-ext", label: "Gameplay Ext (F12–16)" },
+  { id: "presentation", label: "Presentation (F17)" },
+  { id: "tools", label: "Tools (F19)" },
+];
+
+function layerOf(phase: number, status: string): Layer {
+  if (phase <= 9) return "foundation";
+  if (phase <= 11) return "gameplay-base";
+  if (phase <= 16) return "gameplay-ext";
+  if (status === "Em planejamento") return "tools"; // F19 em homologação
+  return "presentation"; // F17 e F18
+}
 
 const TOC = [
   { id: "linha-do-tempo", label: "Linha do tempo de fases" },
@@ -67,6 +90,10 @@ const METRICS = [
 
 export default function History() {
   const active = useActiveSection(TOC.map((t) => t.id));
+  const [layer, setLayer] = useState<Layer>("todas");
+  const foundationVisible = layer === "todas" || layer === "foundation";
+  const ddVersions = Object.keys(DD_BY_VERSION);
+  const [ddFilter, setDdFilter] = useState<string | null>(null);
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante (padrão fuch.ai) */}
@@ -121,7 +148,8 @@ export default function History() {
           Fase 10); da Fase 10 em diante, cada homologação carrega versão, sumário e destaques verificáveis.
         </p>
 
-        {/* Fundação */}
+        {/* Fundação (visível quando "Todas" ou "Foundation") */}
+        {foundationVisible && (
         <div className="mt-6 space-y-3">
           {FOUNDATION_PHASES.map((f) => (
             <div key={f.range} className="border border-border bg-card">
@@ -137,12 +165,38 @@ export default function History() {
             </div>
           ))}
         </div>
+        )}
+        {layer !== "todas" && layer !== "foundation" && (
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            Fundação oculta pelo filtro ativo — <button type="button" onClick={() => setLayer("foundation")} className="underline hover:text-engineering">ver fundação</button>
+          </p>
+        )}
 
-        {/* Fases 10–18 */}
+        {/* Fases 10–18 + F19 */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          {LAYERS.map((l) => {
+            const count = l.id === "todas" ? PHASES.length : PHASES.filter((p) => layerOf(p.phase, p.status) === l.id).length;
+            return (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => setLayer(l.id)}
+                className={`font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 border transition-colors active:scale-[0.97] ${
+                  layer === l.id
+                    ? "border-engineering/60 bg-engineering/8 text-engineering"
+                    : "border-border text-muted-foreground hover:border-engineering/50 hover:text-engineering"
+                }`}
+              >
+                {l.label} · {count}
+              </button>
+            );
+          })}
+        </div>
         <div className="mt-8 relative">
           <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" aria-hidden />
           <ul className="space-y-5">
-            {PHASES.map((p) => (
+            <AnimatePresence mode="popLayout">
+            {PHASES.filter((p) => layer === "todas" || layerOf(p.phase, p.status) === layer).map((p) => (
               <motion.li
                 key={p.phase}
                 initial={{ opacity: 0, y: 8 }}
@@ -161,7 +215,7 @@ export default function History() {
                   }`}
                 />
                 <Link
-                  href={p.phase === 17 ? "/fase-17" : p.phase === 18 ? "/fase-18" : "/fase-19"}
+                  href={p.phase === 17 ? "/fase-17" : p.phase === 18 ? "/fase-18" : p.phase === 19 ? "/fase-19" : "/"}
                   className="group block border border-border bg-card hover:border-engineering/50 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border bg-secondary/60">
@@ -199,6 +253,7 @@ export default function History() {
                 </Link>
               </motion.li>
             ))}
+            </AnimatePresence>
           </ul>
         </div>
 
@@ -212,9 +267,46 @@ export default function History() {
           Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 14 decisões com
           as fases que as originaram. Decisões pendentes aparecem sempre no topo da listagem.
         </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setDdFilter(null)}
+            className={`font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 border transition-colors active:scale-[0.97] ${
+              ddFilter === null
+                ? "border-engineering/60 bg-engineering/8 text-engineering"
+                : "border-border text-muted-foreground hover:border-engineering/50 hover:text-engineering"
+            }`}
+          >
+            Todas as versões · 14
+          </button>
+          {ddVersions.map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setDdFilter(v)}
+              className={`font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 border transition-colors active:scale-[0.97] ${
+                ddFilter === v
+                  ? "border-engineering/60 bg-engineering/8 text-engineering"
+                  : "border-border text-muted-foreground hover:border-engineering/50 hover:text-engineering"
+              }`}
+            >
+              {v} · {DD_BY_VERSION[v].length}
+            </button>
+          ))}
+        </div>
         <div className="mt-6 space-y-6">
-          {Object.entries(DD_BY_VERSION).map(([version, dds]) => (
-            <div key={version} className="border border-border bg-card">
+          <AnimatePresence mode="popLayout">
+          {Object.entries(DD_BY_VERSION)
+            .filter(([v]) => ddFilter === null || ddFilter === v)
+            .map(([version, dds]) => (
+            <motion.div
+              key={version}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              className="border border-border bg-card"
+            >
               <div className="px-4 py-2 border-b border-border bg-secondary/60 flex items-center justify-between gap-3">
                 <span className="font-mono text-[11px] text-engineering">{version}</span>
                 <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -234,8 +326,14 @@ export default function History() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
           ))}
+          </AnimatePresence>
+          {ddFilter !== null && (
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              Filtrando {ddFilter} — <button type="button" onClick={() => setDdFilter(null)} className="underline hover:text-engineering">mostrar todas</button>
+            </p>
+          )}
         </div>
 
         <AuditNote tone="info">

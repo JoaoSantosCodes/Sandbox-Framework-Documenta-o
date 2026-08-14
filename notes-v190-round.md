@@ -42,3 +42,27 @@ DD-01 USBUIManager ULocalPlayerSubsystem; DD-02 idempotência/subscribe cirúrgi
 ## Auditoria pré-entrega
 - tsc OK. Screenshots: /historico, /fase-19, busca (desktop+mobile).
 - Checkpoint → auto-publish habilitado.
+
+
+# Rodada: Copy buttons + filtros timeline + ícones ⌘K
+
+## Estado (checkpoint ac7041a2 publicado)
+- Home box status: "Fase 19 em homologação · v1.9.0" (âmbar). Rodapé "Fase 19 em homologação (v1.9.0)", LAST_VAULT_SYNC "14/08/2026 01:15 GMT-3".
+- Phase19.tsx: 4 slots (A: SBEventPayloads.h USBDamageEventPayload, B: 06_SandboxCombat ponto autoritativo, C: USBUIDamageIndicator, D: SBUITests Cenários 7/8) como divs border-dashed âmbar; seção id="corpo-codigo"; checklist 11 itens; tech rule label="Corpo do código — porta de homologação".
+- History.tsx: FOUNDATION_PHASES (4 blocos F1-9), PHASES (10-18) como timeline motion com dots, DD_BY_VERSION (v1.7.0: DD-09/10; v1.8.0: 11 DDs; v1.9.0 planejada: DD-11), METRICS (11 plugins, 32/32, 31/31, 14 DDs), seção métricas adicionais, próximo passo F19; TOC ids: linha-do-tempo/decisoes/metricas/proximo; índice lateral lg.
+- SearchPalette.tsx: IndexEntry {id,title,subtitle,page,hash?,keywords,group}; grupos existentes: decisoes + secoes (Hash). ALL_INDEX concatena DD entries + ALL_SECTIONS (MANUAL/SFPS/SFDG/FASE/ROUTER).
+- CodeBlock primitiva em Primitives.tsx (path + code) — checar se já tem botão copiar; se não, adicionar componente CopyableCodeBlock ou envolver.
+
+## Progresso da rodada atual
+- Fase 1 CONCLUÍDA: CopyButton criado em Primitives.tsx (useState, Clipboard API, 1500ms volta, classes mono border). CodeBlock agora tem CopyButton na figcaption. Phase19.tsx: 4 slots A–D ganharam campo code (snippets C++ com comentários "Aguardando corpo do build") e renderizam <CodeBlock path={s.slot.replace(" · ", " — ")} language="cpp"> dentro do card. tsc OK.
+- Fase 2 CONCLUÍDA: History.tsx tem filtros LAYER (todas/foundation/gameplay-base/gameplay-ext/presentation/tools) com contagens + chips; FOUNDATION_PHASES oculta quando filtro ≠ foundation; DD_BY_VERSION com filtro ddFilter por versão (Todas·14, v1.7.0·2, v1.8.0·11, v1.9.0·1) + AnimatePresence; F19 adicionada a PHASES em siteData.ts (Em planejamento, destaques 4); link da timeline trata phase 19. tsc OK.
+- Fase 3 EM ANDAMENTO: SearchPalette.tsx — GROUP_META usa ícones: paginas=FileText, secoes=Hash, plugins=Layers, eventos=classes=decisoes=conceitos=Milestone (FALTA: ícones distintos para decisoes/classes/conceitos/eventos). lucide já importados: Clock, FileText, Hash, Layers, Milestone. Falta ver o render dos CommandItem (procurar CommandItem render no arquivo) para inserir iconElement do group.
+
+## Plano de execução
+### Fase 1 — Copy buttons
+- Phase19.tsx slots: transformar em CopyableCodeBlock (botão copiar do texto "exige" + título). Usar componente novo CopyButton genérico (Clipboard API + toast success "Copiado") — reutilizar em todos os slots e em CodeBlock existente do Primitives.
+- Criar componente CopyButton em Primitives.tsx (ícone Copy/Check, 1500ms volta a Copy).
+### Fase 2 — Filtros timeline
+- History.tsx: camada (layer) em FOUNDATION_PHASES e PHASES: foundation/gameplay-base/gameplay-ext/presentation/tools/planning. Chips tipo FilterChip (já existe pattern em MessageRouter: font-mono uppercase border). Filtro padrão "Todas"; aplicar a ambos os blocos (timeline principal + fundação). Contagem "(N)" no chip.
+### Fase 3 — Ícones ⌘K
+- SearchPalette: no render dos resultados, ícone por group: paginas=FileText/Compass?, fases=Layers, decisons=ScrollText/Stamp, secoes=Hash/Anchor. Mapear groups reais lidos do arquivo.
