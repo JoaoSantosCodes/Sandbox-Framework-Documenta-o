@@ -115,9 +115,9 @@ export default function Home() {
               <div className="mt-1 font-mono text-sm font-bold">v1.8.0 · Fase 18</div>
               <div className="text-xs text-muted-foreground mt-0.5">32/32 specs homologadas no Vault</div>
               <div className="mt-2 flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-engineering animate-pulse" />
-                <span className="font-mono text-[10px] text-engineering uppercase tracking-wider">
-                  Fase 19 em planejamento
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-warn animate-pulse" />
+                <span className="font-mono text-[10px] text-amber-warn uppercase tracking-wider">
+                  Fase 19 em homologação · v1.9.0
                 </span>
               </div>
             </div>
