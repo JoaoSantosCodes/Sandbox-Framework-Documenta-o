@@ -19,10 +19,10 @@ mecânica antes de qualquer nova homologação, seguindo a regra do Manifesto:
 | Documento do Vault | Espelho no site | Método |
 |---|---|---|
 | `manual_de_uso.md` | `Manual.tsx` (stamp `MNU · v…`) | Carimbo H1 do Vault vs phase-stamp da página |
-| `walkthrough.md` | `History.tsx` | Maior versão do arquivo vs texto visível |
+| `walkthrough.md` | — (doc histórico do Bootstrap) | Classificado como histórico: título v1.0.0 é legítimo, sem página espelho |
 | `task.md` | snippets de Vault em `Phase18/19.tsx` | Cobertura lexical dos tokens |
 | `00_Sandbox_Framework_Dashboard.md` | snippets de Vault em `Phase17/18/19.tsx` | Cobertura lexical |
-| `implementation_plan.md` | planos embutidos em `Phase17/18/19.tsx` | Cobertura lexical |
+| `implementation_plan.md` | planos embutidos em `Phase17/18/19.tsx` | Classificado como plano externo (GameAnimationSample): cobertura baixa não é divergência |
 | `sfdg_guide.md` | `Guide.tsx` (stamp `SFDG · v…`) | Carimbo H1 vs phase-stamp |
 | `sfps_specification.md` | `Spec.tsx` (stamp `SFPS · v…`) | Carimbo H1 vs phase-stamp |
 | `manifesto_and_coding_standards.md` | `Manifesto.tsx` (stamp `norma v1.0.0 · imutável`) | Carimbo H1 vs phase-stamp |
@@ -48,9 +48,21 @@ Na janela WSL/Ubuntu: aponte `--vault` para o caminho do Junction do Vault
 (`mnt/<letra>/B01 PROJECTS/Sandbox_Framework` ou cópia local) e o script roda
 normalmente — o repositório é lido via HTTPS público, sem dependência do vault físico.
 
-## Uso em CI (GitHub Actions)
+> Nota de calibração: documentos históricos (recorte de uma fase antiga) e planos de
+> contexto externo (GameAnimationSample) não têm página espelho dedicada — são
+> marcados com `historical` / `external_plan` em `DOC_PAGES` e reportados como
+> informativos, nunca como divergências de homologação.
 
-Workflow sugerido em `.github/workflows/sync-audit.yml` (a criar):
+## Ativação do CI (GitHub Actions)
+
+O workflow pronto está em `scripts/sync-audit-workflow.yml`. O token do GitHub App
+não tem permissão `workflows`, portanto ele não pode ser criado por push — a
+ativação é manual:
+
+1. No repositório: `.github/workflows/sync-audit.yml` (criar) ← copie o conteúdo de `scripts/sync-audit-workflow.yml`
+2. (Opcional) Crie o segredo `VAULT_MIRROR_REPO` com um espelho de leitura do Vault
+
+Alternativa em `actions/checkout` direto quando houver espelho privado:
 
 ```yaml
 name: Sync Audit (Vault mirror)
