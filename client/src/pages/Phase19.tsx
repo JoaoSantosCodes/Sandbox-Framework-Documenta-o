@@ -53,17 +53,15 @@ function formatSlotTimestamp(iso: string): string {
 
 /* Trechos exatos para colar no Vault após a homologação — mantidos como dado
    único, consumidos pelos blocos copiáveis e pelo "Copiar tudo" manual. */
-const VAULT_DASHBOARD_SNIPPET = `### Execução paralela — Fase 19 (widgets UMG, DD-17)
-Montagem, fiação e verificação PIE dos WBPs: WBP_StatusHUD, WBP_InteractionPrompt,
-WBP_AbilityBar e WBP_InventoryGrid (herdando de USBUserWidget), com WBP_MainHUD,
-BP_SBHUD e HUDClass no GameMode de playtest. Infraestrutura C++ de suporte: Fase 18
-homologada (DD-04 · DD-05 · DD-06 · DD-07 · DD-02). Referência: /fase-19-umg.
-
-### Fase 19 Concluída · v1.9.0 (Indicador Direcional de Dano)
-Homologação fechada: USBDamageEventPayload em 04_SandboxCore (Slot A), broadcast
-autoritativo no Hitscan (Slot B), USBUIDamageIndicator com deduplicação AttackId (Slot C)
-e SBUITests 34/34 (Slot D, Cenários 7/8). Decisão DD-08 vigente; DD-11 homologada (deduplicação
-client-side). 11 de 11 plugins implementados · 0 em backlog.`;
+/* VAULT_SNAPSHOT 15/08/2026 — espelho do carimbo colado pelo usuário no cofre
+   (00_Sandbox_Framework_Dashboard.md · seção Status do Projeto · blocos_vault_1508.md).
+   O trecho do rascunho de dano foi removido do snapshot — esse conteúdo vive nas
+   páginas de rascunho (P-1), fora da régua oficial. */
+const VAULT_DASHBOARD_SNIPPET = `### Fase 19 Concluída · v1.9.0 (Integração e Replicação no GameAnimationSample)
+Homologação fechada: módulo C++ híbrido no GameAnimationSample, 241 passos UBT sem erros,
+suíte 32/32 Exit 0 em ambos os projetos, split-screen homologada em C++.
+11 de 11 plugins implementados · backlog oficial: P-3 UMG, P-4 Rede, P-5 Polimento,
+P-6 Equipamento.`;
 
 const VAULT_TASK_SNIPPET = `## Fase 19 — Indicador Direcional de Dano (v1.9.0)
 
@@ -1117,11 +1115,11 @@ export default function Phase19() {
                   label="Copiar"
                   value={VAULT_DASHBOARD_SNIPPET}
                   toastTitle="Trecho do Dashboard copiado"
-                  toastDesc="Cole no 00_Sandbox_Framework_Dashboard.md APENAS após a homologação real (slots A–D com corpo do build + suíte 34/34)."
+                  toastDesc="Trecho carimbado no cofre em 15/08 (Status do Projeto) — colar APENAS após homologação real em futuras versões."
                   onOpenRules={() => setRulesOpen(true)}
                 />
             </div>
-            <CodeBlock path="00_Sandbox_Framework_Dashboard.md · Execução paralela + v1.9.0" language="text">
+            <CodeBlock path="00_Sandbox_Framework_Dashboard.md · Fase 19 (GameAnimationSample) · v1.9.0" language="text">
               {VAULT_DASHBOARD_SNIPPET}
             </CodeBlock>
           </div>

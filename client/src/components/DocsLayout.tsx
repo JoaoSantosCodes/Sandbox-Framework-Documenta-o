@@ -130,12 +130,10 @@ function runLocalAudit(): AuditRecord {
   const driftItems: string[] = [];
   const title = typeof document !== "undefined" ? document.title : "";
   if (!/v1\.9\.0/.test(title) && !/v2\.0\.0-prep/.test(title)) driftItems.push("carimbo do <title>");
-  /* VALIDAÇÃO 15/08 — divergência interna do Vault: o 00_Sandbox_Framework_Dashboard.md
-     do cofre ainda carimba "Fase 18 Concluída · v1.8.1", enquanto status_atual_do_projeto.md,
-     task.md, walkthrough.md e linha_do_tempo_e_roadmap.md atestam a Fase 19 (Portabilidade
-     e Replicação no GameAnimationSample) como concluída. O site segue o estado oficial
-     (F19 · v1.9.0); a correção pertence ao Vault (atualizar o Dashboard), não ao site. */
-  driftItems.push("Dashboard do Vault: carimbo F18 · v1.8.1 (correção pendente no cofre)");
+  /* VALIDADO 15/08: o usuário colou o carimbo F19 · v1.9.0 no cofre (blocos_vault_1508.md);
+     o VAULT_DASHBOARD_SNIPPET da /fase-19 foi reespelhado no mesmo carimbo — este drift foi
+     removido. Se o cofre voltar a divergir (ex.: Dashboard retroceder para F18), restaurar
+     a verificação comparando o snippet embutido contra o carimbo esperado no audit. */
   const record: AuditRecord & { drift?: string[] } = {
     checkedAt: new Date().toISOString(),
     divergences: driftItems.length,
