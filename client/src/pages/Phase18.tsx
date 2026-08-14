@@ -4,7 +4,8 @@
 */
 import { DocsLayout } from "@/components/DocsLayout";
 import { TopologyDiagram } from "@/components/TopologyDiagram";
-import { AuditNote, CodeBlock, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning } from "@/components/Primitives";
+import { useState } from "react";
+import { AuditNote, CodeBlock, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning, HomologationRulesModal } from "@/components/Primitives";
 import { toast } from "sonner";
 import { CheckCircle2, Circle, X } from "lucide-react";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
@@ -64,6 +65,7 @@ const PHASE18_CHECKLIST_ITEMS = [
 
 export default function Phase18() {
   const active = useActiveSection(TOC.map((t) => t.id));
+  const [rulesOpen, setRulesOpen] = useState(false);
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
@@ -348,7 +350,7 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
             regra dura da Fase 19: a colagem só é válida depois da homologação real (corpo do build compilado,
             SBUITests 32/32 e isolamento simétrico com Exit Code 0). O aviso está embutido no toast de cada botão.
           </p>
-          <VaultCopyWarning />
+          <VaultCopyWarning onOpenRules={() => setRulesOpen(true)} />
           <div className="mt-4 space-y-4">
             <div className="border border-border">
               <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
@@ -360,6 +362,7 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
                   value={VAULT18_DASHBOARD_SNIPPET}
                   toastTitle="Trecho do Dashboard copiado"
                   toastDesc="Cole no 00_Sandbox_Framework_Dashboard.md APENAS após a homologação real (32/32 specs + isolamento simétrico Exit Code 0)."
+                  onOpenRules={() => setRulesOpen(true)}
                 />
               </div>
               <CodeBlock path="00_Sandbox_Framework_Dashboard.md · Fase 18 Concluída · v1.8.0" language="text">
@@ -374,6 +377,7 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
                   value={VAULT18_TASK_SNIPPET}
                   toastTitle="Trecho do task.md copiado"
                   toastDesc="Cole no task.md APENAS após a homologação real — substituir os itens de planejamento pelos checkados."
+                  onOpenRules={() => setRulesOpen(true)}
                 />
               </div>
               <CodeBlock path="task.md · Fase 18 (checklist pós-homologação)" language="text">
@@ -381,6 +385,7 @@ void USBUIPromptWidget::OnInteractionAvailable(FGameplayTag EventTag, UObject* P
               </CodeBlock>
             </div>
           </div>
+          <HomologationRulesModal open={rulesOpen} onOpenChange={setRulesOpen} />
         </article>
 
         {/* Sumário sticky */}

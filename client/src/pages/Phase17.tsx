@@ -4,7 +4,8 @@
   Checklist interativo retrospectivo com persistência em localStorage e botões de controle.
 */
 import { DocsLayout } from "@/components/DocsLayout";
-import { AuditNote, CodeBlock, PhaseStamp, TechRule } from "@/components/Primitives";
+import { useState } from "react";
+import { AuditNote, CodeBlock, HomologationRulesModal, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning } from "@/components/Primitives";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 
@@ -17,7 +18,30 @@ const TOC = [
   { id: "isolamento", label: "Isolamento de compilação" },
   { id: "aceite", label: "Critérios de aceite" },
   { id: "checklist", label: "Checklist interativo" },
+  { id: "trechos-vault", label: "Trechos do Vault" },
 ];
+
+/* Trechos do Vault para a F17 — fase homologada (v1.7.0), snippets seguros para
+carimbo de versão; a regra de não antecipar homologação segue valendo para F18+. */
+const VAULT17_DASHBOARD_SNIPPET = `### Fase 17 Concluída · v1.7.0 (Gameplay Debugger — 10_SandboxDebug)
+Homologação fechada: ISBDebugInterface + FSBDebugLine em 02_SandboxInterfaces, implementada nos
+componentes de stack/atributo/estado/habilidade (05), extensões (06/08), ator de interação (07)
+e coletor FGameplayDebuggerCategory_Sandbox registrado no módulo do 10_SandboxDebug. Isolamento
+de compilação validado (remover 08_SandboxInventory sem quebrar o build) e suíte 31/31 verde.
+Zero dependências de gameplay — o debugger desconhece combate, inventário e personagem.
+9 de 11 plugins implementados · 2 em backlog.`;
+
+const VAULT17_TASK_SNIPPET = `## Fase 17 — Gameplay Debugger e Telemetria (v1.7.0)
+
+- [x] 8.1. ISBDebugInterface + FSBDebugLine em 02_SandboxInterfaces
+- [x] 8.2. ISBDebugInterface em USBBehaviorStackComponent (01_SandboxCommon)
+- [x] 8.3. ISBDebugInterface em USBAttribute/USBState/USBAbilityComponent (05_SandboxCharacter)
+- [x] 8.4. ISBDebugInterface em USBInventoryComponent (08) e USBCombatComponent (06)
+- [x] 8.5. ISBDebugInterface em ASBTestLockedChest e ator de interação (07)
+- [x] 8.6. Plugin 10_SandboxDebug inicializado (.uplugin, Build.cs, módulo)
+- [x] 8.7. FGameplayDebuggerCategory_Sandbox implementado e registrado no módulo
+- [x] 8.8. Teste de desacoplamento: remover 08_SandboxInventory e validar o build
+- [x] 8.9. V1Editor compila + suíte verde (31/31)`;
 
 const PHASE17_CHECKLIST_KEY = "sbf-phase17-checklist";
 
@@ -36,6 +60,7 @@ const PHASE17_CHECKLIST_ITEMS = [
 
 export default function Phase17() {
   const active = useActiveSection(TOC.map((item) => item.id));
+  const [rulesOpen, setRulesOpen] = useState(false);
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home) */}
@@ -246,6 +271,52 @@ public:
             phaseLabel="Fase 17 — Gameplay Debugger e Telemetria (v1.7.0)"
             completeMessage="Checklist completo — Fase 17 (v1.7.0) confirmada e auditada."
           />
+
+          <TechRule label="17.9 · Trechos do Vault" />
+          <h2 id="trechos-vault" className="font-display text-2xl font-bold scroll-mt-24">
+            Trechos do Vault
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
+            Mesma seção de sincronização das Fases 18 e 19, adaptada à F17 homologada: os blocos abaixo são
+            os trechos exatos para o Dashboard e o task.md. Por ser retrospectiva, a fase já fechou 31/31 —
+            mas o aviso permanece, porque a disciplina de colagem só vale para o momento da homologação real.
+          </p>
+          <VaultCopyWarning onOpenRules={() => setRulesOpen(true)} />
+          <div className="mt-4 space-y-4">
+            <div className="border border-border">
+              <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+                <span className="font-mono text-[11px] text-engineering">
+                  00_Sandbox_Framework_Dashboard.md · F17 homologada · v1.7.0
+                </span>
+                <VaultCopyButton
+                  label="Copiar"
+                  value={VAULT17_DASHBOARD_SNIPPET}
+                  toastTitle="Trecho do Dashboard copiado"
+                  toastDesc="Cole no 00_Sandbox_Framework_Dashboard.md APENAS no carimbo da homologação (fase homologada desde v1.7.0 — uso: restaurar registro)."
+                  onOpenRules={() => setRulesOpen(true)}
+                />
+              </div>
+              <CodeBlock path="00_Sandbox_Framework_Dashboard.md · Fase 17 Concluída · v1.7.0" language="text">
+                {VAULT17_DASHBOARD_SNIPPET}
+              </CodeBlock>
+            </div>
+            <div className="border border-border">
+              <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+                <span className="font-mono text-[11px] text-engineering">task.md · itens da Fase 17</span>
+                <VaultCopyButton
+                  label="Copiar"
+                  value={VAULT17_TASK_SNIPPET}
+                  toastTitle="Trecho do task.md copiado"
+                  toastDesc="Cole no task.md APENAS no carimbo da homologação (itens 8.1–8.9 checkados — uso: restaurar registro)."
+                  onOpenRules={() => setRulesOpen(true)}
+                />
+              </div>
+              <CodeBlock path="task.md · Fase 17 (checklist pós-homologação)" language="text">
+                {VAULT17_TASK_SNIPPET}
+              </CodeBlock>
+            </div>
+          </div>
+          <HomologationRulesModal open={rulesOpen} onOpenChange={setRulesOpen} />
 
           <AuditNote tone="info">
             <strong>Dívida conhecida:</strong> compensação de lag no Hitscan segue ausente — a detecção usa

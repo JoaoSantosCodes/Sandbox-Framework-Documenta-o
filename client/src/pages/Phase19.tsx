@@ -6,11 +6,22 @@
   Papel quente, tinta grafite, acento verde-engineering. Carimbo "em planejamento".
 */
 import { Link } from "wouter";
+import { useState } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, FileText } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
-import { AuditNote, CodeBlock, CopyButton, PhaseStamp, TechRule, VaultCopyButton, VaultCopyWarning } from "@/components/Primitives";
+import {
+  AuditNote,
+  CodeBlock,
+  CopyButton,
+  HomologationRulesModal,
+  PhaseStamp,
+  TechRule,
+  useSlotSubmissions,
+  VaultCopyButton,
+  VaultCopyWarning,
+} from "@/components/Primitives";
 import { toast } from "sonner";
 
 /* Trechos exatos para colar no Vault após a homologação — mantidos como dado
@@ -243,6 +254,153 @@ const SCOPE: ProposedItem[] = [
 
 const CHECKLIST_KEY = "sbf-phase19-checklist";
 
+/* Card de slot auditável com formulário de submissão — o envio é puramente
+   client-side (localStorage): marca "Código recebido", vira verde e habilita
+   o bloco de código. Aviso explícito: não substitui a homologação real. */
+type SlotStatus = "Aguardando Código" | "Código recebido";
+
+function SlotCard({
+  slot,
+  resolved,
+  submitted,
+  submissions,
+  onSubmit,
+}: {
+  slot: (typeof CODE_SLOTS)[number];
+  resolved: { status: SlotStatus; code: string };
+  submitted: boolean;
+  submissions: Record<string, string>;
+  onSubmit: (code: string) => void;
+}) {
+  const [draft, setDraft] = useState(submissions[slot.slot] ?? "");
+  const [openForm, setOpenForm] = useState(false);
+  return (
+    <div
+      className={`border ${
+        submitted
+          ? "border border-engineering/60 bg-engineering/[0.04]"
+          : "border-dashed border-amber-warn/60 bg-amber-warn/[0.05] slot-waiting"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
+        <span className="flex items-center gap-2 font-mono text-[11px]">
+          <span
+            className={`inline-block h-1.5 w-1.5 rounded-full ${
+              submitted ? "bg-engineering" : "bg-amber-warn waiting-dot"
+            }`}
+            aria-hidden="true"
+          />
+          <span className={submitted ? "text-engineering" : "text-amber-warn"}>{slot.slot}</span>
+        </span>
+        <span
+          className={`font-mono text-[10px] uppercase tracking-[0.14em] border px-2 py-0.5 whitespace-nowrap ${SLOT_STATUS_STYLES[resolved.status]}`}
+        >
+          {resolved.status}
+        </span>
+      </div>
+      <div className="px-4 py-3">
+        <p className="font-medium text-sm">{slot.title}</p>
+        <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{slot.exige}</p>
+      </div>
+      {resolved.code && (
+        <div className="px-4 pb-4">
+          <CodeBlock path={slot.slot.replace(" · ", " — ")} language="cpp">
+            {resolved.code}
+          </CodeBlock>
+        </div>
+      )}
+      <div className="px-4 pb-4">
+        {submitted ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-engineering">
+              Corpo registrado neste navegador — a revisão segue exigindo o build compilado.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onSubmit("");
+                setDraft("");
+                setOpenForm(true);
+                toast("Submissão removida", {
+                  description: `O slot ${slot.slot} voltou para "Aguardando Código".`,
+                });
+              }}
+              className="border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-amber-warn/60 hover:text-amber-warn transition-colors"
+            >
+              Retirar submissão
+            </button>
+          </div>
+        ) : (
+          <>
+            {openForm ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const trimmed = draft.trim();
+                  if (trimmed.length < 40) {
+                    toast.error("Código insuficiente", {
+                      description: "Cole o corpo real de C++ do slot — prosa não fecha homologação.",
+                    });
+                    return;
+                  }
+                  onSubmit(trimmed);
+                  setOpenForm(false);
+                  toast.success(`Submissão registrada — ${slot.slot}`, {
+                    description:
+                      "Indicador verde e bloco habilitado. ATENÇÃO: simulação de fluxo — a homologação real só fecha com build + suíte 34/34 + isolamento Exit 0.",
+                    duration: 8000,
+                  });
+                }}
+                className="space-y-2"
+              >
+                <label className="block">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    Corpo do código ({slot.slot} — mínimo 40 caracteres)
+                  </span>
+                  <textarea
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    rows={8}
+                    spellCheck={false}
+                    className="mt-1 w-full border border-border bg-background font-mono text-[12px] leading-relaxed px-3 py-2 focus:outline-none focus:border-engineering/70"
+                    placeholder={`Cole aqui o corpo real de ${slot.slot}… // SBEventPayloads.h, broadcast do Hitscan, USBUIDamageIndicator ou SBUITests`}
+                  />
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    className="bg-engineering text-background px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:opacity-90 active:scale-[0.97] transition-all"
+                  >
+                    Enviar submissão
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpenForm(false)}
+                    className="border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-amber-warn/60 hover:text-amber-warn transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <span className="text-[11px] text-muted-foreground">
+                    localStorage — apenas este navegador
+                  </span>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setOpenForm(true)}
+                className="border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering transition-colors"
+              >
+                Submeter corpo do código
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const CHECKLIST_ITEMS = [
   { key: "payload", label: "SBEventPayloads.h — USBDamageEventPayload (AttackId, Direction, bIsFatal)" },
   { key: "produtor", label: "Ponto autoritativo de publicação no Hitscan (HasAuthority já ativo)" },
@@ -259,6 +417,10 @@ const CHECKLIST_ITEMS = [
 
 export default function Phase19() {
   const active = useActiveSection(TOC.map((t) => t.id));
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const { submissions, submitSlot } = useSlotSubmissions("sbf-slot-submissions-19");
+  const resolveSlot = (s: (typeof CODE_SLOTS)[number]): { status: SlotStatus; code: string } =>
+    submissions[s.slot] ? { status: "Código recebido" as const, code: submissions[s.slot] } : s;
   return (
     <DocsLayout>
       {/* BANNER — divergência de escopo resolvida (DD-17) + homologação pendente da v1.9.0.
@@ -416,7 +578,7 @@ export default function Phase19() {
           slot auditável; a prosa não fecha homologação (padrão do projeto: nunca aceitar prosa como prova
           de comportamento).
         </p>
-        <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               4 slots auditáveis — concatene o contrato completo para a sprint
@@ -431,46 +593,38 @@ export default function Phase19() {
               }
             />
           </div>
-          {CODE_SLOTS.map((s) => (
-            <div
-              key={s.slot}
-              className={`border ${
-                s.status === "Aguardando Código"
-                  ? "border-dashed border-amber-warn/60 bg-amber-warn/[0.05] slot-waiting"
-                  : "border border-engineering/50 bg-engineering/[0.04]"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
-                <span className="flex items-center gap-2 font-mono text-[11px]">
-                  <span
-                    className={`inline-block h-1.5 w-1.5 rounded-full ${
-                      s.status === "Aguardando Código" ? "bg-amber-warn waiting-dot" : "bg-engineering"
-                    }`}
-                    aria-hidden="true"
-                  />
-                  <span className={s.status === "Aguardando Código" ? "text-amber-warn" : "text-engineering"}>
-                    {s.slot}
-                  </span>
-                </span>
-                <span
-                  className={`font-mono text-[10px] uppercase tracking-[0.14em] border px-2 py-0.5 whitespace-nowrap ${SLOT_STATUS_STYLES[s.status]}`}
-                >
-                  {s.status}
-                </span>
-              </div>
-              <div className="px-4 py-3">
-                <p className="font-medium text-sm">{s.title}</p>
-                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{s.exige}</p>
-              </div>
-              {s.code && (
-                <div className="px-4 pb-4">
-                  <CodeBlock path={s.slot.replace(" · ", " — ")} language="cpp">
-                    {s.code}
-                  </CodeBlock>
-                </div>
-              )}
-            </div>
-          ))}
+          <div className="border border-border bg-secondary/40 px-4 py-3">
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              <strong className="text-foreground">Envio antecipado para auditoria:</strong> submeta o corpo
+              do C++ de cada slot pelo formulário abaixo — o indicador muda para verde e o bloco de código
+              fica legível na página, marcando o slot como <em>"Código recebido"</em>. Isso organiza a
+              revisão, mas não homologa: a v1.9.0 só fecha com build + suíte 34/34 + isolamento simétrico.
+              (Simulação de fluxo em localStorage — os dados nunca saem do navegador.){" "}
+              <button
+                type="button"
+                onClick={() => setRulesOpen(true)}
+                className="underline underline-offset-2 hover:text-engineering transition-colors cursor-pointer"
+              >
+                Ver regras de homologação
+              </button>
+            </p>
+          </div>
+          {CODE_SLOTS.map((s) => {
+            const resolved = resolveSlot(s);
+            const submitted = resolved.status === "Código recebido";
+            return (
+              <SlotCard
+                key={s.slot}
+                slot={s}
+                resolved={resolved}
+                submitted={submitted}
+                submissions={submissions}
+                onSubmit={(code) => submitSlot(s.slot, code)}
+              />
+            );
+          })}
+
+          <HomologationRulesModal open={rulesOpen} onOpenChange={setRulesOpen} />
         </div>
         <AuditNote tone="info">
           A homologação acontece quando os quatro slots acima recebem os corpos reais de C++, os 34 cenários
@@ -516,19 +670,20 @@ export default function Phase19() {
           dura: a colagem só é permitida depois da homologação real (slots A–D com corpos do build + suíte
           34/34 + isolamento simétrico). Cada botão leva esse aviso embutido no próprio toast de confirmação.
         </p>
-        <VaultCopyWarning />
+        <VaultCopyWarning onOpenRules={() => setRulesOpen(true)} />
         <div className="mt-4 space-y-4">
           <div className="border border-border">
             <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
               <span className="font-mono text-[11px] text-engineering">
                 00_Sandbox_Framework_Dashboard.md · F19 homologada · v1.9.0
               </span>
-              <VaultCopyButton
-                label="Copiar"
-                value={VAULT_DASHBOARD_SNIPPET}
-                toastTitle="Trecho do Dashboard copiado"
-                toastDesc="Cole no 00_Sandbox_Framework_Dashboard.md APENAS após a homologação real (slots A–D com corpo do build + suíte 34/34)."
-              />
+                <VaultCopyButton
+                  label="Copiar"
+                  value={VAULT_DASHBOARD_SNIPPET}
+                  toastTitle="Trecho do Dashboard copiado"
+                  toastDesc="Cole no 00_Sandbox_Framework_Dashboard.md APENAS após a homologação real (slots A–D com corpo do build + suíte 34/34)."
+                  onOpenRules={() => setRulesOpen(true)}
+                />
             </div>
             <CodeBlock path="00_Sandbox_Framework_Dashboard.md · Execução paralela + v1.9.0" language="text">
               {VAULT_DASHBOARD_SNIPPET}
@@ -537,12 +692,13 @@ export default function Phase19() {
           <div className="border border-border">
             <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/60 bg-secondary/60">
               <span className="font-mono text-[11px] text-engineering">task.md · itens da Fase 19</span>
-              <VaultCopyButton
-                label="Copiar"
-                value={VAULT_TASK_SNIPPET}
-                toastTitle="Trecho do task.md copiado"
-                toastDesc="Cole no task.md APENAS após a homologação real (slots A–D com corpo do build + suíte 34/34)."
-              />
+                <VaultCopyButton
+                  label="Copiar"
+                  value={VAULT_TASK_SNIPPET}
+                  toastTitle="Trecho do task.md copiado"
+                  toastDesc="Cole no task.md APENAS após a homologação real (slots A–D com corpo do build + suíte 34/34)."
+                  onOpenRules={() => setRulesOpen(true)}
+                />
             </div>
             <CodeBlock path="task.md · Fase 19 (checklist pós-homologação)" language="text">
               {VAULT_TASK_SNIPPET}
