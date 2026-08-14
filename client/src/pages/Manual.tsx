@@ -1,5 +1,5 @@
 /*
-  DESIGN: "Blueprint Técnico" — página do Manual de Uso (manual_de_uso.md, v1.7.0).
+  DESIGN: "Blueprint Técnico" — página do Manual de Uso (manual_de_uso.md, v1.8.0).
   Coluna assimétrica: guia do operador à esquerda, sumário sticky à direita.
   Mesma linguagem spec-sheet das demais páginas: TechRule, AuditNote, tabelas mono.
 */
@@ -18,6 +18,7 @@ const TOC = [
   { id: "checklist", label: "Checklist de aceite" },
   { id: "limitacoes", label: "Limitações conhecidas" },
   { id: "integracao", label: "Integração incremental" },
+  { id: "sample", label: "GameAnimationSample" },
 ];
 
 function scrollToSection(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
@@ -45,7 +46,7 @@ export default function Manual() {
               doc. mnu · operador
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <span className="phase-stamp">MNU · v1.7.0</span>
+              <span className="phase-stamp">MNU · v1.8.0</span>
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 guia prático no unreal editor
               </span>
@@ -57,7 +58,7 @@ export default function Manual() {
           </h1>
           <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Guia operacional para configurar, rodar e testar o Sandbox Framework no Unreal Editor —
-            com os 11 plugins compilando e a suíte verde (31/31 specs).
+            com os 11 plugins compilando e a suíte verde (32/32 specs).
           </p>
         </div>
       </section>
@@ -476,7 +477,7 @@ export default function Manual() {
               ["Inventário", "Equipar/desequipar instancia a arma, associa behaviors via interface e limpa o estado sem resíduos."],
               ["Habilidades", "Validação preditiva de mana e cooldowns no frame do cliente, com rollbacks precisos e replicados."],
               ["Persistência", "Carregar a sessão recupera o estado de atributos e slots respeitando a prioridade de carregamento."],
-              ["Debug (v1.7.0)", "GDT exibe a categoria Sandbox com pilha, atributos, tags, cooldowns, slots e lock; desabilitar o plugin não altera os demais."],
+              ["Debug (v1.8.0)", "GDT exibe a categoria Sandbox com pilha, atributos, tags, cooldowns, slots e lock; desabilitar o plugin não altera os demais."],
             ].map(([k, v]) => (
               <li key={k} className="flex gap-3 text-sm leading-relaxed">
                 <CheckCircle2 className="h-4 w-4 text-engineering shrink-0 mt-0.5" />
@@ -498,6 +499,7 @@ export default function Manual() {
               "Sem Motion Warping ou IK completo de mãos/pés.",
               "Sem restauração visual do item equipado ao recarregar a sessão — apenas o inventário lógico é salvo.",
               "Perda de PredictionId em habilidades cascateadas via deferral: mutações diferidas resolvem após a reentrância limpar a CurrentServerPredictionId.",
+              "09_SandboxUI lógica completa, exibição pendente no UMG: o plugin tem a lógica dinâmica de HUD e camadas de widgets com assinaturas assíncronas automáticas; a renderização física herda das backing classes (USBStatusHUDWidget, USBInteractionPromptWidget, USBAbilityBarWidget, USBInventoryGridWidget).",
             ].map((l, i) => (
               <li key={l} className="flex gap-3">
                 <span className="font-mono text-xs text-muted-foreground font-semibold w-6 shrink-0 pt-0.5 text-right">
@@ -530,8 +532,36 @@ export default function Manual() {
               </li>
             ))}
           </ol>
-        </article>
 
+          <TechRule label="06.10 · GameAnimationSample" />
+          <h2 id="sample" className="font-display text-2xl font-bold scroll-mt-24">
+            Integração com o GameAnimationSample
+          </h2>
+          <p className="mt-3 leading-relaxed max-w-3xl text-sm">
+            O Sandbox Framework também está disponível integrado de forma híbrida no projeto{" "}
+            <strong>GameAnimationSample</strong> (<code className="font-mono text-xs">D:\Unreal\GameAnimationSample</code>).
+          </p>
+          <div className="mt-4 max-w-3xl text-sm leading-relaxed">
+            <p className="mt-1"><strong>Target no editor:</strong> <code className="font-mono text-xs">GameAnimationSampleEditor</code> (Win64 Development).</p>
+            <p className="mt-3 font-mono text-xs uppercase tracking-wider">Compilação do editor integrado</p>
+            <pre className="mt-2 overflow-x-auto bg-card border border-border p-4 font-mono text-xs leading-relaxed">{`dotnet "C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" GameAnimationSampleEditor Win64 Development "D:\Unreal\GameAnimationSample\GameAnimationSample.uproject" -waitmutex`}</pre>
+            <p className="mt-3 font-mono text-xs uppercase tracking-wider">Suíte de testes de conformidade</p>
+            <pre className="mt-2 overflow-x-auto bg-card border border-border p-4 font-mono text-xs leading-relaxed">{`& "C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "D:\Unreal\GameAnimationSample\GameAnimationSample.uproject" -NullRHI -NoSound -NoSplash -stdout -ExecCmds="Automation RunTest Sandbox; Quit" -log`}</pre>
+            <div className="mt-4">
+            <AuditNote tone="info">
+              O código e os arquivos de regras de build deste projeto estão sob controle de versão no GitHub:{" "}
+              <a
+                href="https://github.com/JoaoSantosCodes/GameAnimationSampleSandbox-Framework"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-engineering underline underline-offset-2"
+              >
+                GameAnimationSampleSandbox-Framework
+              </a>
+            </AuditNote>
+            </div>
+          </div>
+        </article>
         {/* Sumário sticky */}
         <aside className="hidden lg:block">
           <nav className="sticky top-24 border border-border bg-card p-5">
