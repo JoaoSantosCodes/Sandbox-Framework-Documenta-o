@@ -241,7 +241,7 @@ function ProgressTrack() {
             ✓ até {lastDone ? `${lastDone.title.split(" (")[0]} · ${lastDone.version}` : "—"}
           </span>
           <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-            próxima frente: backlog oficial P-3 → P-4 → P-5 → P-6
+            próxima frente: backlog oficial P-4 → P-5 → P-6 (P-3 concluído 15/08/2026 · relato)
           </span>
         </div>
         {/* Tooltip interativo — hover revela a sequência exata das próximas fases
@@ -254,13 +254,14 @@ function ProgressTrack() {
               próximas fases pendentes · ordem de execução do Vault
             </div>
             <ul className="divide-y divide-border/50">
-              {PHASE_PENDINGS.filter((p) => p.categoria === "Backlog oficial do Vault")
+              {PHASE_PENDINGS.filter((p) => p.categoria === "Backlog oficial do Vault" && p.itens.some((it) => it.estado !== "Concluída"))
                 .sort((a, b) => a.ordem - b.ordem || a.id.localeCompare(b.id))
                 .map((p, i, arr) => (
                   <li key={p.id}>
                     <Link
                       href={p.paginaRelacionada ?? "/pendencias"}
                       className="block px-3 py-2 flex items-start gap-2 hover:bg-accent/60 transition-colors"
+                      {...(p.itens.every((it) => it.estado === "Concluída") ? { "aria-label": `${p.id} concluído` } : {})}
                     >
                       <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-engineering pt-0.5">
                         {p.id}

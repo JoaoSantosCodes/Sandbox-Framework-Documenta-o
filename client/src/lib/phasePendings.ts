@@ -82,19 +82,19 @@ export const PHASE_PENDINGS: PhasePending[] = [
     categoria: "Backlog oficial do Vault",
     ordem: 1,
     resumo:
-      "Montagem dos Widget Blueprints herdando das backing classes C++ do 09_SandboxUI, slots de habilidades com WatchedAbilityTag e playtests de interface em Listen Server e Split-Screen local.",
+      "CONCLUÍDA em 15/08/2026 (homologação relatada pelo usuário: checklist de playtest da Frente 1 executado sem erros no Listen Server e no Split-Screen — nota de origem; o carimbo documental no cofre — Dashboard/task.md/walkthrough.md — fecha a cadeia). Montagem dos Widget Blueprints herdando das backing classes C++ do 09_SandboxUI, slots de habilidades com WatchedAbilityTag e playtests de interface em Listen Server e Split-Screen local.",
     paginaRelacionada: "/fase-19-umg",
     itens: [
       {
         id: "P-3.1",
         exige: "Widget Blueprints sobre as backing classes C++ do 09_SandboxUI",
-        estado: "Pendente",
+        estado: "Concluída",
       },
-      { id: "P-3.2", exige: "Slots de habilidades com WatchedAbilityTag", estado: "Pendente" },
+      { id: "P-3.2", exige: "Slots de habilidades com WatchedAbilityTag", estado: "Concluída" },
       {
         id: "P-3.3",
         exige: "Playtests de interface em Listen Server e Split-Screen local",
-        estado: "Pendente",
+        estado: "Concluída",
       },
     ],
   },

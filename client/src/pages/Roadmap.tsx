@@ -43,6 +43,10 @@ interface RoadmapSlot {
   icon: React.ReactNode;
   title: string;
   detail: string;
+  /* Pendência concluída por relato do usuário (15/08/2026) — dot verde com nota de origem.
+     O carimbo documental no cofre fecha a cadeia; nunca marcar sem relato confirmado. */
+  concluidoEm?: string;
+  concluidoNota?: string;
 }
 
 type MilestoneStatus = "done" | "active" | "planned";
@@ -199,13 +203,17 @@ function StatusBadge({ status }: { status: MilestoneStatus }) {
 }
 
 /* Seção "Em curso" — pendências oficiais do Vault (pendencias_de_fases.md).
-   Não há slots de homologação ativos (nenhuma fase com corpo real em execução). */
+   O P-3 foi concluído por relato do usuário em 15/08/2026 (playtests Listen Server + Split-Screen
+   sem erros) e permanece na lista com dot verde para auditoria; o carimbo documental no cofre
+   fecha a cadeia. Nenhum outro slot tem corpo real em execução. */
 const ROADMAP_SLOTS: RoadmapSlot[] = [
   {
     slotKey: "P-3 · Montagem UMG",
     icon: <Paintbrush className="h-4 w-4" />,
     title: "P-3 · Widget Blueprints no UMG Designer",
     detail: "Backing classes C++ do 09_SandboxUI + WatchedAbilityTag",
+    concluidoEm: "15/08/2026",
+    concluidoNota: "Homologação relatada — checklist de playtest executado sem erros",
   },
   {
     slotKey: "P-4 · Segurança de rede",
@@ -251,7 +259,25 @@ function RoadmapCompletionBanner() {
 
 
 function RoadmapSlotRow({ row, index }: { row: RoadmapSlot; index: number }) {
-  /* Pendências do Vault — não há formulário de submissão; estado sempre "Pendente". */
+  /* Pendências do Vault — estado "Pendente" por padrão; concluídas por relato do usuário
+     recebem dot verde com data (o carimbo documental no cofre fecha a cadeia). */
+  if (row.concluidoEm) {
+    return (
+      <div className={`flex items-center gap-4 px-5 py-4 ${index > 0 ? "border-t border-dotted" : ""}`}>
+        <span className="text-engineering">{row.icon}</span>
+        <div className="flex-1">
+          <div className="text-sm font-medium">{row.title}</div>
+          <div className="font-mono text-[11px] text-muted-foreground">{row.detail}</div>
+          {row.concluidoNota && (
+            <div className="font-mono text-[10px] text-engineering mt-1">{row.concluidoNota}</div>
+          )}
+        </div>
+        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-engineering">
+          Concluída {row.concluidoEm}
+        </span>
+      </div>
+    );
+  }
   return (
     <div className={`flex items-center gap-4 px-5 py-4 ${index > 0 ? "border-t border-dotted" : ""}`}>
       <span className="text-warning">{row.icon}</span>
@@ -277,8 +303,10 @@ function RoadmapInProgress() {
         </span>
       </div>
       <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-        A Fase 19 (Integração no GameAnimationSample) foi concluída no Vault oficial — não há
-        fase com corpo real em execução. As linhas abaixo vêm do documento
+        A Fase 19 (Integração no GameAnimationSample) foi concluída no Vault oficial e o{" "}
+        <strong className="text-foreground">P-3 (Frente 1 · Montagem Visual UMG)</strong> foi concluído por
+        relato do usuário em 15/08/2026 — checklist de playtest executado sem erros (nota de origem;
+        o carimbo documental no cofre fecha a cadeia). As demais linhas vêm do documento{" "}
         <code className="mx-1 border border-dotted px-1 py-0.5 font-mono text-[11px]">pendencias_de_fases.md</code>
         e avançam somente com build UBT Exit 0 + suíte verde + isolamento simétrico.
       </p>

@@ -28,6 +28,12 @@ const CHANGELOG_FILTER_META: Record<ChangelogFilterKey, { label: string }> = {
 /* Alterações da pré-versão v2.0.0-prep — registro documental; nenhum item homologa a fase. */
 export const V20_CHANGELOG: ChangelogEntryCategory[] = [
   {
+    tag: "P-3 · UMG",
+    category: "Novidade",
+    title: "P-3 homologado por relato: Frente 1 (Montagem Visual UMG) concluída",
+    body: "O checklist da Frente 1 foi executado sem erros no Listen Server (dois clientes isolados) e no Split-Screen local (zero spill cruzado), validando P-3.1 (WBPs sobre as backing classes C++ do 09_SandboxUI), P-3.2 (slots com WatchedAbilityTag) e P-3.3 (playtests). Homologação relatada pelo usuário em 15/08/2026 — o painel de pendências, a régua da Home e a seção 'Em curso' do Roadmap espelham a conclusão com nota de origem; o carimbo documental no cofre (Dashboard/task.md/walkthrough.md) fecha a cadeia. Próximo marco da ordem oficial: P-4 (Infraestrutura de Rede).",
+  },
+  {
     tag: "Reconciliação",
     category: "Correção",
     title: "Site alinhado ao Vault oficial: v1.9.0 homologada (F19 GameAnimationSample)",

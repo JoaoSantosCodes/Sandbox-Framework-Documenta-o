@@ -7,7 +7,7 @@
   Papel quente, tinta grafite, acento verde-engineering.
 */
 import { Link } from "wouter";
-import { ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { AuditNote, CodeBlock, CopyButton, PhaseStamp, TechRule } from "@/components/Primitives";
@@ -118,6 +118,22 @@ export default function Phase19Umg() {
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 widgets UMG no editor · fora do escopo da homologação v1.9.0
               </span>
+            </div>
+            <div className="mt-4 flex items-start gap-2.5 border border-engineering/60 bg-engineering/[0.06] px-4 py-3 max-w-3xl">
+              <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-engineering" />
+              <div className="text-sm leading-relaxed">
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering block mb-1">
+                  P-3 homologado · Frente 1 concluída · 15/08/2026
+                </span>
+                <span className="text-muted-foreground">
+                  A montagem dos quatro WBPs sobre as backing classes do 09_SandboxUI, os slots com{" "}
+                  <code className="font-mono text-[11px]">WatchedAbilityTag</code> e o checklist de playtest
+                  Listen Server + Split-Screen foram executados sem erros — <strong className="text-foreground">homologação relatada
+                  pelo usuário em 15/08/2026</strong> (nota de origem). O espelhamento no painel de pendências
+                  reflete esse relato; o carimbo documental no cofre (Dashboard/task.md/walkthrough.md) fecha
+                  a cadeia de homologação do P-3.
+                </span>
+              </div>
             </div>
           </div>
           <h1 className="max-w-3xl font-display text-4xl lg:text-5xl font-bold mt-5 leading-[1.05]">
@@ -268,7 +284,10 @@ export default function Phase19Umg() {
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
           Duas baterias de playtest — single-player PIE e Split-Screen com dois jogadores locais — fecham a
           verificação visual. A segunda bateria é a que prova o contrato mais crítico do projeto: o
-          <strong className="text-foreground"> controle de spill</strong> entre HUDs.
+          <strong className="text-foreground"> controle de spill</strong> entre HUDs. <strong className="text-foreground">Resultado
+          (15/08/2026, relatado pelo usuário):</strong> o checklist foi executado sem erros — Listen Server
+          com dois clientes isolados e Split-Screen com zero spill cruzado, validando os itens P-3.1,
+          P-3.2 e P-3.3 do documento oficial <code className="font-mono text-[11px]">pendencias_de_fases.md</code>.
         </p>
         <div className="mt-4 space-y-3">
           <AuditNote tone="info">
@@ -290,7 +309,10 @@ export default function Phase19Umg() {
           Esta página documenta a execução paralela de conteúdo — os WBPs não alteram o carimbo de homologação
           da Fase 19. A versão v1.9.0 fecha quando o indicador direcional de dano (porta de homologação em{" "}
           <Link href="/fase-19" className="text-engineering underline underline-offset-4">/fase-19</Link>) receber os
-          corpos reais dos quatro slots e a suíte SBUITests 34/34.
+          corpos reais dos quatro slots e a suíte SBUITests 34/34. O <strong className="text-foreground">P-3 (Frente 1 ·
+          Montagem Visual UMG)</strong> segue como pendência oficial do Vault concluída por relato, e o próximo
+          marco da ordem de execução é o <Link href="/pendencias" className="text-engineering underline underline-offset-4">P-4
+          (Infraestrutura de Rede)</Link>.
         </AuditNote>
 
         <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
