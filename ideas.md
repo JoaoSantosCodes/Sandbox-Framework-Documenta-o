@@ -53,3 +53,31 @@ Traços finos, hachuras, carimbos de revisão, cotas e anotações como em desen
 - O modelo de navegação é parte da marca: toda página de documentação preserva um layout de especificação assimétrico com trilho de documento à esquerda (índice de seções visível) e notas de auditoria opcionais na margem direita — nunca uma pilha de artigo centralizada pura.
 - O wordmark deve aparecer completo em mono caps "SANDBOX·FRAMEWORK" ao lado do símbolo de três camadas verde; nunca truncado com reticências na navegação primária.
 - Containers de conteúdo secundário usam linguagem de "spec sheet" — carimbos de fase, metadados mono, réguas técnicas, labels de dependência e cues de auditoria/revisão — em vez de cards genéricos bordados sempre que possível.
+
+## Style Decisions — Redesign com referência fuch.ai (agosto/2026)
+
+O usuário aprovou o layout do site fuch.ai como referência estrutural. A identidade "Blueprint
+Técnico" (paleta, tipografia serifada, mono, verde-auditoria) permanece; o que muda é a
+ORGANIZAÇÃO espacial, adotando os padrões do fuch.ai:
+
+- **Header**: sem nav tradicional larga. Marca de identidade compacta no canto superior esquerdo
+  ("SANDBOX·FRAMEWORK" bold + sublinha mono espaçada com estado de versão); navegação agrupada
+  como chips discretos no canto superior direito (borda fina, mono caps, agrupamento flutuante).
+  Busca (⌘K) e tema vivem como chips utilitários com ícone, lado a lado da nav.
+- **Hero da Home**: wordmark GIGANTE (texto gigante em serif, "SANDBOX" em duas linhas ou uma
+  linha massiva) como fundo tipográfico do hero, com o conteúdo funcional (meta, CTA, diagrama)
+  sobreposto/distribuído nos cantos. Assimetria total: cada canto tem um bloco funcional próprio.
+- **Cantos funcionais**: canto inferior esquerdo = bloco mono estilo terminal (label verde +
+  frase de estado + perguntas atalho "> ..."); canto inferior direito = card de status (versão
+  atual, fases concluídas) espelhando o card de música; chips "sticker" de promo para fases/DD
+  recentes com borda tracejada discreta.
+- **Páginas internas**: header de seção em duas colunas (label mono "02 / SEÇÃO" à esquerda +
+  intro bold à direita, como o WORK); grid assimétrico: coluna estreita mono (índice/timeline)
+  à esquerda + conteúdo amplo à direita com cards numerados ("01 · PLUGIN · STATUS" + título
+  bold + chips de tags).
+- **Faixa final**: marquee/linha fina "TRUSTED BY"-like com labels de plugins/métricas separados
+  por pontos.
+- **Hierarquia por peso, não por caixas**: labels mono cinza, títulos bold, pouco preenchimento
+  de fundo; bordas finas (1px) como única moldura.
+- **Microcódigos**: códigos mono de máquina como elemento decorativo (números de fase, carimbos
+  de auditoria).
