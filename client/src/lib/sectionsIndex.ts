@@ -81,10 +81,20 @@ export const ROUTER_SECTIONS: SectionIndexEntry[] = [
   { id: "s-router-fase18", title: "Contrato da Fase 18", subtitle: "Message Router § F18", page: "/message-router", hash: "fase-18", keywords: "router contrato fase 18 ui widgets", group: "router" },
 ];
 
+export const ROADMAP_SECTIONS: SectionIndexEntry[] = [
+  { id: "s-ro-visao", title: "Roadmap · Visão geral — de Foundation a v2.0.0", subtitle: "Roadmap § Visão", page: "/roadmap", hash: "visao-geral", keywords: "roadmap visão geral 11 plugins foundation timeline", group: "fases" },
+  { id: "s-ro-tempo", title: "Roadmap · Linha do tempo — marcos de execução", subtitle: "Roadmap § Timeline", page: "/roadmap", hash: "linha-do-tempo", keywords: "roadmap linha do tempo marcos v1.7.0 v1.8.0 v1.9.0", group: "fases" },
+  { id: "s-ro-marcos", title: "Roadmap · Marcos homologados", subtitle: "Roadmap § Marcos", page: "/roadmap", hash: "marcos", keywords: "roadmap marcos homologados specs Exit 0", group: "fases" },
+  { id: "s-ro-curso", title: "Roadmap · Em curso — slots A–D da F19", subtitle: "Roadmap § Em curso", page: "/roadmap", hash: "em-curso", keywords: "roadmap em curso slots damage indicator aguardando código", group: "fases" },
+  { id: "s-ro-plan", title: "Roadmap · Próximos passos — 01 fechar v1.9.0 · 02 processo · 03 F20", subtitle: "Roadmap § Roadmap", page: "/roadmap", hash: "roadmap", keywords: "roadmap próximos passos fase 20 persistência playtest", group: "fases" },
+  { id: "s-ro-riscos", title: "Roadmap · Riscos e mitigação", subtitle: "Roadmap § Riscos", page: "/roadmap", hash: "riscos", keywords: "roadmap riscos mitigação bloqueante sync evidence", group: "fases" },
+];
+
 export const ALL_SECTIONS: SectionIndexEntry[] = [
   ...MANUAL_SECTIONS,
   ...SFPS_SECTIONS,
   ...SFDG_SECTIONS,
   ...FASE_SECTIONS,
   ...ROUTER_SECTIONS,
+  ...ROADMAP_SECTIONS,
 ];

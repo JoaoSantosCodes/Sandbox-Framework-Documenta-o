@@ -145,6 +145,7 @@ const NAV_CHIPS = [
   { href: "/manifesto", label: "Manifesto & Padrões", short: "10 · Manifesto" },
   { href: "/historico", label: "Histórico Consolidado", short: "11 · Hist" },
   { href: "/fase-19-umg", label: "F19 — Widgets UMG", short: "12 · UMG" },
+  { href: "/roadmap", label: "Linha do Tempo & Roadmap", short: "13 · Roadmap" },
 ];
 
 function ThemeToggle({ compact = false }: { compact?: boolean }) {

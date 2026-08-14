@@ -58,6 +58,7 @@ const PAGES: IndexEntry[] = [
   { id: "plugins", title: "Topologia de Plugins", subtitle: "Dependências unidirecionais dos 11 plugins", page: "/plugins", keywords: "plugins dependências layer foundation", group: "paginas" },
   { id: "fases", title: "Histórico de Fases", subtitle: "Registro de homologação por versão", page: "/fases", keywords: "fases histórico versões specs", group: "paginas" },
   { id: "manifesto", title: "Manifesto e Padrões de Código", subtitle: "Os 10 princípios e standards A/B/C", page: "/manifesto", keywords: "manifesto princípios standards", group: "paginas" },
+  { id: "roadmap", title: "Linha do Tempo & Roadmap", subtitle: "Marcos homologados · F19 em homologação · rota até a v2.0.0", page: "/roadmap", keywords: "roadmap linha do tempo marcos riscos v1.9.0 v2.0.0 timeline", group: "paginas" },
   { id: "manual", title: "Manual de Uso (v1.7.0)", subtitle: "Pré-requisitos, playtest, gameplay debugger, checklist", page: "/manual", keywords: "manual uso playtest debug", group: "paginas" },
 ];
 

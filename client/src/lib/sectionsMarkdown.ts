@@ -79,11 +79,26 @@ const ROUTER_SECTIONS: SectionCopySource = {
   },
 };
 
+const ROADMAP_SECTIONS: SectionCopySource = {
+  route: "/roadmap",
+  page: "Linha do Tempo & Roadmap",
+  ids: ["visao-geral", "linha-do-tempo", "marcos", "em-curso", "roadmap", "riscos"],
+  labels: {
+    "visao-geral": "Visão geral",
+    "linha-do-tempo": "Linha do tempo",
+    marcos: "Marcos homologados",
+    "em-curso": "Em curso",
+    roadmap: "Roadmap",
+    riscos: "Riscos & mitigação",
+  },
+};
+
 export const SECTION_COPY_SOURCES: SectionCopySource[] = [
   MANUAL_SECTIONS,
   SPEC_SECTIONS,
   GUIDE_SECTIONS,
   ROUTER_SECTIONS,
+  ROADMAP_SECTIONS,
 ];
 
 /** Seleciona a fonte de cópia da rota atual, se houver. */
