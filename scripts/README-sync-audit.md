@@ -60,7 +60,37 @@ não tem permissão `workflows`, portanto ele não pode ser criado por push — 
 ativação é manual:
 
 1. No repositório: `.github/workflows/sync-audit.yml` (criar) ← copie o conteúdo de `scripts/sync-audit-workflow.yml`
-2. (Opcional) Crie o segredo `VAULT_MIRROR_REPO` com um espelho de leitura do Vault
+2. Configurar a permissão `Workflows` do GitHub App (passo a passo abaixo)
+3. (Opcional) Crie o segredo `VAULT_MIRROR_REPO` com um espelho de leitura do Vault
+
+### Como liberar a permissão `Workflows` do GitHub App
+
+O push que cria `.github/workflows/` falhou com `refusing to allow a GitHub App to
+create or update workflow` porque o token do App não tem a permissão de repositório
+**Workflows** — o GitHub a exige explicitamente para qualquer push que toque o
+diretório de workflows ([docs oficiais][1], [discussão do problema][2]):
+
+1. Abra a página do App em https://github.com/settings/apps (ou Settings →
+   Developer settings → GitHub Apps) e clique no App instalado.
+2. Vá em **Permissions & events** → **Configure permissions**.
+3. Em **Repository permissions**, localize **Workflows** e selecione
+   **Read & write** — Write é obrigatório para criar/editar workflow files.
+4. Mantenha **Contents** em **Read & write** (push normal).
+5. Clique em **Save changes**.
+6. A conta dona da instalação verá um banner pedindo aprovação da nova permissão —
+   confirme na tela do App ou em https://github.com/settings/installations. Sem
+   essa aprovação, o App continua com as permissões antigas ([nota de campo][3]).
+7. Reinstale/atualize a instalação se o GitHub pedir: Applications → App instalado →
+   **Update**.
+
+
+Com as permissões aceitas, o mesmo push que falhava escreve
+`.github/workflows/sync-audit.yml` normalmente. Se o token usado for um PAT
+fine-grained, as permissões equivalentes são `contents:write` + `workflows:write`.
+
+[1]: https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/choosing-permissions-for-a-github-app
+[2]: https://github.com/orgs/community/discussions/35410
+[3]: https://github.com/orgs/community/discussions/35410#discussioncomment-9508716
 
 Alternativa em `actions/checkout` direto quando houver espelho privado:
 
