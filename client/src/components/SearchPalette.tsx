@@ -42,6 +42,7 @@ const DECISIONS: IndexEntry[] = [
   { id: "DD-12", title: "DD-12 — Header compacto com rótulos curtos de navegação", subtitle: "Labels curtos + tooltip completo · sem overflow horizontal · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-12", keywords: "dd-12 header navegação responsivo compacto", group: "decisoes" },
   { id: "DD-13", title: "DD-13 — Banner persistente de acesso por link direto", subtitle: "Âncora /decisoes#dd-XX com banner âmbar + scroll suave · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-13", keywords: "dd-13 link direto banner âncora scroll", group: "decisoes" },
   { id: "DD-14", title: "DD-14 — Redesign de layout com referência fuch.ai", subtitle: "Chips de navegação · hero wordmark gigante · índices numerados · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-14", keywords: "dd-14 layout fuch.ai hero wordmark chips navegação redesign", group: "decisoes" },
+  { id: "DD-15", title: "DD-15 — Atalhos ⌘⇧C e compartilhamento de visualização do histórico", subtitle: "Cópia Markdown de checklist e seções técnicas · share de filtros · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-15", keywords: "dd-15 atalho copiar compartilhar histórico filtros produtividade clipboard", group: "decisoes" },
 ];
 const PAGES: IndexEntry[] = [
   { id: "inicio", title: "Início", subtitle: "Visão geral, topologia e métricas do framework", page: "/", keywords: "home dashboard métricas topologia", group: "paginas" },

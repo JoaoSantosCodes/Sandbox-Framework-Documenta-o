@@ -240,7 +240,7 @@ export default function Phase19() {
             <div className="flex flex-wrap items-center gap-2 mt-3">
               <PhaseStamp phase="19" version="v1.9.0 · em homologação" warn />
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                rascunho · aguardando homologação
+                porta de homologação · aguardando corpo do build
               </span>
             </div>
           </div>
@@ -310,8 +310,8 @@ export default function Phase19() {
 
         <TechRule label="Proposta de escopo" />
 
-        <h2 id="escopo" className="mt-12 font-serif text-2xl font-bold">
-          Escopo proposto (não homologado)
+          <h2 id="escopo" className="mt-12 font-serif text-2xl font-bold">
+          Escopo proposto (contrato de homologação)
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
           Rascunho do plano, para revisão antes de qualquer implementação em C++. Os cinco itens abaixo
@@ -418,8 +418,8 @@ export default function Phase19() {
           (mapa de AttackId recentes com TTL ou bSkipClientNotify no caminho feliz), não a descrição em prosa.
         </AuditNote>
 
-        <h2 id="aceite" className="mt-12 font-serif text-2xl font-bold">
-          Critérios de aceite preliminares
+          <h2 id="aceite" className="mt-12 font-serif text-2xl font-bold">
+          Critérios de aceite da homologação
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
           A homologação da Fase 19 exigirá, no mínimo: (1) SBUITests com os 8 cenários verdes (6 existentes +

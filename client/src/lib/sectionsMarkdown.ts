@@ -50,7 +50,41 @@ const SPEC_SECTIONS: SectionCopySource = {
   },
 };
 
-export const SECTION_COPY_SOURCES: SectionCopySource[] = [MANUAL_SECTIONS, SPEC_SECTIONS];
+const GUIDE_SECTIONS: SectionCopySource = {
+  route: "/guia-cpp",
+  page: "Guia de Desenvolvimento C++",
+  ids: ["sfdg-01", "sfdg-02", "sfdg-03", "sfdg-04", "sfdg-05", "sfdg-06", "sfdg-07", "sfdg-08"],
+  labels: {
+    "sfdg-01": "01 · Comportamento de Movimentação (05_SandboxCharacter)",
+    "sfdg-02": "02 · Utilizando o Message Router (USBEventSubsystem)",
+    "sfdg-03": "03 · Ciclo de Vida, Ticks e Ordem de Execução",
+    "sfdg-04": "04 · Sincronização via ISBReplicable",
+    "sfdg-05": "05 · Objetos Interativos Modulares (07_SandboxInteraction)",
+    "sfdg-06": "06 · Habilidades no Behavior Stack (Fase 16)",
+    "sfdg-07": "07 · Integração ao Save Game System (Fase 15)",
+    "sfdg-08": "08 · Precedentes Homologados — DD-01 ··· DD-08 (v1.8.0)",
+  },
+};
+
+const ROUTER_SECTIONS: SectionCopySource = {
+  route: "/message-router",
+  page: "Message Router",
+  ids: ["modos", "tabela", "prioridades", "invariantes", "fase-18"],
+  labels: {
+    modos: "Modos de publicação",
+    tabela: "Tabela canônica — eventos Event.*",
+    prioridades: "Prioridades de assinatura",
+    invariantes: "Invariantes de consumo",
+    "fase-18": "Contrato da Fase 18",
+  },
+};
+
+export const SECTION_COPY_SOURCES: SectionCopySource[] = [
+  MANUAL_SECTIONS,
+  SPEC_SECTIONS,
+  GUIDE_SECTIONS,
+  ROUTER_SECTIONS,
+];
 
 /** Seleciona a fonte de cópia da rota atual, se houver. */
 export function sourceForRoute(route: string): SectionCopySource | null {

@@ -370,6 +370,23 @@ const DECISIONS: Decision[] = [
     status: "Homologada",
     homologatedAt: "2026-08-14",
   },
+  {
+    id: "DD-15",
+    version: "v1.9.0 · planejada",
+    title: "Atalhos de produtividade ⌘⇧C e compartilhamento de visualização do histórico",
+    problem:
+      "A reprodução de estado para revisões exigia esforço manual: copiar o checklist de uma fase, extrair a seção técnica ativa de uma página longa e replicar filtros de visualização — rotinas repetidas em praticamente toda rodada de auditoria entre Vault e site.",
+    decision:
+      "Registrar dois padrões como UI de produtividade: (a) ⌘⇧C copia em Markdown o checklist da fase ativa ou a seção técnica sob a linha de leitura (Manual, SFPS, Guia C++ e Message Router, via sectionsMarkdown.ts), com badge ⌘⇧C no header ao lado do ⌘K para descoberta guiada; (b) botão \"Compartilhar visualização\" no /historico copia a URL com os filtros ?layer=&dd= aplicados. Toast sonner confirma cada cópia; o atalho ignora foco em campos de texto para não colidir com o ⌘C nativo.",
+    rejected:
+      "Botão fixo de copiar em cada seção — polui o ritmo editorial das páginas longas e repete a função do atalho contextual; salvar filtros apenas em localStorage — não permite compartilhamento por link, inviabilizando links diretos em conversas de review; ⌘⇧C copiando a página inteira — perde a intenção de copiar \"o que estou lendo\", inflando a área de transferência com ruído.",
+    consequence:
+      "Checklists e seções técnicas exportáveis em um gesto, sem mouse; visualizações filtradas do histórico viram links compartilháveis com restauração exata da seleção; o badge do header garante descoberta sem depender de documentação externa.",
+    precedent:
+      "Par direto com DD-12 (compactar oculta, não deleta): recursos de produtividade não podem custar a clareza editorial. O conteúdo copiado vem do DOM da própria página — mesma fonte de verdade do render — e não de strings duplicadas, alinhado ao princípio da seção única de verdade.",
+    status: "Homologada",
+    homologatedAt: "2026-08-14",
+  },
 ];
 
 const STATUS_STYLES: Record<DecisionStatus, string> = {

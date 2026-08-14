@@ -121,3 +121,39 @@ State atual relevante:
 - Inserir botão Compartilhar no History.tsx (após bloco LAYERS, linha ~281).
 - Screenshot de auditoria (/historico, /manual, /especificacao, home) → checkpoint → entrega com sugestões.
 - Checkpoint anterior: 024a1911. Auto-publish ativo.
+
+## Rodada 7 — skill + DD-15 + ⌘⇧C Guide/Router + F19 (aguardando plano executado real)
+
+### Feito até agora (rodada 7)
+1. Skill `sandbox-framework-review` atualizada e validada (badge ⌘⇧C, sectionsMarkdown, share, DD-15 pendente).
+
+### Dados técnicos coletados (para editar sem ler arquivos)
+- Guide.tsx: ids de seção `sfdg-01..08` em `<section id=...>` com h3 seguinte. Rota `/guia-cpp`. Títulos:
+  sfdg-01 "01 · Comportamento de Movimentação (05_SandboxCharacter)", sfdg-02 "02 · Utilizando o Message Router (USBEventSubsystem)",
+  sfdg-03 "03 · Ciclo de Vida, Ticks e Ordem de Execução", sfdg-04 "04 · Sincronização via ISBReplicable",
+  sfdg-05 "05 · Objetos Interativos Modulares (07_SandboxInteraction)", sfdg-06 "06 · Habilidades no Behavior Stack (Fase 16)",
+  sfdg-07 "07 · Integração ao Save Game System (Fase 15)", sfdg-08 "08 · Precedentes Homologados — DD-01···DD-08 (v1.8.0)".
+- MessageRouter.tsx: ids `modos, tabela, prioridades, invariantes, fase-18` em h2 (linhas 146/166/248/267/286). Rota `/message-router`.
+  Títulos: "Modos de publicação", "Tabela canônica — eventos Event.*", "Prioridades de assinatura", "Invariantes de consumo", "Contrato da Fase 18".
+- sectionsMarkdown.ts: exportar SECTION_COPY_SOURCES = [MANUAL, SPEC]; adicionar GUIDE_SECTIONS (route "/guia-cpp") e ROUTER_SECTIONS (route "/message-router").
+- Decisions.tsx: array DECISIONS com objetos Decision; últimos IDs DD-14; padrão status Pendente → Homologada. DD-15 = "Atalhos de produtividade ⌘⇧C + compartilhamento de visualização do histórico" (badge no header, seções técnicas em Markdown via sectionsMarkdown.ts, share URL ?layer=&dd= no History). Status: Homologada (decisão de UI registrada nesta rodada) — usar status "Pendente" com homologatedAt null OU "Homologada" com data 14/08/2026.
+- Phase19.tsx: slots A–D = CODE_SLOTS (const no topo), seção "Corpo do código (homologação)" com botão Copiar Tudo; hero "v1.9.0 · em homologação" (badge âmbar); checklist 11 itens (sbf-phase19-checklist).
+- Checkpoint anterior: c9968624. Auto-publish ativo.
+
+### FALTA (rodada 7)
+- sectionsMarkdown.ts: adicionar GUIDE_SECTIONS + ROUTER_SECTIONS.
+- Decisions.tsx: adicionar DD-15 ao array (status "Homologada"? ou "Pendente" — usuário pediu registrar; DD-11/12/13/14 já Homologadas registradas em 14/08/2026; DD-15 homologada hoje 14/08/2026). Atualizar contagem 14 → 15 em Decisions.tsx e siteData (home/historico métricas "14 DECISÕES" → "15").
+- Phase19.tsx: preparar slots A–D como "roteiro executado preenchível" — aguardando plano executado real (usuário disse "preenchendo com plano executado" mas não enviou os arquivos; manter disciplina: não inventar corpo). Talvez atualizar checklist/labels para refletir "aguardando corpo do build".
+- Rodar tsc, screenshots (/historico, /decisoes, /guia-cpp, /message-router), checkpoint, entrega.
+- F19: versão do projeto v1.9.0 — o carimbo da página F19 é "v1.9.0 · em homologação"; homologação REAL depende do plano executado que o usuário vai enviar.
+
+### Progresso atualizado (rodada 7) — checkpoint anterior c9968624
+- [x] Skill atualizada + validada (sandbox-framework-review)
+- [x] sectionsMarkdown.ts: GUIDE_SECTIONS (sfdg-01..08) + ROUTER_SECTIONS (modos/tabela/prioridades/invariantes/fase-18) adicionados e exportados em SECTION_COPY_SOURCES.
+- [x] DD-15 adicionada ao Decisions.tsx (status Homologada, homologatedAt 2026-08-14, version "v1.9.0 · planejada").
+- [x] History.tsx: contagem 15 decisões; DD-15 no grupo v1.8.0; grupo "v1.9.0 · planejada" = apenas DD-11 (duplicata removida).
+- [x] SearchPalette.tsx: DD-15 indexada (grupo decisoes).
+- [x] Home.tsx: "ver as 15 decisões DD?" corrigido.
+- [x] tsc limpo.
+- [ ] Falta: (Fase 3 do plano) Phase19.tsx — atualizar para preparar homologação v1.9.0 (slots A–D aguardando plano executado real; usuário NÃO enviou os arquivos, manter disciplina); (Fase 4) screenshots (/decisoes, /guia-cpp, /message-router, /historico), checkpoint, entrega.
+- Nota F19: o carimbo atual é "v1.9.0 · em homologação"; homologação real depende do build + SBUITests 34/34. Na entrega, esclarecer ao usuário que o plano executado real precisa ser enviado.

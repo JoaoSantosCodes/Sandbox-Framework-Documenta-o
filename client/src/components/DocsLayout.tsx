@@ -284,7 +284,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
             {/* Atalho ⌘⇧C — copiar checklist/seção técnica ativa (descoberta guiada, par do ⌘K) */}
             <span className="hidden lg:inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground border border-border bg-background px-2.5 py-1.5" aria-hidden title="Copiar checklist ou seção técnica ativa em Markdown">
               <span className="opacity-60">⌘⇧C</span>
-              <span className="hidden xl:inline opacity-40">copiar fase</span>
+              <span className="hidden xl:inline opacity-40">copiar fase / seção</span>
             </span>
             <ThemeToggle compact />
             <span className="hidden md:inline-block mx-1 h-4 w-px bg-border/70" />
