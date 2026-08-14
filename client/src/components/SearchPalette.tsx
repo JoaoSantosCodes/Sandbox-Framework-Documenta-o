@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/command";
 import { PLUGINS } from "@/lib/siteData";
 import { ALL_SECTIONS } from "@/lib/sectionsIndex";
-import { Clock, Code2, Compass, FileText, Gavel, Hash, Layers, Zap } from "lucide-react";
+import { Clock, Code2, Compass, FileText, Gavel, Hash, Layers, Search, Zap } from "lucide-react";
 
 interface IndexEntry {
   id: string;
@@ -188,6 +188,18 @@ function matches(entry: IndexEntry, q: string): boolean {
 export function SearchPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+
+  // Abertura programática com query inicial: document.dispatchEvent(
+  // new CustomEvent("sbf-open-search", { detail: "USBUIDamageIndicator" }))
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const detail = (e as CustomEvent<string | undefined>).detail ?? "";
+      setQuery(detail);
+      setOpen(true);
+    };
+    window.addEventListener("sbf-open-search", onOpen);
+    return () => window.removeEventListener("sbf-open-search", onOpen);
+  }, []);
   const [history, setHistory] = useState<string[]>([]);
   const [, navigate] = useLocation();
 
@@ -328,14 +340,49 @@ export function SearchPalette() {
   );
 }
 
-export function SearchShortcut() {
+// Abre a paleta de busca com uma query inicial (usada pela barra inline do header).
+export function openSearchWithQuery(query = "") {
+  window.dispatchEvent(new CustomEvent("sbf-open-search", { detail: query }));
+}
+
+// Barra de pesquisa simples no cabeçalho (desktop): digitar abre a paleta com o texto;
+// clique sem texto abre a paleta vazia. Mobile mantém o chip ⌘K original.
+export function SearchShortcut({ compact = false }: { compact?: boolean }) {
+  const [value, setValue] = useState("");
+  if (compact) {
+    return (
+      <button
+        onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+        className="inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground border border-border bg-background px-2.5 py-1.5 hover:border-engineering/60 hover:text-engineering transition-colors"
+        aria-label="Abrir busca global"
+      >
+        <span className="opacity-60">⌘K</span>
+      </button>
+    );
+  }
   return (
-    <button
-      onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
-      className="hidden md:inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground border border-border bg-background px-2.5 py-1.5 hover:border-engineering/60 hover:text-engineering transition-colors"
-      aria-label="Abrir busca global"
-    >
-      <span className="opacity-60">⌘K</span>
-    </button>
+    <div className="relative hidden md:flex items-center">
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60 pointer-events-none" />
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onFocus={() => {
+          openSearchWithQuery(value);
+          setValue("");
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            (e.target as HTMLInputElement).blur();
+            setValue("");
+          }
+        }}
+        placeholder="Buscar fase, classe, tag…"
+        aria-label="Buscar no framework"
+        className="w-52 lg:w-64 rounded-full border border-border bg-background pl-8 pr-9 py-1.5 font-mono text-[11px] text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-engineering/60 transition-colors"
+      />
+      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none font-mono text-[9px] uppercase tracking-wider text-muted-foreground/50">
+        ⌘K
+      </span>
+    </div>
   );
 }
