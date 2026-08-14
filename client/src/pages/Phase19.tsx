@@ -6,8 +6,19 @@
   Papel quente, tinta grafite, acento verde-engineering. Carimbo "em planejamento".
 */
 import { Link } from "wouter";
-import { useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Download, FileText } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Download,
+  FileText,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import hljs from "highlight.js";
+import "highlight.js/styles/atom-one-dark.css";
+import type { ReactNode } from "react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { PhaseChecklist } from "@/components/PhaseChecklist";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
@@ -274,6 +285,20 @@ function SlotCard({
 }) {
   const [draft, setDraft] = useState(submissions[slot.slot] ?? "");
   const [openForm, setOpenForm] = useState(false);
+  const highlightRef = useRef<HTMLPreElement>(null);
+  useEffect(() => {
+    // Reaplica o highlight quando o draft muda — highlight.js lê o texto cru.
+    const el = highlightRef.current;
+    if (!el) return;
+    if (draft.trim().length === 0) {
+      el.textContent = "";
+      el.classList.remove("hljs");
+      return;
+    }
+    const result = hljs.highlight(draft, { language: "cpp" });
+    el.innerHTML = result.value;
+    el.classList.add("hljs");
+  }, [draft]);
   return (
     <div
       className={`border ${
@@ -357,14 +382,23 @@ function SlotCard({
                   <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
                     Corpo do código ({slot.slot} — mínimo 40 caracteres)
                   </span>
-                  <textarea
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    rows={8}
-                    spellCheck={false}
-                    className="mt-1 w-full border border-border bg-background font-mono text-[12px] leading-relaxed px-3 py-2 focus:outline-none focus:border-engineering/70"
-                    placeholder={`Cole aqui o corpo real de ${slot.slot}… // SBEventPayloads.h, broadcast do Hitscan, USBUIDamageIndicator ou SBUITests`}
-                  />
+                  {/* Destaque de sintaxe básico: o <pre> espelha o texto cru e o
+                      textarea fica transparente por cima — digitação e seleção normais, visual colorido. */}
+                  <div className="relative mt-1 w-full border border-border bg-background font-mono text-[12px] leading-relaxed">
+                    <pre
+                      ref={highlightRef}
+                      aria-hidden="true"
+                      className="absolute inset-0 m-0 overflow-auto whitespace-pre-wrap break-words px-3 py-2 pointer-events-none text-transparent selection:bg-transparent"
+                    />
+                    <textarea
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      rows={8}
+                      spellCheck={false}
+                      className="relative w-full bg-transparent resize-y px-3 py-2 text-transparent caret-foreground focus:outline-none"
+                      placeholder={`Cole aqui o corpo real de ${slot.slot}… // SBEventPayloads.h, broadcast do Hitscan, USBUIDamageIndicator ou SBUITests`}
+                    />
+                  </div>
                 </label>
                 <div className="flex items-center gap-2">
                   <button
@@ -415,6 +449,50 @@ const CHECKLIST_ITEMS = [
   { key: "vault", label: "Vault + site carimbados v1.9.0 (Dashboard, task.md, siteData)" },
 ];
 
+/* Importa o backup .txt exportado pela função exportSubmissions — restaura apenas
+   os slots reconhecidos pelo cabeçalho "=== Slot X … ===", ignorando blocos inválidos. */
+function importSubmissions(
+  submissions: Record<string, string>,
+  submitAll: (next: Record<string, string>) => void,
+): void {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".txt,text/plain";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const restored: Record<string, string> = { ...submissions };
+    const slotPattern = /^=== (Slot [A-D][^=·]+)\s*·/;
+    const blocks = text.split(/=== /).filter((b) => b.trim());
+    let matched = 0;
+    for (const block of blocks) {
+      const headerMatch = block.match(slotPattern);
+      if (!headerMatch) continue;
+      const header = headerMatch[1].trim();
+      const code = block.slice(headerMatch[0].length).replace(/^Exige:.*?\n\n/, "").trim();
+      if (code.length < 40) continue;
+      // casa o cabeçalho com o slot correspondente (Slot A · … → "Slot A · SBEventPayloads")
+      const slot = CODE_SLOTS.find((s) => header.startsWith(s.slot));
+      if (!slot || restored[slot.slot] === code) continue;
+      restored[slot.slot] = code;
+      matched++;
+    }
+    if (matched === 0) {
+      toast.error("Nenhum slot restaurado", {
+        description: "O arquivo não contém blocos legíveis de slots auditáveis da F19.",
+      });
+      return;
+    }
+    submitAll(restored);
+    toast.success(`${matched} ${matched === 1 ? "slot restaurado" : "slots restaurados"}`, {
+      description: "Submissões importadas do backup .txt — verificação do build segue necessária.",
+      duration: 5000,
+    });
+  };
+  input.click();
+}
+
 /* Exporta os códigos submetidos como arquivo .txt — apenas os slots com código,
    um por bloco, para backup entre navegadores (localStorage é local ao browser). */
 function exportSubmissions(submissions: Record<string, string>) {
@@ -446,7 +524,7 @@ function exportSubmissions(submissions: Record<string, string>) {
 export default function Phase19() {
   const active = useActiveSection(TOC.map((t) => t.id));
   const [rulesOpen, setRulesOpen] = useState(false);
-  const { submissions, submitSlot } = useSlotSubmissions("sbf-slot-submissions-19");
+  const { submissions, submitSlot, clearAll, submitAll } = useSlotSubmissions("sbf-slot-submissions-19");
   const submittedCount = CODE_SLOTS.filter((s) => submissions[s.slot]).length;
   const resolveSlot = (s: (typeof CODE_SLOTS)[number]): { status: SlotStatus; code: string } =>
     submissions[s.slot] ? { status: "Código recebido" as const, code: submissions[s.slot] } : s;
@@ -639,7 +717,57 @@ export default function Phase19() {
                 className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <Download className="h-3.5 w-3.5" />
-                Exportar submetidos (.txt)
+                Exportar (.txt)
+              </button>
+              <button
+                type="button"
+                onClick={() => importSubmissions(submissions, submitAll)}
+                className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-engineering/60 hover:text-engineering transition-colors"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Importar (.txt)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (submittedCount === 0) {
+                    toast("Nada a limpar", { description: "Nenhum slot tem submissão neste navegador." });
+                    return;
+                  }
+                  const confirmId = toast(
+                    <div className="flex flex-col gap-2">
+                      <p className="font-medium">Limpar todas as submissões?</p>
+                      <p className="text-xs text-muted-foreground">Reseta a barra de progresso e os 4 slots para “Aguardando Código” — ação irreversível.</p>
+                      <div className="flex gap-2 mt-1">
+                        <button
+                          type="button"
+                          className="bg-destructive text-destructive-foreground px-3 py-1 text-xs font-mono uppercase hover:opacity-90 transition-opacity"
+                          onClick={() => {
+                            clearAll();
+                            toast.dismiss(confirmId);
+                            toast.success("Todas as submissões removidas", {
+                              description: "Barra de progresso em 0/4 e slots restaurados para “Aguardando Código”.",
+                            });
+                          }}
+                        >
+                          Sim, limpar tudo
+                        </button>
+                        <button
+                          type="button"
+                          className="border border-border px-3 py-1 text-xs font-mono uppercase hover:border-engineering/60 transition-colors"
+                          onClick={() => toast.dismiss(confirmId)}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div> as unknown as ReactNode,
+                    { duration: 10000 },
+                  );
+                }}
+                className="inline-flex items-center gap-1.5 border border-border bg-card px-3 py-1.5 text-xs font-mono uppercase tracking-[0.1em] hover:border-destructive/60 hover:text-destructive transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Limpar todas
               </button>
             </div>
           </div>

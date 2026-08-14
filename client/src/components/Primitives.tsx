@@ -243,7 +243,23 @@ export function useSlotSubmissions(storageKey: string) {
     }
     setSubmissions(next);
   };
-  return { submissions, submitSlot };
+  const clearAll = () => {
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      // ignorado — sem quebra de UI
+    }
+    setSubmissions({});
+  };
+  const submitAll = (next: Record<string, string>) => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // ignorado — sem quebra de UI
+    }
+    setSubmissions(next);
+  };
+  return { submissions, submitSlot, clearAll, submitAll };
 }
 
 export function TechRule({ label }: { label?: string }) {
