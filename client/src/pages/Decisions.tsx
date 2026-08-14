@@ -387,6 +387,23 @@ const DECISIONS: Decision[] = [
     status: "Homologada",
     homologatedAt: "2026-08-14",
   },
+  {
+    id: "DD-16",
+    version: "v1.9.0 · planejada",
+    title: "Portas de homologação com slots auditáveis — padrão reutilizável para fases futuras",
+    problem:
+      "Fases em planejamento tendem a evoluir para especificação fechada em prosa antes da execução — e prosa não prova comportamento. Quando a execução chega, a página da fase precisa ser reescrita do zero, perdendo o histórico do convite à homologação e o contrato que orientou a sprint.",
+    decision:
+      "Fases futuras (a partir da Fase 19) nascem como \"porta de homologação\": quatro slots auditáveis de contrato (A–D: payload em 04_SandboxCore, produtor autoritativo em 06, widget em 09, testes SBUITests), cada um com texto de exigência + CodeBlock C++ de contrato marcado \"aguardando corpo do build\" + CopyButton individual, e um \"Copiar tudo\" que concatena os slots para o escopo da sprint no Vault. O carimbo fica \"v1.X.0 · em homologação\" até o plano executado real ser submetido; a homologação exige os corpos reais de C++, suíte de testes verde (34/34) e isolamento simétrico — nunca código inventado preenche um slot.",
+    rejected:
+      "Especificar a fase completa em prosa antes da execução — viola a regra do projeto de nunca aceitar prosa como prova e infla a área da decisão sem revisão; slots com pseudocódigo \"exemplificativo\" já executável — o exemplo executável vira referência silenciosa e contamina o build (padrão DD-01: nunca vazar bypass para produção); abrir a página como \"rascunho livre\" — perde o contrato estruturado que orienta a sprint e não tem ponto de auditoria claro.",
+    consequence:
+      "Toda fase futura tem um ponto de auditoria explícito: a revisão examina os quatro slots com o corpo real lado a lado do contrato. O histórico do convite à homologação (pré-requisitos, escopo, aceite) permanece preservado após a homologação. Sites com mais de uma fase futura replicam o padrão sem re-inventar a página.",
+    precedent:
+      "Extensão direta da disciplina do Manifesto (nunca aceitar prosa como prova) e da DD-11 (deduplicação via AttackId): o mecanismo concreto é exigido, não descrito. Mesma simetria Entry/Exit do DD-02 aplicada à documentação — cada abertura de fase (convite) exige fechamento (homologação) em todos os caminhos.",
+    status: "Homologada",
+    homologatedAt: "2026-08-14",
+  },
 ];
 
 const STATUS_STYLES: Record<DecisionStatus, string> = {

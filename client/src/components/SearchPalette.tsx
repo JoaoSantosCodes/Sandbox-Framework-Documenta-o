@@ -43,6 +43,7 @@ const DECISIONS: IndexEntry[] = [
   { id: "DD-13", title: "DD-13 — Banner persistente de acesso por link direto", subtitle: "Âncora /decisoes#dd-XX com banner âmbar + scroll suave · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-13", keywords: "dd-13 link direto banner âncora scroll", group: "decisoes" },
   { id: "DD-14", title: "DD-14 — Redesign de layout com referência fuch.ai", subtitle: "Chips de navegação · hero wordmark gigante · índices numerados · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-14", keywords: "dd-14 layout fuch.ai hero wordmark chips navegação redesign", group: "decisoes" },
   { id: "DD-15", title: "DD-15 — Atalhos ⌘⇧C e compartilhamento de visualização do histórico", subtitle: "Cópia Markdown de checklist e seções técnicas · share de filtros · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-15", keywords: "dd-15 atalho copiar compartilhar histórico filtros produtividade clipboard", group: "decisoes" },
+  { id: "DD-16", title: "DD-16 — Portas de homologação com slots auditáveis", subtitle: "Padrão reutilizável para fases futuras · slots A–D · nunca prosa como prova · Homologada em 14/08/2026", page: "/decisoes", hash: "DD-16", keywords: "dd-16 homologação slots auditáveis contrato build fase futura f19", group: "decisoes" },
 ];
 const PAGES: IndexEntry[] = [
   { id: "inicio", title: "Início", subtitle: "Visão geral, topologia e métricas do framework", page: "/", keywords: "home dashboard métricas topologia", group: "paginas" },

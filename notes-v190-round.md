@@ -157,3 +157,20 @@ State atual relevante:
 - [x] tsc limpo.
 - [ ] Falta: (Fase 3 do plano) Phase19.tsx — atualizar para preparar homologação v1.9.0 (slots A–D aguardando plano executado real; usuário NÃO enviou os arquivos, manter disciplina); (Fase 4) screenshots (/decisoes, /guia-cpp, /message-router, /historico), checkpoint, entrega.
 - Nota F19: o carimbo atual é "v1.9.0 · em homologação"; homologação real depende do build + SBUITests 34/34. Na entrega, esclarecer ao usuário que o plano executado real precisa ser enviado.
+
+## Rodada 8 (em andamento) — DD-16, Copiar Seção, toast ⌘⇧C
+Estado até agora:
+- [x] SKILL.md sandbox-framework-review atualizada (DD-16, portas de homologação, botões Copiar Seção) e validada.
+- [x] DD-16 adicionada ao Decisions.tsx após DD-15 (formato: problem/decision/rejected/consequence/precedent, status Homologada 2026-08-14, version "v1.9.0 · planejada").
+- [x] Contagens 15→16: Home ("> ver as 16 decisões DD?"), History METRICS (16 decisões), History intro ("cruza as 16 decisões").
+- [x] DD-16 adicionada à busca global (SearchPalette.tsx DECISIONS, keywords "dd-16 homologação slots auditáveis contrato build fase futura f19").
+- [x] History.tsx: DD-15 movida para grupo "v1.9.0 · planejada" (estava erradamente em v1.8.0), DD-16 adicionada ao mesmo grupo.
+- [ ] Falta: botões "Copiar Seção" ao lado dos títulos de seção no Guia C++ (Guide.tsx, ids sfdg-01..08) e Message Router (MessageRouter.tsx, ids modos/tabela/prioridades/invariantes/fase-18). Usar extractSectionMarkdown de sectionsMarkdown.ts + toast sonner. Criar componente reutilizável CopySectionButton.
+- [ ] Falta: validar toast do ⌘⇧C nas 4 páginas técnicas (handler unificado DocsLayout.tsx — já dispara toast "Seção técnica copiada" para sectionSource; conferir que /guia-cpp e /message-router entram em sourceForRoute).
+- [ ] Falta: tsc final, screenshots (/guia-cpp, /message-router, /decisoes), checkpoint, entrega.
+
+Detalhes técnicos:
+- Guide.tsx usa seções com id="sfdg-01"..08 (divs ou section). MessageRouter.tsx ids: modos, tabela, prioridades, invariantes, fase-18.
+- sectionsMarkdown.ts: SOURCE_MAP (routes: /manual, /especificacao, /guia-cpp, /message-router) com ids e labels; extractSectionMarkdown(source, id) retorna string Markdown do DOM até o próximo id.
+- DocsLayout.tsx: sourceForRoute(location) retorna source de SECTION_SOURCES por rota; toast já implementado no handler ⌘⇧C (linhas ~252-254: "Seção técnica copiada").
+- Checkpoint anterior: a53415cc. Auto-publish ativo.

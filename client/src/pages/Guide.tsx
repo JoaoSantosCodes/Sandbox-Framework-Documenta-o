@@ -6,6 +6,7 @@
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { CodeBlock, AuditNote, TechRule } from "@/components/Primitives";
+import { CopySectionButton } from "@/components/CopySectionButton";
 import { DocsLayout } from "@/components/DocsLayout";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 
@@ -361,6 +362,7 @@ export default function Guide() {
             <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">01</span>
               Comportamento de Movimentação (05_SandboxCharacter)
+              <CopySectionButton sectionId="sfdg-01" label="Movimentação" />
             </h2>
             <ol className="text-sm text-muted-foreground leading-relaxed space-y-2 list-decimal pl-5 mb-5">
               <li>Defina a classe do comportamento herdando de <span className="font-mono text-xs">USBMovementBehavior</span>.</li>
@@ -378,6 +380,7 @@ export default function Guide() {
             <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">02</span>
               Utilizando o Message Router (USBEventSubsystem)
+              <CopySectionButton sectionId="sfdg-02" label="Message Router" />
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-3xl mb-5">
               O subsistema suporta mensagens transientes e de estado persistente. O exemplo abaixo
@@ -409,6 +412,7 @@ export default function Guide() {
             <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">03</span>
               Ciclo de Vida, Ticks e Ordem de Execução
+              <CopySectionButton sectionId="sfdg-03" label="Ciclo de vida" />
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-3xl">
               Componentes orquestrados passam por <span className="font-mono text-xs">OnPreInitialize</span>,{" "}
@@ -428,6 +432,7 @@ export default function Guide() {
             <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">04</span>
               Sincronização via ISBReplicable
+              <CopySectionButton sectionId="sfdg-04" label="ISBReplicable" />
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-3xl mb-5">
               Para comportamentos transientes que replicam dados (ex: taxa de munição de uma arma
@@ -452,6 +457,7 @@ export default function Guide() {
             <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">05</span>
               Objetos Interativos Modulares (07_SandboxInteraction)
+              <CopySectionButton sectionId="sfdg-05" label="Interação modular" />
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-3xl mb-5">
               O sistema é baseado em objetos que implementam{" "}
@@ -492,6 +498,7 @@ export default function Guide() {
             <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">06</span>
               Habilidades no Behavior Stack (Fase 16)
+              <CopySectionButton sectionId="sfdg-06" label="Habilidades" />
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-3xl mb-5">
               Habilidades herdam de <span className="font-mono text-xs">USBAbility</span> (que
@@ -515,6 +522,7 @@ export default function Guide() {
             <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">07</span>
               Integração ao Save Game System (Fase 15)
+              <CopySectionButton sectionId="sfdg-07" label="Save Game" />
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-3xl mb-5">
               Qualquer ator ou componente que persista estado entre sessões assina{" "}
@@ -540,6 +548,7 @@ export default function Guide() {
             <h2 className="font-serif text-2xl font-semibold mb-4 scroll-mt-24 flex items-baseline gap-4">
               <span className="font-mono text-sm text-engineering">08</span>
               Precedentes Homologados — DD-01 ··· DD-08 (v1.8.0)
+              <CopySectionButton sectionId="sfdg-08" label="Precedentes" />
             </h2>
             <p className="text-muted-foreground leading-relaxed max-w-3xl mb-5">
               As decisões de arquitetura homologadas em auditoria são precedentes citáveis: ao implementar

@@ -76,10 +76,11 @@ const DD_BY_VERSION: Record<string, DDMilestone[]> = {
     { id: "DD-12", version: "v1.8.0", title: "Header compacto com rótulos curtos de navegação", page: "/decisoes#dd-12" },
     { id: "DD-13", version: "v1.8.0", title: "Banner persistente de acesso por link direto", page: "/decisoes#dd-13" },
     { id: "DD-14", version: "v1.8.0", title: "Redesign de layout com referência fuch.ai", page: "/decisoes#dd-14" },
-    { id: "DD-15", version: "v1.8.0", title: "Atalhos de produtividade ⌘⇧C e compartilhamento de visualização", page: "/decisoes#dd-15" },
+    { id: "DD-15", version: "v1.9.0 · planejada", title: "Atalhos de produtividade ⌘⇧C e compartilhamento de visualização", page: "/decisoes#dd-15" },
   ],
   "v1.9.0 · planejada": [
     { id: "DD-11", version: "v1.9.0 · planejada", title: "Deduplicação client-side do indicador de dano via AttackId", page: "/decisoes#dd-11" },
+    { id: "DD-16", version: "v1.9.0 · planejada", title: "Portas de homologação com slots auditáveis (padrão reutilizável)", page: "/decisoes#dd-16" },
   ],
 };
 
@@ -87,7 +88,7 @@ const METRICS = [
   { value: "11", label: "plugins implementados · 0 em backlog" },
   { value: "32/32", label: "SBUITests verdes (F18)" },
   { value: "31/31", label: "specs verdes (F17)" },
-  { value: "15", label: "decisões DD-* registradas" },
+  { value: "16", label: "decisões DD-* registradas" },
 ];
 
 /* Persistência dos filtros — a visualização escolhida sobrevive ao recarregamento.
@@ -375,7 +376,7 @@ export default function History() {
           02 · Decisões DD-* por versão
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
-          Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 15 decisões com
+          Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 16 decisões com
           as fases que as originaram. Decisões pendentes aparecem sempre no topo da listagem.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
