@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DocsLayout } from "@/components/DocsLayout";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 import { useEffect, useState } from "react";
-import { Link2, Search, Star } from "lucide-react";
+import { Download, Link2, Search, Star, X } from "lucide-react";
 import { toast } from "sonner";
 
 // Favoritos do Registro de Decisões — persistidos em localStorage por dd-id.
@@ -38,6 +38,31 @@ function useFavoriteDecisions() {
       setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id])),
     isFavorite: (id: string) => favorites.includes(id),
   };
+}
+
+// Exportação de favoritos em JSON — backup entre navegadores.
+function exportFavoritesJSON(favorites: string[]) {
+  const exported = favorites
+    .map((id) => DECISIONS.find((d) => d.id === id))
+    .filter((d): d is Decision => Boolean(d))
+    .map((d) => ({
+      id: d.id,
+      version: d.version,
+      title: d.title,
+      status: d.status,
+      homologatedAt: d.homologatedAt,
+      url: `${window.location.origin}/decisoes#${d.id.toLowerCase()}`,
+    }));
+  const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), total: exported.length, decisions: exported }, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `decisoes-favoritas-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success(`${exported.length} decisão(ões) favorita(s) exportada(s) em JSON`);
 }
 
 async function copyDecisionLink(id: string) {
@@ -359,6 +384,12 @@ export default function Decisions() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<DecisionStatus | "Todas">("Todas");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  // Indicador persistente de acesso por link direto (/decisoes#dd-XX): persiste
+  // enquanto a página estiver aberta, mesmo que o hash seja removido do URL.
+  const [directLinkBanner, setDirectLinkBanner] = useState<string | null>(() => {
+    const hash = window.location.hash.replace("#", "").toLowerCase();
+    return hash.startsWith("dd-") ? hash : null;
+  });
   const { favorites, toggleFavorite, isFavorite } = useFavoriteDecisions();
 
   const filtered = DECISIONS.filter((d) => {
@@ -425,6 +456,25 @@ export default function Decisions() {
           </p>
         </header>
 
+        {directLinkBanner && (
+          <div className="mb-6 border-l-4 border-amber-warn bg-amber-warn/8 px-4 py-3 flex items-start sm:items-center gap-3">
+            <Link2 className="h-4 w-4 text-amber-warn shrink-0 mt-0.5 sm:mt-0" />
+            <p className="text-sm text-foreground">
+              Você está visualizando o registro{" "}
+              <span className="font-mono font-bold text-amber-warn">{directLinkBanner.toUpperCase()}</span> via link
+              direto — o filtro foi ajustado para destacá-lo na lista.
+            </p>
+            <button
+              type="button"
+              onClick={() => setDirectLinkBanner(null)}
+              aria-label="Fechar indicador de link direto"
+              className="ml-auto p-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         <TechRule label="Como citar" />
         <div className="border-l-2 border-engineering pl-5 max-w-3xl mb-10">
           <p className="text-sm leading-relaxed text-muted-foreground">
@@ -466,6 +516,20 @@ export default function Decisions() {
               >
                 <Star className={`h-3.5 w-3.5 ${favoritesOnly ? "fill-current" : ""}`} />
                 Favoritos ({favorites.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => exportFavoritesJSON(favorites)}
+                disabled={favorites.length === 0}
+                title={favorites.length === 0 ? "Nenhuma decisão favorita para exportar" : "Baixar a lista de decisões favoritas em JSON"}
+                className={`border px-3 py-2 text-xs font-mono uppercase tracking-wider inline-flex items-center gap-1.5 transition-colors duration-150 ${
+                  favorites.length === 0
+                    ? "border-border bg-card text-muted-foreground/40 cursor-not-allowed"
+                    : "border-border bg-card text-muted-foreground hover:border-engineering/60 hover:text-engineering"
+                }`}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Exportar JSON
               </button>
               {STATUS_FILTERS.map((s) => (
                 <button

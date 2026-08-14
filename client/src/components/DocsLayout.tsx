@@ -116,18 +116,18 @@ function ThemeToggle({ compact = false }: { compact?: boolean }) {
 }
 
 const NAV = [
-  { href: "/", label: "Início", section: "01" },
-  { href: "/fase-17", label: "Fase 17 — Gameplay Debugger", section: "02·R" },
-  { href: "/fase-18", label: "Fase 18 — Interface Dinâmica", section: "02" },
-  { href: "/especificacao", label: "Especificação SFPS", section: "03" },
-  { href: "/plugins", label: "Topologia de Plugins", section: "04" },
-  { href: "/fases", label: "Histórico de Fases", section: "05" },
-  { href: "/manual", label: "Manual de Uso", section: "06" },
-  { href: "/guia-cpp", label: "Guia de Desenvolvimento", section: "07" },
-  { href: "/message-router", label: "Message Router", section: "08" },
-  { href: "/decisoes", label: "Registro de Decisões", section: "09" },
-  { href: "/fase-19", label: "Fase 19 — Planejamento", section: "09·P" },
-  { href: "/manifesto", label: "Manifesto & Padrões", section: "10" },
+  { href: "/", label: "Início", short: "01 · Início" },
+  { href: "/fase-17", label: "Fase 17 — Gameplay Debugger", short: "02 · F17" },
+  { href: "/fase-18", label: "Fase 18 — Interface Dinâmica", short: "02 · F18" },
+  { href: "/especificacao", label: "Especificação SFPS", short: "03 · SFPS" },
+  { href: "/plugins", label: "Topologia de Plugins", short: "04 · Plugins" },
+  { href: "/fases", label: "Histórico de Fases", short: "05 · Histórico" },
+  { href: "/manual", label: "Manual de Uso", short: "06 · Manual" },
+  { href: "/guia-cpp", label: "Guia de Desenvolvimento", short: "07 · Guia C++" },
+  { href: "/message-router", label: "Message Router", short: "08 · Router" },
+  { href: "/decisoes", label: "Registro de Decisões", short: "09 · Decisões" },
+  { href: "/fase-19", label: "Fase 19 — Planejamento", short: "09 · F19" },
+  { href: "/manifesto", label: "Manifesto & Padrões", short: "10 · Manifesto" },
 ];
 
 export function DocsLayout({ children }: { children: ReactNode }) {
@@ -146,23 +146,22 @@ export function DocsLayout({ children }: { children: ReactNode }) {
               Sandbox<span className="text-engineering">·</span>Framework
             </span>
           </Link>
-          <div className="hidden xl:flex items-center gap-1">
-            <ThemeToggle />
+          <nav className="hidden xl:flex items-center gap-1 text-[13px]">
             {NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${
+                title={item.label}
+                className={`px-2.5 py-1.5 font-medium border-b-2 whitespace-nowrap transition-colors ${
                   location === item.href
                     ? "border-engineering text-engineering"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
               >
-                <span className="font-mono text-[10px] opacity-60 mr-1.5">{item.section}</span>
-                {item.label}
+                {item.short}
               </Link>
             ))}
-          </div>
+          </nav>
           <SearchShortcut />
           <ThemeToggle compact />
           <button
@@ -172,7 +171,7 @@ export function DocsLayout({ children }: { children: ReactNode }) {
           >
             <Search className="h-4.5 w-4.5" />
           </button>
-          <span className="phase-stamp hidden md:inline ml-2">v1.8.0 · Fase 18 homologada · 32/32</span>
+          <span className="phase-stamp hidden 2xl:inline ml-2">v1.8.0 · F18 · 32/32</span>
           <button
             className="xl:hidden p-2 -mr-2"
             onClick={() => setOpen(!open)}
@@ -192,7 +191,6 @@ export function DocsLayout({ children }: { children: ReactNode }) {
                   location === item.href ? "text-engineering font-semibold" : "text-foreground"
                 }`}
               >
-                <span className="font-mono text-[10px] opacity-60 mr-1.5">{item.section}</span>
                 {item.label}
               </Link>
             ))}
