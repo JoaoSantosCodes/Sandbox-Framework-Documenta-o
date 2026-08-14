@@ -2,7 +2,7 @@
   DESIGN: "Blueprint Técnico" — primitivas: carimbo de fase, bloco de código com barra verde
   e botão de copiar, bloco de auditoria (nota de revisor), régua técnica.
 */
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { AlertTriangle, Check, Copy, X } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -286,6 +286,53 @@ export function useSlotSubmissions(storageKey: string) {
   };
   const submitAll = (next: Record<string, string>) => persist(next);
   return { submissions, submitSlot, clearAll, submitAll };
+}
+
+/* STATUS DOS SLOTS DA F19 — leitura em tempo real da chave compartilhada
+   sbf-slot-submissions-19 (gerenciada pelo useSlotSubmissions). Exposta em módulo
+   compartilhado para que Home e Roadmap reflitam o mesmo estado sem duplicar o hook. */
+const SLOT_STORAGE_KEY = "sbf-slot-submissions-19";
+export const F19_SLOT_KEYS = [
+  "Slot A · SBEventPayloads.h",
+  "Slot B · 06_SandboxCombat",
+  "Slot C · USBUIDamageIndicator (09_SandboxUI)",
+  "Slot D · SBUITests",
+] as const;
+
+export type SlotStatus = "Aguardando Código" | "Código registrado";
+
+function readSlotStatus(slotKey: string): SlotStatus {
+  try {
+    const raw = localStorage.getItem(SLOT_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed[slotKey]) return "Código registrado";
+    }
+  } catch {
+    // storage indisponível ou corrompido — degrade para aguardando
+  }
+  return "Aguardando Código";
+}
+
+export function useSlotSubmissionStatus(slotKey: string): { status: SlotStatus } {
+  const [state, setState] = useState<SlotStatus>(() => readSlotStatus(slotKey));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const refresh = () => setState(readSlotStatus(slotKey));
+    refresh();
+    window.addEventListener("storage", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [slotKey]);
+  return { status: state };
+}
+
+export function useF19SubmittedCount(): number {
+  const states = F19_SLOT_KEYS.map((k) => readSlotStatus(k));
+  return states.filter((s) => s === "Código registrado").length;
 }
 
 export function TechRule({ label }: { label?: string }) {

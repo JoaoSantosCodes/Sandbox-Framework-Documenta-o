@@ -8,7 +8,6 @@ import { useState, useEffect } from "react";
 import {
   Check,
   CircleAlert,
-  CircleDot,
   Compass,
   Lock,
   Map,
@@ -20,6 +19,7 @@ import {
 } from "lucide-react";
 import { DocsLayout } from "@/components/DocsLayout";
 import { BackToTop, useActiveSection } from "@/components/ActiveSection";
+import { F19_SLOT_KEYS, useF19SubmittedCount } from "@/components/Primitives";
 
 const TOC = [
   { id: "visao-geral", label: "Visão geral" },
@@ -152,13 +152,13 @@ const MILESTONES: Milestone[] = [
   },
   {
     id: "m-dds",
-    tag: "DD-01…DD-17",
+    tag: "DD-01…DD-18",
     date: "Contínuo",
     title: "Registro de Decisões de design",
     description:
-      "Decisões homologadas do manifesto ao redesign fuch.ai: simetria Exit, anti-reflexão por string, DD-11 AttackId, portas de homologação (DD-16) e divergência de escopo auditável (DD-17).",
+      "Decisões homologadas do manifesto ao redesign fuch.ai: simetria Exit, anti-reflexão por string, DD-11 AttackId, portas de homologação (DD-16), divergência de escopo auditável (DD-17) e o padrão da página de linha do tempo & roadmap (DD-18).",
     status: "done",
-    metric: "17 decisões · 15 homologadas",
+    metric: "18 decisões · 16 homologadas",
   },
   {
     id: "m-site",
@@ -191,6 +191,15 @@ const MILESTONES: Milestone[] = [
     status: "planned",
   },
 ];
+
+type StatusFilter = "all" | "done" | "active" | "planned";
+
+const FILTER_META: Record<StatusFilter, { label: string; counter: (n: number) => string }> = {
+  all: { label: "Todas", counter: (n) => `${n} marcos` },
+  done: { label: "Concluído", counter: (n) => `${n} homologados` },
+  active: { label: "Em curso", counter: (n) => `${n} ativos` },
+  planned: { label: "Planejado", counter: (n) => `${n} planejados` },
+};
 
 /* ------------------------------------------------------------------ */
 
@@ -247,13 +256,43 @@ const ROADMAP_SLOTS: RoadmapSlot[] = [
   },
 ];
 
+/* Banner automático: aparece quando os 4 slots recebem código (submissão local).
+   Texto deixa explícito que é estado local — homologação real exige build + suíte 34/34. */
+function RoadmapCompletionBanner() {
+  const count = useF19SubmittedCount();
+  const allSubmitted = count === 4;
+  if (!allSubmitted) return null;
+  return (
+    <div className="mb-6 border border-engineering/60 bg-engineering/[0.06] px-4 py-3">
+      <div className="flex items-start gap-3">
+        <Check className="h-4 w-4 mt-0.5 shrink-0 text-engineering" />
+        <div className="text-sm leading-relaxed">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-engineering block mb-1">
+            Homologação concluída · 4/4 slots — submissões locais
+          </span>
+          <span className="text-muted-foreground">
+            Os quatro slots da Fase 19 receberam código neste navegador — a régua abaixo reflete
+            o estado local. <strong>A homologação real da v1.9.0 exige</strong> build UBT Exit 0 +
+            suíte 34/34 + isolamento simétrico, antes de qualquer carimbo no Vault.
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RoadmapInProgress() {
   const submittedCount = ROADMAP_SLOTS.filter(
     (s) => useSlotSubmissionStatus(s.slotKey).status === "Código registrado",
   ).length;
   return (
     <section id="em-curso" className="scroll-mt-24 mt-14">
-      <h2 className="font-display text-3xl font-bold">Em curso</h2>
+      <div className="flex items-baseline justify-between flex-wrap gap-3">
+        <h2 className="font-display text-3xl font-bold">Em curso</h2>
+        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+          {submittedCount} / 4 slots neste navegador
+        </span>
+      </div>
       <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
         A Fase 19 (Damage Indicator) é o único trabalho ativo — tudo abaixo é pré-requisito
         do carimbo v1.9.0 e segue a porta de homologação com slots auditáveis A–D. O status
@@ -307,6 +346,25 @@ export default function Roadmap() {
     return () => clearTimeout(t);
   }, [copiedRoute]);
 
+  const submittedCount = useF19SubmittedCount();
+  const [filter, setFilter] = useState<StatusFilter>("all");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sbf-roadmap-filter") as StatusFilter | null;
+    if (saved && FILTER_META[saved]) setFilter(saved);
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("sbf-roadmap-filter", filter);
+    } catch {
+      /* ignorado */
+    }
+  }, [filter]);
+
+  const filteredMilestones = MILESTONES.filter((m) =>
+    filter === "all" ? true : m.status === filter,
+  );
+
   return (
     <DocsLayout>
       {/* HERO — wordmark gigante como fundo (padrão fuch.ai, espelhando a Home/F18) */}
@@ -325,10 +383,11 @@ export default function Roadmap() {
           </h1>
           <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Consolidação auditável do caminho dos 11 plugins UE5.8 C++, das versões homologadas
-            (v1.7.0 · v1.8.0), das decisões de design (DD-01…DD-17) e do que se desbloqueia na v1.9.0.
+            (v1.7.0 · v1.8.0), das decisões de design (DD-01…DD-18) e do que se desbloqueia na v1.9.0.
           </p>
         </div>
       </section>
+      <RoadmapCompletionBanner />
       <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-10">
         {/* TOC lateral */}
         <aside className="hidden lg:block">
@@ -371,7 +430,7 @@ export default function Roadmap() {
             <div className="mt-4 max-w-3xl space-y-3 text-sm leading-relaxed text-muted-foreground">
               <p>
                 A linha do tempo abaixo consolida o caminho dos 11 plugins UE5.8 C++, das versões
-                homologadas (v1.7.0 · v1.8.0) e das decisões de design (DD-01…DD-17) até o estado
+                homologadas (v1.7.0 · v1.8.0) e das decisões de design (DD-01…DD-18) até o estado
                 atual — a <b className="text-warning">Fase 19 em homologação</b>, único bloqueante
                 para a v1.9.0.
               </p>
@@ -385,7 +444,7 @@ export default function Roadmap() {
               {[
                 { label: "Plugins", value: "11/11", detail: "implementados" },
                 { label: "Versões", value: "v1.8.0", detail: "homologada" },
-                { label: "Decisões DD", value: "17", detail: "registradas" },
+                { label: "Decisões DD", value: "18", detail: "registradas" },
                 { label: "Próxima", value: "v1.9.0", detail: "em homologação" },
               ].map((s) => (
                 <div key={s.label} className="bg-background px-4 py-4">
@@ -407,13 +466,44 @@ export default function Roadmap() {
             <p className="mt-3 text-sm text-muted-foreground max-w-3xl">
               Marcos em ordem de execução. A régua é qualitativa (não cronológica) — cada marco
               só avança com prova de engenharia: build Exit 0 + suíte verde + isolamento simétrico.
+              Use os filtros abaixo para isolar por status.
             </p>
+
+            {/* Filtros de status */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              {(Object.keys(FILTER_META) as StatusFilter[]).map((key) => {
+                const n = MILESTONES.filter((m) => (key === "all" ? true : m.status === key)).length;
+                const active = filter === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFilter(key)}
+                    aria-pressed={active}
+                    className={`inline-flex items-center gap-2 border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.15em] transition-colors active:scale-[0.97] ${
+                      active
+                        ? "border-engineering text-engineering bg-engineering/[0.06]"
+                        : "border-border text-muted-foreground hover:border-engineering/50 hover:text-foreground"
+                    }`}
+                  >
+                    {FILTER_META[key].label}
+                    <span className={active ? "text-engineering" : "text-border"}>{n}</span>
+                  </button>
+                );
+              })}
+            </div>
 
             <div className="relative mt-10 pl-8">
               {/* régua vertical */}
               <div className="absolute left-[7px] top-1 bottom-1 w-px bg-border border-l border-dashed" />
               <div className="flex flex-col">
-                {MILESTONES.map((m) => (
+                {filteredMilestones.length === 0 && (
+                  <p className="text-sm text-muted-foreground py-4">
+                    Nenhum marco com o status “{FILTER_META[filter].label.toLowerCase()}” — ajuste
+                    o filtro acima.
+                  </p>
+                )}
+                {filteredMilestones.map((m) => (
                   <div key={m.id} className="relative py-5">
                     <div
                       className={`absolute -left-8 top-7 h-[15px] w-[15px] rounded-full border-2 ${
