@@ -85,6 +85,7 @@ const DD_BY_VERSION: Record<string, DDMilestone[]> = {
     { id: "DD-17", version: "v1.9.0", title: "Divergência de escopo plano UMG vs. DD-08 — Rota A prevalece", page: "/decisoes#dd-17" },
     { id: "DD-18", version: "v1.9.0", title: "Linha do Tempo & Roadmap como página permanente do site", page: "/decisoes#dd-18" },
     { id: "DD-19", version: "v1.9.0 · rascunho", title: "Persistência transacional ancorada no PredictionId — Pendência P-2, fora da régua", page: "/decisoes#dd-19" },
+    { id: "DD-20", version: "v1.9.0", title: "Painel de pendências como fonte única do backlog de fases (pendencias_de_fases.md)", page: "/decisoes#dd-20" },
   ],
 };
 
@@ -92,7 +93,7 @@ const METRICS = [
   { value: "11", label: "plugins implementados" },
   { value: "32/32", label: "SBUITests verdes (F19 · contexto integrado)" },
   { value: "7", label: "pendências no Vault oficial (P-1…P-7)" },
-  { value: "19", label: "decisões DD-* registradas" },
+  { value: "20", label: "decisões DD-* registradas" },
 ];
 
 /* Persistência dos filtros — a visualização escolhida sobrevive ao recarregamento.
@@ -409,7 +410,7 @@ export default function History() {
           02 · Decisões DD-* por versão
         </h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-3xl">
-          Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 19 decisões com
+          Cada decisão homologada nasce dentro de uma versão — o registro abaixo cruza as 20 decisões com
           as fases que as originaram. Decisões pendentes aparecem sempre no topo da listagem.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">

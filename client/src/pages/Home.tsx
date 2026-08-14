@@ -310,10 +310,13 @@ export default function Home() {
                   &gt; quais os 10 princípios?
                 </Link>
                 <Link href="/decisoes" className="text-muted-foreground hover:text-engineering transition-colors">
-                  &gt; ver as 19 decisões DD?
+                  &gt; ver as 20 decisões DD?
                 </Link>
                 <Link href="/roadmap" className="text-muted-foreground hover:text-engineering transition-colors">
                   &gt; linha do tempo &amp; roadmap?
+                </Link>
+                <Link href="/decisoes#dd-20" className="text-muted-foreground hover:text-engineering transition-colors">
+                  &gt; DD-20 · pendências como fonte única?
                 </Link>
               </div>
               <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">

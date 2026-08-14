@@ -3,6 +3,7 @@
    2 colunas (trilho mono à esquerda, tese editorial à direita).
    Acento verde-engineering; tinta grafite sobre papel quente; selo tracejado para rascunhos. */
 import { useState, useEffect, useMemo } from "react";
+import { Copy } from "lucide-react";
 import { Link } from "wouter";
 import {
   ArrowUpRight,
@@ -660,8 +661,41 @@ function PendingDetailModal({
               <RefreshCcw className="h-3 w-3" /> copiar seção
             </button>
           )}
+          {/* Botão "Copiar texto" — resumo compacto da pendência (badge · título · resumo · checklist)
+             gerado diretamente do PhasePending aberto, sem depender do DOM e sem inventar notas. */}
+          {pending && (
+            <button
+              onClick={() => copyPendingSummary(pending)}
+              className="inline-flex items-center gap-1 border border-border/70 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground hover:border-engineering/60 transition-colors"
+            >
+              <Copy className="h-3 w-3" /> copiar texto
+            </button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* Copia um resumo compacto da pendência em texto plano — compartilhável em chat
+   ou anotação: badge + título + categoria + resumo + checklist de requisitos.
+   O conteúdo vem integralmente do PhasePending (fonte única phasePendings.ts,
+   espelho do Vault) — nenhum campo é inventado. */
+function copyPendingSummary(p: PhasePending) {
+  const lines: string[] = [
+    `${p.id} · ${p.titulo} · ${p.categoria}`,
+    "",
+    p.resumo,
+    "",
+    "Requisitos:",
+    ...p.itens.map((i) => `[${i.estado === "Pendente" ? " " : "x"}] ${i.id} ${i.exige}`),
+    "",
+    `fonte: pendencias_de_fases.md · Vault · https://sandboxdocs-c9yezybu.manus.space/pendencias`,
+  ];
+  navigator.clipboard.writeText(lines.join("\n")).then(
+    () => toast.success(`Texto copiado — ${p.id}: ${p.titulo}`, {
+      description: "Compartilhável em texto plano; a homologação oficial segue no Vault.",
+    }),
+    () => toast.error("Falha ao copiar"),
   );
 }

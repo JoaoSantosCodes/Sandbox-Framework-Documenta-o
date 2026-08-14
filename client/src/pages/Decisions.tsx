@@ -542,6 +542,23 @@ const DECISIONS: Decision[] = [
     status: "Pendente",
     homologatedAt: undefined,
   },
+  {
+    id: "DD-20",
+    version: "v1.9.0 · registrada",
+    title: "Painel de pendências como fonte única do backlog de fases (pendencias_de_fases.md)",
+    problem:
+      "Após a reconciliação com o Vault oficial, o backlog do framework passou a viver em dois lugares com status divergentes: propostas fora da régua (indicador direcional de dano e persistência transacional — registradas no site como \"Fase 19\" e \"Fase 20\") e o backlog oficial do Vault (P-3…P-6: UMG, rede, status effects, equipamento). Sem um documento único, cada rodada de auditoria Vault ↔ site reconstituía manualmente o que estava pendente — e o site corria o risco de contar rascunhos como fases homologadas na régua, invertendo a precedência oficial (o Vault prevalece).",
+    decision:
+      "Consolidar todas as pendências em um único documento oficial — pendencias_de_fases.md no Vault — consumido pelo site via fonte única client/src/lib/phasePendings.ts: (a) o Vault é a fonte oficial (regra de precedência homologada); (b) P-1 e P-2 são rascunhos fora da régua numerada, com selo explícito nas páginas correspondentes; (c) o site expõe o backlog na página /pendencias (chip \"15 · Pendências\") com filtro por categoria, ordenação, busca por palavras-chave, modal de detalhes espelhando o Vault sem notas inventadas e exportação da lista filtrada em Markdown e PDF; (d) o painel de sincronização da Home mostra a régua de fases concluídas vs. pendentes e a próxima frente oficial (P-3 → P-4 → P-5 → P-6); (e) nenhuma proposta vira fase numerada sem homologação real registrada no Vault.",
+    rejected:
+      "Manter as propostas de dano e persistência como \"Fase 19\" e \"Fase 20\" na régua oficial — conflitaria a numeração paralela usada pelo Vault (F19 = GameAnimationSample) e quebraria toda auditoria automática; criar um quadro Kanban com colunas de estado — acrescentaria estado novo não rastreável no Vault, violando a regra de fonte única; esconder os rascunhos do site — o histórico registrado tem valor de auditoria e não pode ser apagado, apenas reclassificado.",
+    consequence:
+      "O backlog passa a ter um único ponto de auditoria: qualquer divergência entre Vault e site sobre pendências é detectável em minutos pela ferramenta de sync. O site ganha clareza editorial (o que está homologado vs. o que é rascunho), a régua de fases para de contar propostas, e cada rodada de trabalho escolhe o P seguinte pela ordem de execução recomendada pelo Vault (P-3 → P-4 → P-5 → P-6) em vez de navegar entre documentos desatualizados.",
+    precedent:
+      "Extensão direta da regra de precedência \"Vault é fonte oficial\" (reconciliação 14/08) e da DD-16 (ponto de auditoria explícito para homologação): assim como os slots F19-A…F19-D têm um contrato fixo, as pendências agora têm um contrato fixo — um documento, uma lib, uma página, um painel na Home. A mesma disciplina da DD-18 (roadmap como fonte única da régua) aplicada ao backlog.",
+    status: "Pendente",
+    homologatedAt: undefined,
+  },
 ];
 
 const STATUS_STYLES: Record<DecisionStatus, string> = {
@@ -727,7 +744,7 @@ export default function Decisions() {
         <header className="border-b-2 border-foreground pb-6 mb-10 grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6">
           <div className="flex md:flex-col gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             <span className="text-engineering">03 / DOC · RD</span>
-            <span>Decisões DD-01…DD-19</span>
+            <span>Decisões DD-01…DD-20</span>
             <span>Homologadas: 16</span>
             <span>Versão: v2.0.0-prep</span>
             <span className="hidden md:inline mt-2 flex items-center gap-1.5 text-muted-foreground/70">

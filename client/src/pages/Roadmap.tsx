@@ -122,13 +122,13 @@ const MILESTONES: Milestone[] = [
   },
   {
     id: "m-dds",
-    tag: "DD-01…DD-19",
+    tag: "DD-01…DD-20",
     date: "Contínuo",
     title: "Registro de Decisões de design",
     description:
-      "Decisões homologadas do manifesto ao redesign fuch.ai: simetria Exit, anti-reflexão por string, DD-11 AttackId, portas de homologação (DD-16), divergência de escopo auditável (DD-17), o padrão da página de linha do tempo & roadmap (DD-18) e o contrato da persistência transacional (DD-19).",
+      "Decisões homologadas do manifesto ao redesign fuch.ai: simetria Exit, anti-reflexão por string, DD-11 AttackId, portas de homologação (DD-16), divergência de escopo auditável (DD-17), o padrão da página de linha do tempo & roadmap (DD-18), o contrato da persistência transacional (DD-19) e as pendências como fonte única do backlog de fases (DD-20).",
     status: "done",
-    metric: "19 decisões · 16 homologadas",
+    metric: "20 decisões · 17 homologadas",
   },
   {
     id: "m-site",
@@ -340,7 +340,7 @@ export default function Roadmap() {
           </h1>
           <p className="mt-4 text-muted-foreground text-lg max-w-2xl leading-relaxed">
             Consolidação auditável do caminho dos 11 plugins UE5.8 C++, das versões homologadas
-            (v1.7.0 · v1.8.0), das decisões de design (DD-01…DD-19) e do que se desbloqueia na v1.9.0.
+            (v1.7.0 · v1.8.0), das decisões de design (DD-01…DD-20) e do que se desbloqueia na v1.9.0.
           </p>
         </div>
       </section>
@@ -387,7 +387,7 @@ export default function Roadmap() {
             <div className="mt-4 max-w-3xl space-y-3 text-sm leading-relaxed text-muted-foreground">
               <p>
                 A linha do tempo abaixo consolida o caminho dos 11 plugins UE5.8 C++, das versões
-                homologadas (v1.7.0 · v1.8.0 · v1.9.0) e das decisões de design (DD-01…DD-19) até
+                homologadas (v1.7.0 · v1.8.0 · v1.9.0) e das decisões de design (DD-01…DD-20) até
                 o estado atual — a <b className="text-engineering">Fase 19 concluída</b> no Vault
                 oficial (Obsidian), com a portabilidade do GameAnimationSample.
               </p>

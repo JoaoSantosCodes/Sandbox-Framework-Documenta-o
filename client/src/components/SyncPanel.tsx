@@ -4,8 +4,9 @@
   O painel declara o último registro local de auditoria e os commits de referência de cada lado.
 */
 import { Link } from "wouter";
-import { AlertTriangle, CheckCircle2, GitBranch, Layers, RefreshCcw } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, GitBranch, Layers, RefreshCcw } from "lucide-react";
 import { PHASES } from "@/lib/siteData";
+import { PHASE_PENDINGS } from "@/lib/phasePendings";
 
 const AUDIT_STORAGE_KEY = "sbf-audit-status";
 const LAST_VAULT_SYNC = "14/08/2026 01:15 GMT-3";
@@ -228,7 +229,7 @@ function ProgressTrack() {
           {done}/{total} · {pct}%
         </span>
       </div>
-      <div className="px-3 py-2.5 space-y-2">
+      <div className="group relative px-3 py-2.5 space-y-2">
         <div className="h-2 w-full bg-secondary overflow-hidden" title={`${pct}% da régua concluída`}>
           <div
             className="h-full bg-engineering transition-[width] duration-300 ease-out"
@@ -243,7 +244,45 @@ function ProgressTrack() {
             próxima frente: backlog oficial P-3 → P-4 → P-5 → P-6
           </span>
         </div>
+        {/* Tooltip interativo — hover revela a sequência exata das próximas fases
+           pendentes do backlog oficial (espelha phasePendings.ts, fonte única do Vault).
+           Detalhe progressivo: a régua mostra só "P-3 → P-6" por padrão; o detalhe
+           completo (título de cada P e contador de itens) abre sob demanda. */}
+        <div className="pointer-events-none absolute left-3 right-3 -bottom-1 translate-y-full mt-2 hidden group-hover:block z-10">
+          <div className="border border-border bg-background shadow-sm">
+            <div className="px-3 py-1.5 border-b border-dashed border-border font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              próximas fases pendentes · ordem de execução do Vault
+            </div>
+            <ul className="divide-y divide-border/50">
+              {PHASE_PENDINGS.filter((p) => p.categoria === "Backlog oficial do Vault")
+                .sort((a, b) => a.ordem - b.ordem || a.id.localeCompare(b.id))
+                .map((p, i, arr) => (
+                  <li key={p.id}>
+                    <Link
+                      href={p.paginaRelacionada ?? "/pendencias"}
+                      className="block px-3 py-2 flex items-start gap-2 hover:bg-accent/60 transition-colors"
+                    >
+                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-engineering pt-0.5">
+                        {p.id}
+                      </span>
+                      <span className="text-[11px] leading-snug flex-1">
+                        {p.titulo}
+                        <span className="block font-mono text-[9px] uppercase tracking-[0.1em] text-muted-foreground mt-0.5">
+                          {p.itens.filter((it) => it.estado === "Pendente").length}/{p.itens.length} itens pendentes
+                        </span>
+                      </span>
+                      {i < arr.length - 1 && (
+                        <ArrowRight className="h-3 w-3 text-muted-foreground/50 mt-0.5" />
+                      )}
+                    </Link>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
+
