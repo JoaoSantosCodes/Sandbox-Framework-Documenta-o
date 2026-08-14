@@ -765,20 +765,23 @@ export default function Phase19() {
           </div>
         </div>
       ) : (
-        <div className="border-b border-engineering/40 bg-engineering/[0.05]">
+        /* Rascunho P-1: desde a reconciliação ao Vault oficial, a F19 homologada é a portabilidade
+           no GameAnimationSample (v1.9.0) — esta página documenta a proposta de dano como pendência P-1 */
+        <div className="border-b border-border bg-muted/50">
           <div className="container py-3">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-engineering" aria-hidden />
+              <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               <div className="text-sm leading-relaxed">
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-engineering">
-                  v1.9.0 · slots fechados — homologação concluída no contrato
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  pendência P-1 · rascunho fora da régua oficial
                 </span>
                 <p className="mt-1 text-muted-foreground max-w-3xl">
                   Os quatro slots auditáveis receberam o corpo canônico do plano homologado (referência do Vault):
                   USBDamageEventPayload (A), broadcast autoritativo no Hitscan (B), USBUIDamageIndicator com
-                  deduplicação AttackId (C) e SBUITests Cenários 7/8 (D). <strong className="text-foreground">Divergência de escopo resolvida pela Rota A (DD-17).</strong>
-                  ATENÇÃO: fechamento contratual no site — a homologação real segue exigindo o build compilado,
-                  suíte 34/34 verde e isolamento simétrico Exit Code 0 antes do carimbo v1.9.0 no Vault.
+                  deduplicação AttackId (C) e SBUITests Cenários 7/8 (D). <strong className="text-foreground">Esta proposta segue como pendência P-1</strong> em
+                  <a href="/roadmap" className="underline-offset-4 hover:underline"> pendencias_de_fases.md</a> — a F19 oficial homologada no Vault
+                  é a Integração e Replicação no GameAnimationSample (v1.9.0). Nenhum corpo aqui entra na régua sem
+                  build compilado, suíte verde e isolamento simétrico Exit Code 0.
                 </p>
               </div>
             </div>

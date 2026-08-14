@@ -1423,25 +1423,28 @@ export default function Phase20() {
 
   return (
     <DocsLayout>
-      {/* BANNER — fase planejada (padrão DD-18). O status da régua do /roadmap atualiza
-          quando a Fase 19 fechar (4/4 slots) e esta página entrar em execução. */}
-      <div className="border-b border-border bg-secondary/40">
+      {/* BANNER — rascunho P-2 (reconciliação ao Vault oficial, 14/08): a F19 homologada é a
+          portabilidade no GameAnimationSample (v1.9.0); esta proposta de persistência segue como
+          pendência P-2 em pendencias_de_fases.md e fora da régua oficial. */}
+      <div className="border-b border-border bg-muted/50">
         <div className="container py-3">
           <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <div className="text-sm leading-relaxed">
               <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                v2.0.0 · fase planejada — aguardando a homologação da Fase 19
+                pendência P-2 · rascunho fora da régua oficial
               </span>
               <p className="mt-1 text-muted-foreground max-w-3xl">
-                Esta página é o convite para homologação da{" "}
-                <strong className="text-foreground">Fase 20 — Persistência Transacional de Atributos</strong>.
-                Ela entra em execução quando a Fase 19 fechar os quatro slots (v1.9.0 homologada); a partir
-                daí, a régua do{" "}
-                <Link href="/roadmap" className="text-engineering underline underline-offset-4">
-                  roadmap
+                Este documento é uma proposta de planejamento da{" "}
+                <strong className="text-foreground">Persistência Transacional de Atributos</strong> — registrada
+                como pendência P-2 em{" "}
+                <Link href="/roadmap" className="text-foreground underline underline-offset-4">
+                  pendencias_de_fases.md
                 </Link>{" "}
-                passa a rastreá-la como próxima fase de gameplay.
+                e fora da régua oficial do Vault. A F19 homologada no Vault é a Integração e Replicação no
+                GameAnimationSample (v1.9.0). Nenhuma próxima fase entra na régua sem corpo real de código,
+                suíte verde e isolamento simétrico Exit 0 — se esta proposta for homologada, recebe DD e
+                numeração oficiais então.
               </p>
             </div>
           </div>
