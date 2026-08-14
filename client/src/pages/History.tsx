@@ -10,7 +10,8 @@ import { BackToTop, useActiveSection } from "@/components/ActiveSection";
 import { AuditNote, PhaseStamp, TechRule } from "@/components/Primitives";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowRight, CheckCircle2, Clock, Share2 } from "lucide-react";
 import { PHASES } from "@/lib/siteData";
 
 /* Camada estrutural de cada fase homologada — espelha a topologia de plugins do framework:
@@ -278,6 +279,28 @@ export default function History() {
               </button>
             );
           })}
+          {/* Compartilhar visualização — copia a URL com os filtros atuais (?layer=&dd=) */}
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard
+                .writeText(window.location.href)
+                .then(() => {
+                  toast("Visualização compartilhada", {
+                    description: "URL com os filtros atuais copiada — quem abrir o link verá a mesma seleção.",
+                  });
+                })
+                .catch(() => {
+                  toast("Falha ao copiar", {
+                    description: "O navegador bloqueou o acesso à área de transferência.",
+                  });
+                });
+            }}
+            className="ml-auto font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 border border-border text-muted-foreground hover:border-engineering/50 hover:text-engineering transition-colors active:scale-[0.97] inline-flex items-center gap-2"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Compartilhar visualização
+          </button>
         </div>
         <div className="mt-8 relative">
           <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" aria-hidden />

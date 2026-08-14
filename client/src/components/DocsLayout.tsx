@@ -11,6 +11,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { ASSET_URLS } from "@/lib/siteData";
 import { CHECKLIST_META, decodeChecklistProgress } from "@/components/PhaseChecklist";
+import { sourceForRoute, extractSectionMarkdown } from "@/lib/sectionsMarkdown";
 
 /* Rota → checklist ativo: ⌘⇧C copia o Markdown do checklist da fase em foco
    (par com o botão "Copiar status" do checklist interativo). */
@@ -220,11 +221,21 @@ export function DocsLayout({ children }: { children: ReactNode }) {
       if (!(e.metaKey || e.ctrlKey) || !e.shiftKey || e.key.toLowerCase() !== "c") return;
       const tag = (document.activeElement?.tagName || "").toLowerCase();
       if (tag === "input" || tag === "textarea" || (document.activeElement as HTMLElement)?.isContentEditable) return;
+      // Fase ativa (/fase-17/18/19) → checklist; páginas técnicas → seção ativa (scroll-spy).
       const index = ROUTE_PHASE_INDEX[location];
-      const text = index !== undefined ? buildPhaseMarkdown(index) : null;
+      const sectionSource = index === undefined ? sourceForRoute(location) : null;
+      let text: string | null = index !== undefined ? buildPhaseMarkdown(index) : null;
+      let notice = "⌘⇧C copia o checklist das páginas /fase-17, /fase-18 e /fase-19.";
+      if (!text && sectionSource) {
+        // useActiveSection já exporta o hash da seção ativa via history.replaceState;
+        // o hash atual da URL reflete a seção sob a linha de leitura.
+        const activeId = window.location.hash.replace("#", "") || sectionSource.ids[0];
+        if (sectionSource.ids.includes(activeId)) text = extractSectionMarkdown(sectionSource, activeId);
+        notice = `⌘⇧C copia a seção técnica ativa em Markdown nas páginas ${sectionSource.page} e no Manual.`;
+      }
       if (!text) {
         toast("Nenhuma fase ativa nesta página", {
-          description: "⌘⇧C copia o checklist das páginas /fase-17, /fase-18 e /fase-19.",
+          description: notice,
         });
         return;
       }
@@ -232,10 +243,16 @@ export function DocsLayout({ children }: { children: ReactNode }) {
       navigator.clipboard
         .writeText(text)
         .then(() => {
-          const meta = CHECKLIST_META[index];
-          toast(`Checklist da ${meta.phase} copiado`, {
-            description: `Markdown da fase ativa pronto para colar no Vault.`,
-          });
+          if (index !== undefined) {
+            const meta = CHECKLIST_META[index];
+            toast(`Checklist da ${meta.phase} copiado`, {
+              description: `Markdown da fase ativa pronto para colar no Vault.`,
+            });
+          } else {
+            toast(`Seção técnica copiada`, {
+              description: `Markdown da seção ativa pronto para colar no Vault ou no plano de sprint.`,
+            });
+          }
         })
         .catch(() => {
           toast("Falha ao copiar", {
@@ -264,6 +281,11 @@ export function DocsLayout({ children }: { children: ReactNode }) {
           {/* Chips utilitários + chips de navegação agrupados à direita (fuch.ai) */}
           <div className="flex items-center gap-1.5">
             <SearchShortcut />
+            {/* Atalho ⌘⇧C — copiar checklist/seção técnica ativa (descoberta guiada, par do ⌘K) */}
+            <span className="hidden lg:inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground border border-border bg-background px-2.5 py-1.5" aria-hidden title="Copiar checklist ou seção técnica ativa em Markdown">
+              <span className="opacity-60">⌘⇧C</span>
+              <span className="hidden xl:inline opacity-40">copiar fase</span>
+            </span>
             <ThemeToggle compact />
             <span className="hidden md:inline-block mx-1 h-4 w-px bg-border/70" />
             <nav className="hidden xl:flex items-center gap-1">

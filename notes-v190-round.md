@@ -108,3 +108,16 @@ State atual relevante:
 - F19: CODE_SLOTS no topo do arquivo; botões copiar por slot e Copiar Tudo (feito).
 - SearchPalette: highlight âmbar implementado (feito).
 - Auto-publish ativo: checkpoint = publicação imediata.
+
+## Rodada 5 — skill, badge ⌘⇧C, ⌘⇧C estendido, Compartilhar visualização
+
+### Feito até agora (rodada 5)
+1. Skill `sandbox-framework-review` atualizada (validada): estado v1.9.0-prep, slots A–D da F19, padrões de UI (busca ⌘K com sectionsIndex, /historico com URL params, atalhos ⌘K/⌘⇧C, botão Compartilhar).
+2. DocsLayout.tsx: badge ⌘⇧C adicionado no header (hidden lg:inline-flex) ao lado de SearchShortcut; atalho ⌘⇧C estendido — se a rota é de página técnica (sourceForRoute: /manual, /especificacao), copia a seção ativa via extractSectionMarkdown (hash da URL = seção ativa do scroll-spy useActiveSection que já exporta hash via replaceState). Novo arquivo: client/src/lib/sectionsMarkdown.ts (MANUAL_SECTIONS ids: pre,data,input,single,multi,gdt,checklist,limitacoes,integracao; SPEC_SECTIONS ids: sfps-01..08 com labels "NN · Título").
+3. FALTA: botão "Compartilhar visualização" no History.tsx (copiar URL atual com query filters, toast confirm). Inserir perto dos chips LAYERS (linha ~263-281) — ex.: coluna à direita dos chips com CopyButton ou botão próprio com toast("URL copiada"). LAYER_IDS: todas, foundation, gameplay-base, gameplay-ext, presentation, tools. Toast via sonner (já importado? conferir imports do History.tsx — se não, adicionar `import { toast } from "sonner"`).
+4. tsc limpo em todas as etapas. Erro stale no devserver log (Phase19.jsx) é do checkpoint anterior já corrigido — ignorar.
+
+### Próximos passos (rodada 5)
+- Inserir botão Compartilhar no History.tsx (após bloco LAYERS, linha ~281).
+- Screenshot de auditoria (/historico, /manual, /especificacao, home) → checkpoint → entrega com sugestões.
+- Checkpoint anterior: 024a1911. Auto-publish ativo.
