@@ -4,9 +4,9 @@
 */
 
 export const ASSET_URLS = {
-  logo: "/manus-storage/sb_logo_a79d3a08.png",
-  hero: "/manus-storage/sb_hero_blueprint_e40f0c9d.png",
-  widgets: "/manus-storage/sb_widgets_illustration_2cd0617b.png",
+  logo: "/manus-storage/sb_logo_141c629e.webp",
+  hero: "/manus-storage/sb_hero_34df9f7d.webp",
+  widgets: "/manus-storage/sb_widgets_ababb845.webp",
 };
 
 export type PluginStatus = "complete" | "stub";
