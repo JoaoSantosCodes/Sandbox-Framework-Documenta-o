@@ -82,7 +82,7 @@ export const PHASE_PENDINGS: PhasePending[] = [
     categoria: "Backlog oficial do Vault",
     ordem: 1,
     resumo:
-      "CONCLUÍDA em 15/08/2026 (homologação relatada pelo usuário: checklist de playtest da Frente 1 executado sem erros no Listen Server e no Split-Screen — nota de origem; o carimbo documental no cofre — Dashboard/task.md/walkthrough.md — fecha a cadeia). Montagem dos Widget Blueprints herdando das backing classes C++ do 09_SandboxUI, slots de habilidades com WatchedAbilityTag e playtests de interface em Listen Server e Split-Screen local.",
+      "CONCLUÍDA em 15/08/2026 (homologação relatada pelo usuário: checklist de playtest da Frente 1 executado sem erros no Listen Server e no Split-Screen — nota de origem; o carimbo documental no cofre — Dashboard/task.md/walkthrough.md — fecha a cadeia; auditoria do espelho GitHub do Vault em 15/08 confirma que o Dashboard do repo ainda carimba F18/v1.8.1, por isso os Blocos A–D precisam ser colados no cofre antes do repo refletir a conclusão). Montagem dos Widget Blueprints herdando das backing classes C++ do 09_SandboxUI, slots de habilidades com WatchedAbilityTag e playtests de interface em Listen Server e Split-Screen local.",
     paginaRelacionada: "/fase-19-umg",
     itens: [
       {
